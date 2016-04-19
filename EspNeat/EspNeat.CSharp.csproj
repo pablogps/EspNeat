@@ -1,0 +1,237 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{DF5DCB08-FE99-949E-AAF4-B56230CFF51B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Assembly-CSharp</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
+    <CompilerResponseFile></CompilerResponseFile>
+    <UnityProjectType>Game:1</UnityProjectType>
+    <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
+    <UnityVersion>5.2.2f1</UnityVersion>
+    <RootNamespace></RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Temp\UnityVS_bin\Debug\</OutputPath>
+    <IntermediateOutputPath>Temp\UnityVS_obj\Debug\</IntermediateOutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DefineConstants>DEBUG;TRACE;UNITY_5_2_2;UNITY_5_2;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_2D_PHYSICS;ENABLE_4_6_FEATURES;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_REFLECTION_BUFFERS;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;UNITY_STANDALONE_WIN;UNITY_STANDALONE;ENABLE_SUBSTANCE;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_LOG_MIXED_STACKTRACE;ENABLE_UNITYWEBREQUEST;ENABLE_EVENT_QUEUE;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Temp\UnityVS_bin\Release\</OutputPath>
+    <IntermediateOutputPath>Temp\UnityVS_obj\Release\</IntermediateOutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DefineConstants>TRACE;UNITY_5_2_2;UNITY_5_2;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_2D_PHYSICS;ENABLE_4_6_FEATURES;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_REFLECTION_BUFFERS;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;UNITY_STANDALONE_WIN;UNITY_STANDALONE;ENABLE_SUBSTANCE;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_LOG_MIXED_STACKTRACE;ENABLE_UNITYWEBREQUEST;ENABLE_EVENT_QUEUE;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;ENABLE_PROFILER;DEBUG;TRACE;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.XML" />
+    <Reference Include="System.Core" />
+    <Reference Include="Boo.Lang" />
+    <Reference Include="UnityScript.Lang" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="UnityEngine">
+      <HintPath>Library\UnityAssemblies\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.Networking">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor">
+      <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>Library\UnityAssemblies\Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.iOS.Extensions.Xcode">
+      <HintPath>Library\UnityAssemblies\UnityEditor.iOS.Extensions.Xcode.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assets\Scripts\Optimizer.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\AuxFitnessInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\CoordinateVector.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\EvaluationInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\FitnessInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\GenomeFitnessComparer.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\IDistanceMetric.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\IEvolutionAlgorithm.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\IGenome.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\IGenomeDecoder.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\IGenomeFactory.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\IGenomeListEvaluator.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\IPhenomeEvaluator.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\ISpeciationStrategy.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\RunState.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\SelectiveGenomeListEvaluator.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\SerialGenomeListEvaluator.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\Specie.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\UnityListEvaluator.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\UnityParallelListEvaluator.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\UpdateMode.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Core\UpdateScheme.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Coroutiner.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\CyclicNetworkFactory.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\FastAcyclicNetworkFactory.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\FastCyclicNetworkFactory.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\DefaultNodeSetMappingFunction.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\HyperNeatDecoder.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\INodeSetMappingFunction.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\NodeSetMapping.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\Substrate.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\SubstrateConnection.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\SubstrateNode.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\HyperNeat\SubstrateNodeSet.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\Neat\NeatGenomeDecoder.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Decoders\NetworkActivationScheme.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\DistanceMetrics\DistanceMetricUtils.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\DistanceMetrics\EuclideanDistanceMetric.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\DistanceMetrics\ManhattanDistanceMetric.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\AbstractGenerationalAlgorithm.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\ComplexityRegulation\ComplexityCeilingType.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\ComplexityRegulation\ComplexityRegulationMode.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\ComplexityRegulation\DefaultComplexityRegulationStrategy.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\ComplexityRegulation\IComplexityRegulationStrategy.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\ComplexityRegulation\NullComplexityRegulationStrategy.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\NeatAlgorithmStats.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\NeatEvolutionAlgorithm.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\NeatEvolutionAlgorithmParameters.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\HyperNeat\CppnGenomeFactory.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\AddedNeuronGeneStruct.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionGene.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionGeneComparer.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionGeneList.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionGeneListBuilder.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionMutationInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionMutationInfoList.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionPerturbanceType.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\ConnectionSelectionType.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\CorrelationItem.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\CorrelationItemType.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\CorrelationResults.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\CorrelationStatistics.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\NeatGenome.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\NeatGenomeFactory.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\NeatGenomeParameters.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\NeatGenomeStats.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\NeatGenomeXmlIO.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\NeuronGene.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\Neat\NeuronGeneList.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Genomes\RbfNeat\RbfGenomeFactory.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\ActivationFunctionInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Bipolar\BipolarGaussian.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Bipolar\BipolarSigmoid.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Bipolar\Linear.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Bipolar\Sine.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\NullFn.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\RadialBasis\RbfGaussian.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\Absolute.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\AbsoluteRoot.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\Gaussian.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\InverseAbsoluteSigmoid.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\PlainSigmoid.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\ReducedSigmoid.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\SteepenedSigmoid.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\SteepenedSigmoidApproximation.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\Unipolar\StepFunction.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\AcyclicNetworkDepthAnalysis.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ConnectionEndpointsStruct.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\ConnectionList.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\CyclicNetworkDepthAnalysis.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\CyclicNetworkTest.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\DefaultActivationFunctionLibrary.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\Domains\ExperimentUtils.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\Domains\INeatExperiment.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\Domains\IntPoint.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\Domains\PolarPoint.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\Domains\XmlUtils.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\IActivationFunction.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\IActivationFunctionLibrary.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\IConnectionList.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\INetworkConnection.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\INetworkDefinition.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\INetworkNode.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\INodeList.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NetworkConnection.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NetworkConnectivityData.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NetworkDefinition.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NetworkDepthInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NetworkNode.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NetworkXmlIO.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NodeConnectivityData.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NodeList.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Network\NodeType.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\IBlackBox.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\ISignalArray.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\MappingSignalArray.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\AcyclicNetwork\FastAcyclicNetwork.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\AcyclicNetwork\LayerInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\CyclicNetwork\Connection.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\CyclicNetwork\CyclicNetwork.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\CyclicNetwork\Neuron.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\CyclicNetwork\RelaxingCyclicNetwork.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\FastCyclicNetwork\FastConnection.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\FastCyclicNetwork\FastCyclicNetwork.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\FastCyclicNetwork\FastRelaxingCyclicNetwork.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Phenomes\SignalArray.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Properties\AssemblyInfo.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\SharpNeatException.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\SpeciationStrategies\GenomeDistancePair.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\SpeciationStrategies\KMeansClusteringStrategy.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\SpeciationStrategies\RandomClusteringStrategy.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\SpeciationStrategies\SpeciationUtils.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\BoxMullerGaussianSampler.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\CircularBuffer.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\DoubleCircularBufferWithStats.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\FastRandom.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\FrequencyDistributionData.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\KeyedCircularBuffer.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\Point2DDouble.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\RouletteWheel.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\RouletteWheelLayout.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\UInt32IdGenerator.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\Utilities.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\XmlIoUtils.cs" />
+    <Compile Include="Assets\Scripts\SharpNEAT\Utility\ZigguratGaussianSampler.cs" />
+    <Compile Include="Assets\Scripts\SimpleEvaluator.cs" />
+    <Compile Include="Assets\Scripts\SimpleExperiment.cs" />
+    <Compile Include="Assets\Scripts\UnitController.cs" />
+    <Compile Include="Assets\_Working Examples\Cars\Scripts\CarController.cs" />
+    <Compile Include="Assets\_Working Examples\Cars\Scripts\GoalPiece.cs" />
+    <Compile Include="Assets\_Working Examples\Cars\Scripts\RoadPiece.cs" />
+    <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\CargoDock.cs" />
+    <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Chasm.cs" />
+    <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Clock.cs" />
+    <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Destroy.cs" />
+    <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\WorkerController.cs" />
+    <Compile Include="Assets\_Working Examples\PickUp Robot\Scripts\RobotController.cs" />
+    <Compile Include="Assets\_Working Examples\PickUp Robot\Scripts\Rotator.cs" />
+    <Compile Include="Assets\_Working Examples\XOR\Scripts\CalculatorController.cs" />
+    <Compile Include="Assets\_Working Examples\XOR\Scripts\InputProvider.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Resources\experiment.config.xml" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
+</Project>
