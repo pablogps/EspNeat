@@ -1,11 +1,12 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Resources\experiment.config.xml">
     <Files>
+      <File FileName="Assets\Resources\experiment.config.xml" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiManager.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\Visualizer.cs" Line="239" Column="46" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\Visualizer.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\MenuScreens.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiVariables.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiButtonRects.cs" Line="1" Column="1" />
