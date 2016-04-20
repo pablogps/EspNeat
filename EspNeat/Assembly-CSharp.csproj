@@ -223,10 +223,6 @@
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Clock.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Destroy.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\WorkerController.cs" />
-     <Compile Include="Assets\_Working Examples\LogicFunction\Scripts\CalculatorController.cs" />
-     <Compile Include="Assets\_Working Examples\LogicFunction\Scripts\InputProvider.cs" />
-     <Compile Include="Assets\_Working Examples\PickUp Robot\Scripts\RobotController.cs" />
-     <Compile Include="Assets\_Working Examples\PickUp Robot\Scripts\Rotator.cs" />
      <Compile Include="Assets\_Working Examples\XOR\Scripts\XorController.cs" />
      <None Include="Assets\Resources\experiment.config.xml" />
  <Reference Include="UnityEngine.UI">
