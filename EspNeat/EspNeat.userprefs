@@ -1,15 +1,14 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeParameters.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs">
     <Files>
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="1" Column="1" />
-      <File FileName="Assets\_Working Examples\XOR\Scripts\XorController.cs" Line="1" Column="1" />
-      <File FileName="Assets\Resources\experiment.config.xml" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\NeatEvolutionAlgorithmParameters.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeParameters.cs" Line="427" Column="47" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="330" Column="38" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\SimpleExperiment.cs" Line="106" Column="54" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeXmlIO.cs" Line="445" Column="44" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="523" Column="74" />
       <File FileName="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\EspNeat\NeatEvolutionAlgorithm.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\EspNeat\AbstractGenerationalAlgorithm.cs" Line="120" Column="42" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

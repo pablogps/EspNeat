@@ -318,20 +318,7 @@ public class EspNeatOptimizer : Optimizer
             Time.timeScale = 1;
         }
 
-        NeatGenome genome = null;
-        // Try to load the genome from the XML document.
-        try
-        {
-            using (XmlReader xr = XmlReader.Create(champFileSavePath))
-                genome = NeatGenomeXmlIO.ReadCompleteGenomeList(xr, false, 
-                    (NeatGenomeFactory)experiment.CreateGenomeFactory())[0];
-        } 
-        catch (Exception e1) 
-        {
-            // print(champFileLoadPath + " Error loading genome from file!\nLoading aborted.\n"
-            //                        + e1.Message + "\nJoe: " + champFileLoadPath);
-            return;
-        }
+        NeatGenome genome = LoadChampion();
 
         // Get a genome decoder that can convert genomes to phenomes.
         var genomeDecoder = experiment.CreateGenomeDecoder();
@@ -509,7 +496,7 @@ public class EspNeatOptimizer : Optimizer
 
     /// <summary>
     /// Initializes our evolutionary algorithms (For instance, here the
-    /// manual selection extension gets here access to the genome to phenome
+    /// manual selection extension gets access to the genome-to-phenome
     /// decoder.
     /// Loads a genome population from a save file or calls the factory to 
     /// create the first generation.
@@ -661,6 +648,14 @@ public class EspNeatOptimizer : Optimizer
         // Note NeatGenomeFactory will set AddModule screen if CreateGenomeList
         // is called and there is not a saved population.
         StartGenomePopulation();
+        // We need to load the champion now (in case we want to add a new module
+        // without starting an evolutionary process first, so the program builds
+        // the base on the correct genome, instead of a random genome if we skip
+        // this step).
+        if (LoadChampion() != null)
+        {
+            _ea.CurrentChampGenome = LoadChampion();            
+        }
     }
 
     /// <summary>
@@ -740,6 +735,27 @@ public class EspNeatOptimizer : Optimizer
             }
         }
         return max;
+    }
+
+    NeatGenome LoadChampion()
+    {
+        NeatGenome genome = null;
+        // Try to load the genome from the XML document.
+        try
+        {
+            // It would make more sense to use LoadGenome instead of ReadCompleteGenomeList
+            using (XmlReader xr = XmlReader.Create(champFileSavePath))
+                genome = NeatGenomeXmlIO.ReadCompleteGenomeList(xr, false, 
+                    (NeatGenomeFactory)experiment.CreateGenomeFactory())[0];
+        } 
+        catch (Exception e1) 
+        {
+            // print(champFileLoadPath + " Error loading genome from file!\nLoading aborted.\n"
+            //                        + e1.Message + "\nJoe: " + champFileLoadPath);
+            return genome;
+        }
+
+        return genome;
     }
 
     /// <summary>
