@@ -125,7 +125,7 @@ public class XorController : UnitController
         return ID_counter;
     }
 
-    void FixedUpdate () {        
+    void FixedUpdate () {    
         //if (IsRunning) {
         input_1 = 0f;
         input_2 = 0f;
@@ -138,7 +138,7 @@ public class XorController : UnitController
 		}
         Paint(render00, output00);
 
-        // Debug.Log("output 00 " + output00);
+		// Debug.Log("output 00 " + output00);
 
         input_1 = 0f;
         input_2 = 1f;

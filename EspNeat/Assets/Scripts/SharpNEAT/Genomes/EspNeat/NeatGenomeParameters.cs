@@ -420,12 +420,12 @@ namespace SharpNeat.Genomes.Neat
 			ConnectionMutationInfoList list = new ConnectionMutationInfoList(2);
 
 			// Gaussian jiggle with sigma=0.02 (most values between +-0.04)
-			// Jiggle 90% of connections.
-			list.Add(new ConnectionMutationInfo(0.11375, ConnectionPerturbanceType.JiggleGaussian,
+			// Jiggle 90% of connections with 90% chance.
+			list.Add(new ConnectionMutationInfo(0.9, ConnectionPerturbanceType.JiggleGaussian,
 				ConnectionSelectionType.Proportional, 0.9, 0, 0.0, 0.02));
 			
-			// Reset 10% of connections.
-			list.Add(new ConnectionMutationInfo(0.001, ConnectionPerturbanceType.Reset,
+			// Reset 10% of connections with 10% chance.
+			list.Add(new ConnectionMutationInfo(0.1, ConnectionPerturbanceType.Reset,
 				ConnectionSelectionType.Proportional, 0.1, 0, 0.0, 0));
 			list.Initialize();
 			return list;

@@ -263,8 +263,8 @@ namespace SharpNeat.Phenomes.NeuralNets
             // Initialise the bias neuron's fixed output value.
             _postActivationArray[0] = 1.0;  
                         
-/*            UnityEngine.Debug.Log("TIMESTEPS TO 1");
-            _phenVars.timestepsPerActivation = 1;*/
+/*            UnityEngine.Debug.Log("TIMESTEPS TO 2");
+            _phenVars.timestepsPerActivation = 2;*/
         }
 
         #endregion
@@ -436,7 +436,7 @@ namespace SharpNeat.Phenomes.NeuralNets
                     // Resets the pre-actiavtion value
                     _preActivationArray[j] = 0.0;                    
                 }
-/*                UnityEngine.Debug.Log("CHECK after hidden and local out (no only to out) update CHECK CHECK CHECK");
+/*              UnityEngine.Debug.Log("CHECK after hidden and local out (no only to out) update CHECK CHECK CHECK");
 				UnityEngine.Debug.Log("indices: " + _inBiasOutRegEndIndex  + " " + _hiddenLocalOutNoOutEndIndex);
 				for (int h = 0; h < _phenVars.neuronCount; ++h)
 				{
@@ -557,7 +557,7 @@ namespace SharpNeat.Phenomes.NeuralNets
                         _localOutToOutConnect[j][k]._weight * moduleActivity;   
                 }
             } 
-/*			UnityEngine.Debug.Log("CHECK after local out to out MATRIX final update CHECK CHECK CHECK");
+/*    		UnityEngine.Debug.Log("CHECK after local out to out MATRIX final update CHECK CHECK CHECK");
 			for (int h = 0; h < _phenVars.neuronCount; ++h)
 			{
 				UnityEngine.Debug.Log("Index: Pre/post " + h + ": " + _preActivationArray[h] + 
