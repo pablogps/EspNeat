@@ -45,7 +45,7 @@ public class Clock : MonoBehaviour {
 	}
 
   // Simply changes the clock state from red to blue and vice versa
-  void Change() {
+  public void Change() {
     if (state == 0) {
       state = 1;
       rend_clock.material.color = red_clock;
@@ -55,7 +55,7 @@ public class Clock : MonoBehaviour {
     }
   }
 
-  // Allows to manually change the clock by clicking on it. The position of the
+/*  // Allows to manually change the clock by clicking on it. The position of the
   // clock adapts to dynamic screen changes (but the size remains constant, so
   // if the clock looks big it may not cover the whole thing, which is fine).
   void OnGUI() {
@@ -70,6 +70,6 @@ public class Clock : MonoBehaviour {
     {
       Change();
     }     
-  }
+  }*/
 }
 

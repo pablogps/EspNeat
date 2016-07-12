@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/_Working Examples/XOR/_Scenes/XOR.unity
+- path: Assets/_Working Examples/Cheap Labour SuperSimple/_Scenes/CheapLabourSimple.unity
   isLoaded: 1
   isActive: 1

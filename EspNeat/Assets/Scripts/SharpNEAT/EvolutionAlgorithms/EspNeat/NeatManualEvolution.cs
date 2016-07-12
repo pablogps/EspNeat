@@ -105,6 +105,7 @@ public class NeatManualEvolution<TGenome>
 	{
 		// TODO: Prepare for exception if the brain is not found in the dictionary!
 		int genome_id = brain_index[unit_brain]; 
+        // UnityEngine.Debug.Log("chosen brain " + genome_id);
 
 		//If this genome is not already included
         if (!selected_genomes.ContainsKey(genome_id))
@@ -121,6 +122,7 @@ public class NeatManualEvolution<TGenome>
     {
         // TODO: Prepare for exception if the brain is not found in the dictionary!
         int genome_id = brain_index[unit_brain];
+        // UnityEngine.Debug.Log("dechosen brain " + genome_id);
 
         //See if it was already there
         if (selected_genomes.ContainsKey(genome_id))

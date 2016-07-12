@@ -8,8 +8,8 @@ namespace SharpNeat.Coordination
     /// which makes it convenient to use dedicated classes (as opposed to having
     /// these methods in Optimizer).
     /// Visualizer class also takes much of the effort, specially for the
-    /// AddModule menu, where we need an schematic representation of the modules,
-    /// with their inputs, outputs, labels, and so on.
+    /// schematic representation of the moduleswith their inputs, outputs,
+	/// labels, and so on.
     /// 
     /// This is a very long class. Perhaps it would be reasonable to consider
     /// breaking it further into smaller classes.
@@ -25,8 +25,11 @@ namespace SharpNeat.Coordination
         // #region Properties
         // #region Public Methods
         // #region Menu Selection
+
+        // #region Main menu
+
         // #region Methods common to several menus
-        // #region Main Menu
+        // #region Main Menu (old)
         // #region Edit modules menu
         // #region Add Module methods
         // #region Edit protected weights screen
@@ -59,7 +62,7 @@ namespace SharpNeat.Coordination
 
         // Fast reference for the number of modules. Originally it marked the index
         // for the new module in AddModule methods, later it also allowed to
-        // used some methods also when no new module is being created (by using
+        // use some methods also when no new module is being created (by using
         // this variable as a loop limit and setting it to either the number
         // of modules or the number of modules + 1 (for AddModule)).
         private int newModule;
@@ -67,8 +70,8 @@ namespace SharpNeat.Coordination
         // Not super clever, but simple. Selects which type of connections to
         // show in the weight editing menu. The starting value (currently from
         // 0 to 1) is quite irrelevant.
-        private int typeOfConnectionSelector = 2;
-        // This selects the module for the weight editing menu.
+        private int typeOfConnectionSelector = 1;
+        // This selects the module for the weight-editing menu.
         private int displayModule = 1;
         // Some methods (EditInToRegGetInfo) may need to know which module
         // called them.
@@ -291,6 +294,16 @@ namespace SharpNeat.Coordination
             case MenuScreens.Play:
                 PlayGUI();
                 break;
+            case MenuScreens.Edit:
+                visualizer.DrawScheme();
+                DefaultMenu();
+                break;
+
+
+
+            // These are to be either upgraded or deleted!! (With a propper
+            // cleaning of no longer used features).
+
             case MenuScreens.PlayEditWeights:
                 // DrawScheme only adds a transparend layer: very optional.
                 visualizer.DrawScheme();
@@ -371,6 +384,15 @@ namespace SharpNeat.Coordination
             default:
                 break;
             }
+        }
+
+        #endregion
+
+        #region Main Menu
+
+        void DefaultMenu()
+        {
+            
         }
 
         #endregion
@@ -546,7 +568,7 @@ namespace SharpNeat.Coordination
 
         #endregion
 
-        #region Main Menu
+        #region Main Menu (old)
 
         /// <summary>
         /// From the main menu the user may proceed to the evolution menu (PlayGUI)
@@ -1080,7 +1102,7 @@ namespace SharpNeat.Coordination
                 }
                 ReturnToMainMenu();
 
-                optimizer.AskCreateModule(guiVar); 
+                //optimizer.AskCreateModule(guiVar); 
                 // We reset our variables for the next time.
                 guiVar.Reset();  
             }
@@ -1210,7 +1232,7 @@ namespace SharpNeat.Coordination
 				guiVar.LocalOutputList.RemoveAt(guiVar.LocalOutputList.Count - 1);
 				guiVar.RegulatoryInputList.RemoveAt(guiVar.RegulatoryInputList.Count - 1);
 
-				optimizer.AskChangeWeights(guiVar);
+				//optimizer.AskChangeWeights(guiVar);
 				ReturnToPlay();   
 			}
 
@@ -1345,7 +1367,7 @@ namespace SharpNeat.Coordination
             if (GUI.Button(rects.inToRegApply, "Update regulation", "CustomButton"))
             {
                 // Applies the changes using NeatGenomeFactory.
-                optimizer.AskUpdatePandem(guiVar);
+                //optimizer.AskUpdatePandem(guiVar);
                 ReturnToPlay();
             }    
 		}
@@ -1380,7 +1402,7 @@ namespace SharpNeat.Coordination
             if (GUI.Button(rects.inToRegApply, "Apply", "CustomButton"))
             {
                 // Applies the changes using NeatGenomeFactory.
-                optimizer.AskUpdateInToReg(guiVar, moduleThatCalled);
+                //optimizer.AskUpdateInToReg(guiVar, moduleThatCalled);
 
                 ReturnToPrevious();
             }

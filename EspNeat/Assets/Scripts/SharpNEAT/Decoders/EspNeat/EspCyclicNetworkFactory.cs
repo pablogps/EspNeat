@@ -78,6 +78,19 @@ namespace SharpNeat.Decoders
         private static Dictionary<uint,int> idToNewIndex;
         private static NeatGenome genome;
 
+        // Modules do not need to be in good order anymore, so moduleId is not
+        // enough to determine the index position for the arrays in PhenomeVariables
+        // (moduleId could be the second module in the system, or the first).
+        // This information is already stored in UIvaraibles.moduleIdList, however,
+        // since we are not passing an instance of UIvariables to the decoder
+        // we need to construct the list of modules here as well. MakeDictionaries
+        // already loops through all neurons, so we can build the module list
+        // with little extra overhead (specially in interactive evolution, where
+        // decoding is not a big issue to begin with).
+        // We take the chance to make it a dictionary, as opposed to a list
+        // in UIvariables.
+        private static Dictionary<int, int> moduleIdToIndex;
+
         #region Public Static Methods
 
         /// <summary>
@@ -109,6 +122,7 @@ namespace SharpNeat.Decoders
             // gene sorting in genomes, and old index corresponds to the sorting
             // used in phenomes).
             MakeDictionaries();
+
 /*          foreach (KeyValuePair<int, int> pair in oldToNewIndex)
             {
                 UnityEngine.Debug.Log("old to new Index " + pair.Key + " to " + pair.Value);
@@ -122,6 +136,7 @@ namespace SharpNeat.Decoders
             // pandemonium group (including "no pandemonium" with pandemonium
             // value = 0.
             CreatePandemoniumArray();
+
             GetActivationFunctions();
         }
 
@@ -148,6 +163,8 @@ namespace SharpNeat.Decoders
             // a separate 1D-array.
 			// Non-protected connections from local output neurons (recursive connections)
 			// are treated normally, and are not affected by regulatory neurons.
+            // Remember: module Ids are not (necessarily) in order, so we use
+            // moduleIdToIndex
             phenomeVariables.localOutToRegOrLInConnect = new FastConnection[genome.Regulatory][];
             phenomeVariables.localOutToOutConnect = new FastConnection[genome.Regulatory][];
             phenomeVariables.lOutToRegOrLInModuleCount = new int[genome.Regulatory];
@@ -189,7 +206,7 @@ namespace SharpNeat.Decoders
                     {
                         // This is local_out to local_in
                         localOutToRegOrLocalInList.Add(connection);
-                        ++phenomeVariables.lOutToRegOrLInModuleCount[connection.ModuleId - 1];  
+                        ++phenomeVariables.lOutToRegOrLInModuleCount[moduleIdToIndex[connection.ModuleId]];  
                     }
                     else
                     {
@@ -205,7 +222,7 @@ namespace SharpNeat.Decoders
                     {
                         // This is local_out-to-regulatory
                         localOutToRegOrLocalInList.Add(connection);
-                        ++phenomeVariables.lOutToRegOrLInModuleCount[connection.ModuleId - 1];                        
+                        ++phenomeVariables.lOutToRegOrLInModuleCount[moduleIdToIndex[connection.ModuleId]];                        
                     }
                     else
                     {
@@ -218,7 +235,7 @@ namespace SharpNeat.Decoders
                 {
                     // This can only be local_out-to-out
                     localOutToOutList.Add(connection);
-                    ++phenomeVariables.localOutToOutModuleCount[connection.ModuleId - 1];
+                    ++phenomeVariables.localOutToOutModuleCount[moduleIdToIndex[connection.ModuleId]];
                 }
             }
 
@@ -266,10 +283,9 @@ namespace SharpNeat.Decoders
                 ++current;
             }
 
-            // For local out to out/regulatory we need to put each in its module.
-            // Local output connections are already sorted within modules.
-            // NOTE: This connections NEVER use module 0, so moduleIndex = 2
-            // represents the connections in moduleId = 3.
+            // For local-out to out/regulatory we need to put each connection
+            // with its module. Local-output connections are already sorted
+            // within modules.
 			phenomeVariables.localOutToOutCount = localOutToOutList.Count;
             int localToRegCurrent = 0;
             int localToOutCurrent = 0;
@@ -291,7 +307,7 @@ namespace SharpNeat.Decoders
                                   out phenomeVariables.localOutToRegOrLInConnect[moduleIndex][i]);
                     ++localToRegCurrent; 
                 }
-                // Then local out to out:
+                // Then local-out to out:
                 for (int j = 0; j < phenomeVariables.localOutToOutModuleCount[moduleIndex]; ++j)
                 {
                     // The connection is the next in localOutToOutList.
@@ -543,6 +559,31 @@ namespace SharpNeat.Decoders
             // Perhaps we should make no difference between different types
             // of local output neurons?
             phenomeVariables.localOutToOnlyOut = 0;
+
+            // This dictionary will store the order in which modules appear in
+            // the genome, remember they do not need to be in order!
+            moduleIdToIndex= new Dictionary<int, int>();
+            // Loops through regulatory neurons to list their moduleId and the
+            // order in which they are found. NOTE we only need to give every
+            // moduleId a unique index, but it is not really necessary that this
+            // index be the order in which it is found in the genome. Because
+            // the indices will be used for arryas, we only need them to start
+            // at 0 and have no gaps.
+            int currentModuleId = 0;
+            int currentModuleIndex = 0;
+
+            // + 1 because input does not include bias
+            int offset = genome.Input + genome.Output + 1;
+            for (int i = 0; i < genome.Regulatory; ++i)
+            {
+                if (nodeList[i + offset].ModuleId != currentModuleId)
+                {
+                    currentModuleId = nodeList[i + offset].ModuleId;
+                    moduleIdToIndex.Add(currentModuleId, currentModuleIndex);
+                    ++currentModuleIndex;
+                }                
+            }
+
 
             // Creates Id to Old index dictionary.
             // Adds the first elements to the Old-to-New-index dictionary. And

@@ -4,6 +4,7 @@ using SharpNeat.EvolutionAlgorithms;
 using SharpNeat.Genomes.Neat;
 using System;
 using System.Xml;
+using SharpNeat.Coordination;
 
 /// <summary>
 /// This class coordinates the neuroevolution process, where neural networks 
@@ -51,8 +52,9 @@ public class EspNeatOptimizer : Optimizer
     float timeLeft = 0.0f;
     float accum = 0.0f;
 
-    private SharpNeat.Coordination.GuiManager guiManager;
-    private SharpNeat.Coordination.Visualizer visualizer;
+	private UImanager uiManager;
+    private GuiManager guiManager;
+    private Visualizer visualizer;
 
     private uint generation;
     private double fitness;
@@ -66,6 +68,8 @@ public class EspNeatOptimizer : Optimizer
     
     // Is the evolutionary algorithm active?
     private bool EARunning;
+    // Is a champion instane running?
+    private bool champRunning = false;
     // Here the genomes are saved in an external file. If another evolutionary
     // process is started it will load genome populations from here. If this is 
     // not wanted, change the name of the experiment (in the GameObject "Evaluator")
@@ -110,6 +114,11 @@ public class EspNeatOptimizer : Optimizer
     public bool GetEARUnning
     {
         get { return EARunning; }
+    }
+
+    public bool ChampRunning
+    {
+        get { return champRunning; }
     }
 
     public string TimeStamp
@@ -169,9 +178,10 @@ public class EspNeatOptimizer : Optimizer
         // TODO: There should be an unsubscribe line somewhere, but right now 
         // the program ends with Optimizer, so it is not needed. 
 
+        // This feature is old: now this is chosen with a UI slider
         // speed is increased so evolution is faster in real time
-        var evoSpeed = 25;
-        Time.timeScale = evoSpeed;
+        //var evoSpeed = 25;
+        //Time.timeScale = evoSpeed;
 
         // Starts the algorithm running. The algorithm will switch to the Running 
         // state from either the Ready or Paused states.
@@ -182,9 +192,9 @@ public class EspNeatOptimizer : Optimizer
     /// <summary>
     /// Sets the current menu screen selector.
     /// </summary>
-    public void SetMenuScreen(SharpNeat.Coordination.MenuScreens chosenScreen)
+    public void SetMenuScreen(MenuScreens chosenScreen)
     {
-        guiManager.SetMenuScreen(chosenScreen);
+        //guiManager.SetMenuScreen(chosenScreen);
     }
 
     /// <summary>
@@ -212,6 +222,15 @@ public class EspNeatOptimizer : Optimizer
         }
 
         SaveResearch(directoryPath);
+    }
+    /// <summary>
+    ///  Simple saving: only affects the current population and will be
+    ///  overwritten. To really save use 
+    ///  SavePopulation(string directoryPath, string popPath, string champPath)
+    /// </summary>
+    public void SimpleSavePopulation()
+    {
+        SavePopulation(Application.persistentDataPath);  
     }
     /// <summary>
     /// Saves the population and champion genome in the default path.
@@ -262,7 +281,8 @@ public class EspNeatOptimizer : Optimizer
     {
         // We update the genome used in visualizer. For the schematic view all 
         // genomes are exactly the same, so we can pass any we like.
-        visualizer.UpdateModelGenome(_ea.GenomeList[0]);
+        // visualizer.UpdateModelGenome(_ea.GenomeList[0]);
+        uiManager.UpdateModelGenome(_ea.GenomeList[0]);
     }
 
     /// <summary>
@@ -311,6 +331,8 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void RunBest()
     {
+        champRunning = true;
+
         // Resets timescale ONLY if neuroevolution is not running (otherwise
         // things can go too slow and it may be hard to abort 
         if (EARunning == false)
@@ -365,6 +387,8 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void DestroyBest()
     {
+        champRunning = false;
+
         // We need to remove units created by the button "Run Best"
         // First we identify all remaining units (not taken care by StopEA)
         GameObject[] bests;
@@ -382,55 +406,110 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
-    /// Used from GuiManager to finally proceed with the creation of the
+    /// Sets whichModule as active (clones the current champion and moves
+    /// whichModule to the end of the genome, then produces mutations)
+    /// </summary>
+    public void AskSetActive(UIvariables uiVar, int whichModule)
+    {
+        _ea.GenomeList[0].GenomeFactory.SetModuleActive(
+                _ea.GenomeList, Application.persistentDataPath, experiment_name,
+                uiVar, whichModule);
+
+        // Sets whichModule as the current module in the factory!
+        _ea.GenomeList[0].GenomeFactory.CurrentModule = whichModule;
+
+        // UImanager will call MutateOnce, which already updates the champion
+        // and saves the progress.
+    }
+
+    /// <summary>
+    /// Used from UImanager to finally proceed with the creation of the
     /// new module (once we have all the details!)
     /// </summary>
-    public void AskCreateModule(SharpNeat.Coordination.GuiVariables guiVar)
+    public void AskCreateModule(UIvariables uiVar)
     {
+        Debug.Log("next Id before add new: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);
         _ea.GenomeList[0].GenomeFactory.AddNewModule(
-                _ea.GenomeList, Application.persistentDataPath, experiment_name,
-                guiVar);
-		SavePopulation(Application.persistentDataPath);        
+                _ea.GenomeList, Application.persistentDataPath, experiment_name, uiVar);
+
+		Debug.Log("next Id after add new: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);
+		UpdateChampion();
+        SavePopulation(Application.persistentDataPath);    
+
+
+
+        // TODO: IMPORTANT NOTICE!
+        // There seems to be a bug here: when a population is loaded the ID
+        // generator is reset to the last value used + 1. Then, only the FIRST
+        // time AskCreateModule is called, even if at the very end of AskCreateModule
+        // the ID generator is more advanced (because elements have been created)
+        // the ID at the exit of AddNewModule is again the original value used
+        // after loading the population. Why? Problems with references?
+        // This is not usually relevant (apparently AddNewModule will find the
+        // correct value again if called a second time, and for some reason in new
+        // calls the problem does not happen again).
+        // But AskMutateOnce will not correct the problem, and it may try to
+        // add elements with repeated IDs, which creates genomes that fail the
+        // integrity check.
+
+        // Easy patch: update the ID generator here.
+
+        _ea.GenomeList[0].GenomeFactory.InitializeGeneratorAfterLoad(_ea.GenomeList);   
+        Debug.Log("next Id after final update: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);  
     }
 
     /// <summary>
-    /// Used from GuiManager to change only the protected weights in the
+    /// Used from regulation modules to add a new local output neuron connected
+    /// to the regulatory neuron of the module we are adding. Also creates 
+    /// connections from local inputs to the new local output.
+    /// </summary>
+    public void AskAddModuleToRegModule(UIvariables uiVar, newLink localOutInfo)
+    {
+        _ea.GenomeList[0].GenomeFactory.AddModuleToRegModule(
+                _ea.GenomeList, Application.persistentDataPath, experiment_name,
+                uiVar, localOutInfo);
+        UpdateChampion();
+        SavePopulation(Application.persistentDataPath);  
+        
+    }
+
+    /// <summary>
+    /// Used from UImanager to change only the protected weights in the
     /// genome population.
     /// </summary>
-    public void AskChangeWeights(SharpNeat.Coordination.GuiVariables guiVar)
+    public void AskChangeWeights(UIvariables uiVar)
     {
-        _ea.GenomeList[0].GenomeFactory.ChangeWeights(_ea.GenomeList, guiVar);
-        SavePopulation(Application.persistentDataPath);   
+        _ea.GenomeList[0].GenomeFactory.ChangeWeights(_ea.GenomeList, uiVar);
+        UpdateChampion();
     }
 
     /// <summary>
-    /// Used from GuiManager to change the input that goes to a regulatory
+    /// Used from UImanager to change the input that goes to a regulatory
     /// neuron (but not for the new module in AddModule, which is done normally
     /// with AskCreateModule).
     /// </summary>
-    public void AskUpdateInToReg(SharpNeat.Coordination.GuiVariables guiVar,
-                                 int moduleThatCalled)
+    public void AskUpdateInToReg(UIvariables uiVar)
     {
-        _ea.GenomeList[0].GenomeFactory.UpdateInToReg(_ea.GenomeList, guiVar,
-                                                      moduleThatCalled);
-        SavePopulation(Application.persistentDataPath);    
+        _ea.GenomeList[0].GenomeFactory.UpdateInToReg(_ea.GenomeList, uiVar);
+        _ea.GenomeList[0].GenomeFactory.UpdateStatistics(_ea.GenomeList[0]);
+        UpdateChampion(); 
     }
 
     /// <summary>
-    /// Used from GuiManager to update the pandemonium state of modules
+    /// Used from UImanager to update the pandemonium state of modules
     /// without having to add a new module.
     /// </summary>
-    public void AskUpdatePandem(SharpNeat.Coordination.GuiVariables guiVar)
+    public void AskUpdatePandem(UIvariables uiVar)
     {
         // This method does not require to pass the genome list (it will use
         // the variable for Optimizer from Factory, as we could do for the
         // rest of these AskSomething methods).
-        _ea.GenomeList[0].GenomeFactory.UpdatePandem(guiVar);
-        SavePopulation(Application.persistentDataPath);    
+        _ea.GenomeList[0].GenomeFactory.UpdatePandem(uiVar); 
+        UpdateChampion();  
     }
 
     /// <summary>
-    /// Used from GuiManager to ask for the resetting of the last module in
+    /// Used from UImanager to ask for the resetting of the last module in
     /// all genomes.
     /// This counts as a new generation!
     /// </summary>
@@ -439,7 +518,68 @@ public class EspNeatOptimizer : Optimizer
         ++generation;
         _ea.GenomeList[0].GenomeFactory.ResetActiveModule(_ea.GenomeList, generation);
 
+        UpdateChampion(); 
         SavePopulation(Application.persistentDataPath);  
+    }
+
+    /// <summary>
+    /// Asks the genome factory to remove a given module from all genomes. Note
+    /// that this option may only be called from a module that is not currently
+    /// beeing evolved! In that case the option "reset" is offered instead.
+    /// </summary>
+	public void AskDeleteModule(int whichModule)
+	{
+        // TODO: Ensure this is NOT the active module. The active module is the
+        // one being evolved, and is the only module that is not exactly the
+        // same for all individuals in the population.
+
+		++generation;
+
+		_ea.GenomeList[0].GenomeFactory.DeleteModule(_ea.GenomeList,
+                                                          generation, whichModule);
+
+        UpdateChampion(); 
+		SavePopulation(Application.persistentDataPath); 		
+	}
+
+    public void AskMutateOnce()
+    {
+        ++generation;
+
+/*        Debug.Log("enter mutate once!");
+        for (int i = 0; i < _ea.GenomeList[0].NeuronGeneList.Count; ++i)
+        {
+            UnityEngine.Debug.Log("index " + i + " id " + _ea.GenomeList[0].NeuronGeneList[i].Id);
+        }*/
+
+        foreach (NeatGenome genome in _ea.GenomeList)
+        {
+            genome.SimpleMutation();
+        }
+
+        UpdateChampion();
+        SavePopulation(Application.persistentDataPath);     
+    }
+
+    /// <summary>
+    /// Champion stores a copy of a genome, but apparently does not copy changes
+    /// that are made in that genome. Here we make sure that this is updated
+    /// after genomes are changed.
+    /// </summary>
+    public void UpdateChampion()
+    {
+        uint champId = _ea.CurrentChampGenome.Id;
+        foreach (NeatGenome genome in _ea.GenomeList)
+        {
+            if (genome.Id == champId)
+            {
+                _ea.CurrentChampGenome = genome;
+                return;
+            }
+        }
+        // If the genome is not found, leaves things as they are. Which may be
+        // problematic, so at least warns the developer:
+        Debug.Log("Champion not found in the current population!");
     }
 
     /// <summary>
@@ -511,9 +651,11 @@ public class EspNeatOptimizer : Optimizer
         // Resets the current generation in case we are loading files.
         generation = FindOldGeneration();
         _ea.CurrentGeneration = generation;
+
         // We pass a genome to the visualizer. For the schematic view all 
 		// genomes are exactly the same, so we can pass any we like.
-        visualizer.UpdateModelGenome(_ea.GenomeList[0]);
+        //visualizer.UpdateModelGenome(_ea.GenomeList[0]);
+        uiManager.UpdateModelGenome(_ea.GenomeList[0]);
     }
 
     /// <summary>
@@ -549,17 +691,7 @@ public class EspNeatOptimizer : Optimizer
 
 		System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
 		TimeSpan ts;
-		double ans;
-        
-		Debug.Log("inv abs vs sigm -5 " + funcion1.Calculate(-5, null) + " " + function2.Calculate(-5, null));
-		Debug.Log("inv abs vs sigm -2.5 " + funcion1.Calculate(-2.5, null) + " " + function2.Calculate(-2.5, null));
-		Debug.Log("inv abs vs sigm -1.5 " + funcion1.Calculate(-1.5, null) + " " + function2.Calculate(-1.5, null));
-		Debug.Log("inv abs vs sigm -0.5 " + funcion1.Calculate(-0.5, null) + " " + function2.Calculate(-0.5, null));
-		Debug.Log("inv abs vs sigm 0 " + funcion1.Calculate(0.0, null) + " " + function2.Calculate(0.0, null));
-		Debug.Log("inv abs vs sigm 0.5 " + funcion1.Calculate(0.5, null) + " " + function2.Calculate(0.5, null));
-		Debug.Log("inv abs vs sigm 1.5 " + funcion1.Calculate(1.5, null) + " " + function2.Calculate(1.5, null));
-		Debug.Log("inv abs vs sigm 2.5 " + funcion1.Calculate(2.5, null) + " " + function2.Calculate(2.5, null));
-		Debug.Log("inv abs vs sigm 5 " + funcion1.Calculate(5, null) + " " + function2.Calculate(5, null));
+		double ans;    
         
 		stopWatch.Start();
 		for (int i = 0; i < 10000000; ++i)
@@ -618,7 +750,7 @@ public class EspNeatOptimizer : Optimizer
         print(champFileSavePath);
         // We pass this path to guiManager (it will neeed to check if it exists
         // at different times, and the files may be deleted!)
-        guiManager.SavePath = popFileSavePath;
+        //guiManager.SavePath = popFileSavePath;
 
         // Use if you need your rays in manual selection to interact only with
         // a given set of layers. 
@@ -648,6 +780,7 @@ public class EspNeatOptimizer : Optimizer
         // Note NeatGenomeFactory will set AddModule screen if CreateGenomeList
         // is called and there is not a saved population.
         StartGenomePopulation();
+
         // We need to load the champion now (in case we want to add a new module
         // without starting an evolutionary process first, so the program builds
         // the base on the correct genome, instead of a random genome if we skip
@@ -656,6 +789,7 @@ public class EspNeatOptimizer : Optimizer
         {
             _ea.CurrentChampGenome = LoadChampion();            
         }
+        uiManager.InstantiateLoadedElements();
     }
 
     /// <summary>
@@ -663,17 +797,26 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     void InitGUI()
     {
-        // Here we start all the GUI-related variables.
-        guiManager = transform.gameObject.AddComponent<SharpNeat.Coordination.GuiManager>();
-        visualizer = transform.gameObject.AddComponent<SharpNeat.Coordination.Visualizer>();
-        guiManager.Optimizer = this;
-        guiManager.Initialize(visualizer);
-        guiManager.SetSkin(mySkin);
-        visualizer.SetGuiManager(guiManager);
-        visualizer.SetSkin(mySkin);
-        visualizer.SetNamesPath(Application.persistentDataPath + 
-                                string.Format("/{0}.names.xml", experiment_name));
-    }
+		// Here we start all the GUI-related variables.
+        //guiManager = transform.gameObject.AddComponent<GuiManager>();
+        //visualizer = transform.gameObject.AddComponent<Visualizer>();
+        //guiManager.Optimizer = this;
+        //guiManager.Initialize(visualizer);
+        //guiManager.SetSkin(mySkin);
+        //visualizer.SetGuiManager(guiManager);
+        //visualizer.SetSkin(mySkin);
+        //visualizer.SetNamesPath(Application.persistentDataPath + 
+        //                        string.Format("/{0}.names.xml", experiment_name));
+
+
+
+		uiManager = GetComponent<UImanager>();
+        uiManager.SetNamesPath(Application.persistentDataPath + 
+                               string.Format("/{0}.names.xml", experiment_name));
+
+		uiManager.SetHierarchyPath(Application.persistentDataPath + 
+			                       string.Format("/{0}.hierarchy.xml", experiment_name));
+	}
 
     /// <summary>
     /// Calculates frames per second and reduces the time scale if they are too
@@ -803,7 +946,6 @@ public class EspNeatOptimizer : Optimizer
         System.IO.DirectoryInfo dirInf = new System.IO.DirectoryInfo(directoryPath);
         if (!dirInf.Exists)
         {
-            Debug.Log("Creating subdirectory");
             dirInf.Create();
         }        
     }
@@ -946,9 +1088,6 @@ public class EspNeatOptimizer : Optimizer
     /// Searchs for the tag "HighlightBubble" among the children of a parent unit
     /// so that the highlight bubble can be destroyed.
     /// </summary>
-    /// <returns>The child with tag.</returns>
-    /// <param name="parent_transform">Parent transform.</param>
-    /// <param name="tag">Tag.</param>
     GameObject FindChildWithTag(Transform parent_transform, string tag)
     {
         foreach (Transform child_transform in parent_transform)

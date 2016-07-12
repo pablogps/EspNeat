@@ -15,7 +15,7 @@ public class WorkerSimpleController : UnitController {
   public LayerMask no_sense_layer; // will NOT sense objects in this layer (performance)
   public GameObject cargo_drop; 
 
-  private static Clock clock_script; // sets blue or red clock periods
+  private static ClockSimple clock_script; // sets blue or red clock periods
   // These are needed to compute the fitness 
   private float av_speed;
   private float collision_counter;
@@ -57,7 +57,7 @@ public class WorkerSimpleController : UnitController {
     // length we already have the clock, so we don't need to check both!)
     if (fit_experiment_length == 0f) {
       // Let's look for the clock!
-      clock_script = GameObject.Find("Clock").GetComponent<Clock>();
+      clock_script = GameObject.Find("Clock").GetComponent<ClockSimple>();
       fit_experiment_length = 1f / 
           GameObject.Find("Evaluator").GetComponent<Optimizer>().TrialDuration;
     }
@@ -217,6 +217,7 @@ public class WorkerSimpleController : UnitController {
     inputArr[4] = right_eye;
     inputArr[5] = input_cargo; // is cargo bay loaded?
     inputArr[6] = (float)clock_script.GetState(); // clock value (blue/red)
+
     // Which is activated
     box.Activate();
     // And produces output signals (also in an array)
