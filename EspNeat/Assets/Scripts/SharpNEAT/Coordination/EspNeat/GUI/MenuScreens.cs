@@ -12,6 +12,8 @@ namespace SharpNeat.Coordination
     public enum MenuScreens
     {
         Play,
+		Edit,
+		// These are all to be upgraded or deleted.
         PlayEditWeights,
         EditModules,
 		EditInToReg,

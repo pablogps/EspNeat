@@ -22,7 +22,7 @@ namespace SharpNeat.Coordination
 
         private NeatGenome genome;
 
-        private MenuScreens currentScreen = MenuScreens.AddModule;
+        private MenuScreens currentScreen = MenuScreens.Edit;
         private GuiManager guiManager;
 
         private Texture2D moduleTexture;
@@ -37,6 +37,8 @@ namespace SharpNeat.Coordination
         private GUIStyle inputNeuronText = new GUIStyle();
         private GUIStyle outputNeuronText = new GUIStyle();
         private GUIStyle moduleText = new GUIStyle();
+
+        private int moduleCount = 0;
 
         // Perhaps some information does not need to be in a list, but this way
         // we avoid repeating calculations every frame!
@@ -114,6 +116,8 @@ namespace SharpNeat.Coordination
             UpdatePandemoniums();
             UpdateLabels();
             InitializeRegulatoryInputList();
+
+            moduleCount = genome.Regulatory;
         }
 
         #endregion
@@ -198,6 +202,28 @@ namespace SharpNeat.Coordination
 
             switch (currentScreen)
             {
+
+
+            case MenuScreens.Edit:
+                //TransparentLayer();
+                //HeadingBackground();
+
+                //DrawInputNeurons();
+                //DrawOutputNeurons();
+                // DrawModules();
+                break;
+
+
+
+
+
+
+
+
+
+            // To be upgraded OR DELETED (cleaning unused features!) 
+
+
             case MenuScreens.AddModule:
                 TransparentLayer();
                 DrawInputNeurons();
@@ -416,9 +442,28 @@ namespace SharpNeat.Coordination
         /// </summary>
         void TransparentLayer()
         {
-            // This covers the screen with a uniform colour.
+            // This creates a skin with a uniform colour for background.
             GUI.skin.box.normal.background = transparentTexture;
-            GUI.Box(new Rect(1, 1, Screen.width, Screen.height), GUIContent.none);
+            // Creates an empty element with this screen.
+            // For the whole screen:
+            // GUI.Box(new Rect(1, 1, Screen.width, Screen.height), GUIContent.none);
+            // For a custom size (60% of the screen, fitted to the right):
+            GUI.Box(new Rect(Screen.width * 0.4f, 0, Screen.width * 0.6f, Screen.height),
+                    GUIContent.none);
+        }
+
+        /// <summary>
+        /// Adds a transparent background for the menu options on the top of the
+        /// screen. Because the colour is (semi) transparent, it will look 
+        /// darker over the right side of the screen (which already has a dark
+        /// background). This could be avoided, but is found desirable at present.
+        /// </summary>
+        void HeadingBackground()
+        {
+            GUI.skin.box.normal.background = transparentTexture;
+            GUI.Box(new Rect(0, 0, Screen.width, 50),
+                GUIContent.none);
+            
         }
 
         /// <summary>
@@ -459,7 +504,7 @@ namespace SharpNeat.Coordination
         /// </summary>
         void DrawModules()
         {
-            for (int i = 0; i <= genome.Regulatory; ++i)
+            for (int i = 0; i < moduleCount; ++i)
             {
                 // Draws modules with their labels and regulatory neuron.
                 ModulesBasic(i);
@@ -475,7 +520,7 @@ namespace SharpNeat.Coordination
             }
 
             // Shows input for regulatory neurons.
-            ShowInToReg(genome.Regulatory + 1);
+            ShowInToReg(moduleCount);
         }
 
         /// <summary>
@@ -915,11 +960,10 @@ namespace SharpNeat.Coordination
         /// We declare one extra module in case we are in the screen for adding
         /// new modules.
         /// </summary>
-        /// <param name="moduleCount">Module count.</param>
         void InitializeCoords()
         {
             int x;
-            int y = Screen.height - 80;
+            int y = Screen.height - 60;
             int horizontalSpace = 100;
 
             // These are constant, so only the first time!
@@ -928,14 +972,14 @@ namespace SharpNeat.Coordination
                 // Coordinates for input neuron elements
                 for (int i = 0; i <= genome.Input; ++i)
                 {
-                    x = 100 + i * horizontalSpace;
-                    inputNeuronCoords.Add(new NeuronCoords(true, x, 50));
+                    x = (int)(Screen.width * 0.4f) + 30 + i * horizontalSpace;
+                    inputNeuronCoords.Add(new NeuronCoords(true, x, 80));
                 }
 
                 // Coordinates for output neuron elements
                 for (int i = 0; i < genome.Output; ++i)
                 {
-                    x = 100 + i * horizontalSpace;
+                    x = (int)(Screen.width * 0.4f) + 30 + i * horizontalSpace;
                     outputNeuronCoords.Add(new NeuronCoords(false, x, y));
                 }                
             }
@@ -947,7 +991,8 @@ namespace SharpNeat.Coordination
             int nowDone = moduleCoords.Count;
             for (int i = nowDone; i <= genome.Regulatory; ++i)
             {
-                x = 100 + i * horizontalSpace;
+                //x = (int)(Screen.width * 0.4f) + 30 + i * horizontalSpace;
+                x = (int)(Screen.width * 0.4f) - 60 + i * horizontalSpace;
                 moduleCoords.Add(new ModuleCoords());
                 moduleCoords[i].NewOutputCount(localOutTargets[i].Count);
                 moduleCoords[i].NewInputCount(localInSources[i].Count);

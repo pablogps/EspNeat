@@ -93,6 +93,11 @@ namespace SharpNeat.EvolutionAlgorithms
             set { _currentGeneration = value; }
         }
 
+        public IGenomeFactory<TGenome> Factory
+        {
+            get { return _genomeFactory; }
+        }
+
         #endregion
 
         #region IEvolutionAlgorithm<TGenome> Members

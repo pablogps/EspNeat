@@ -65,7 +65,7 @@ namespace SharpNeat.Decoders
                                          networkDef.NodeList.Count,
                                          networkDef.InputNodeCount,
                                          networkDef.OutputNodeCount,
-                                         activationScheme.TimestepsPerActivation);
+                                         activationScheme.TimestepsPerActivation);        
         }
 
         #endregion

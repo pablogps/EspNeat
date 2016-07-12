@@ -9,7 +9,7 @@ namespace SharpNeat.Coordination
 	/// We include a reset method.
 	/// </summary>
 	public class GuiVariables {
-	    private MenuScreens currentMenu = MenuScreens.MainMenu;
+	    private MenuScreens currentMenu = MenuScreens.Edit;
 
 	    private Dictionary<int, int> pandemonium;
         // See "newLink" struct deffinition at the end of this script!

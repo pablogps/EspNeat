@@ -320,7 +320,7 @@ namespace SharpNeat.Genomes.Neat
         /// Genomes are typically decoded to Phenomes for evaluation. This 
         /// property allows decoders to cache the phenome in order to avoid 
         /// decoding on each re-evaluation; However, this is optional.
-        /// The phenome in un-typed to prevent the class framework from becoming
+        /// The phenome is un-typed to prevent the class framework from becoming
         /// overly complex.
         /// </summary>
         public object CachedPhenome 
@@ -456,12 +456,32 @@ namespace SharpNeat.Genomes.Neat
         }
 
         /// <summary>
+        /// Allows to add a new neuron at a specific place in the list. This is
+        /// used to add new local output neurons (which need to have specific
+        /// ID and index)
+        /// </summary>
+        public void InsertNeuron(NeuronGene newNeuron, int index)
+        {
+            _neuronGeneList.Insert(index, newNeuron);
+        }
+
+        /// <summary>
         /// Allows to add a connection to the genome from another script. Used in
         /// Factory for new modules.
         /// </summary>
         public void AddConnection(ConnectionGene newConnection)
         {
             _connectionGeneList.Add(newConnection); 
+        }
+
+        /// <summary>
+        /// Allows to add a new connection at a specific place in the list. This is
+        /// used to add new local output neurons (these connections need to have
+        /// specific ID and index)
+        /// </summary>
+        public void InsertConnection(ConnectionGene newConnection, int index)
+        {
+            _connectionGeneList.Insert(index, newConnection);
         }
 
         /// <summary>
@@ -525,6 +545,15 @@ namespace SharpNeat.Genomes.Neat
             // Mutate the new genome.
             offspring.Mutate();
             return offspring;
+        }
+
+        /// <summary>
+        /// Called from optimizer (AskMutateOnce). The main difference with
+        /// CreateOffspring is that we are not interested in a new ID.
+        /// </summary>
+        public void SimpleMutation()
+        {
+            this.Mutate();
         }
 
         /// <summary>
@@ -771,7 +800,7 @@ namespace SharpNeat.Genomes.Neat
                                                birthGeneration, neuronCommonList, 
                                                connectionCommonList, false);  
         }
-
+            
         private void Mutate()
         {
             // If we have fewer than two active connections in the active module
@@ -792,6 +821,7 @@ namespace SharpNeat.Genomes.Neat
             for(;;)
             {
                 int outcome = RouletteWheel.SingleThrow(rwlCurrent, _genomeFactory.Rng);
+
                 switch(outcome)
                 {
                     case 0:
@@ -864,7 +894,7 @@ namespace SharpNeat.Genomes.Neat
             // value = 0 we want Count - 1, and for random = active connections
             // we want the first connection.
             int connectionToReplaceIdx = _connectionGeneList.Count - 1 -
-                                         _genomeFactory.Rng.Next(_activeConnections);
+                                         _genomeFactory.Rng.Next(_activeConnections);            
             ConnectionGene connectionToReplace = _connectionGeneList[connectionToReplaceIdx];
             _connectionGeneList.RemoveAt(connectionToReplaceIdx);
 
@@ -929,13 +959,13 @@ namespace SharpNeat.Genomes.Neat
             // Track connections associated with each neuron.
             // Original source neuron.
             NeuronGene srcNeuronGene = 
-                    _neuronGeneList.GetNeuronById(connectionToReplace.SourceNodeId);
+                    _neuronGeneList.GetNeuronByIdAll(connectionToReplace.SourceNodeId);
             srcNeuronGene.TargetNeurons.Remove(connectionToReplace.TargetNodeId);
             srcNeuronGene.TargetNeurons.Add(newNeuronGene.Id);
 
             // Original target neuron.
             NeuronGene tgtNeuronGene = 
-                    _neuronGeneList.GetNeuronById(connectionToReplace.TargetNodeId);
+                    _neuronGeneList.GetNeuronByIdAll(connectionToReplace.TargetNodeId);
             tgtNeuronGene.SourceNeurons.Remove(connectionToReplace.SourceNodeId);
             tgtNeuronGene.SourceNeurons.Add(newNeuronGene.Id);
 
@@ -948,6 +978,7 @@ namespace SharpNeat.Genomes.Neat
             {
                 _auxStateNeuronCount++;
             }
+
             _genomeFactory.Stats._mutationCountAddNode++;
 
             // Do not forget to update the active connections counter!
@@ -985,16 +1016,23 @@ namespace SharpNeat.Genomes.Neat
                 // Therefore we only re-use IDs if we can re-use all three together,
                 // otherwise we aren't assigning the IDs to matching structures 
                 // throughout the population, which is the reason for ID re-use.
-				if ((_neuronGeneList.BinarySearch(idStruct.AddedNeuronId) == -1) &&
-					(_connectionGeneList.BinarySearch(idStruct.AddedInputConnectionId) == -1) &&
-					(_connectionGeneList.BinarySearch(idStruct.AddedOutputConnectionId) == -1))             
+				// if ((_neuronGeneList.BinarySearch(idStruct.AddedNeuronId) == -1) &&
+				// 	 (_connectionGeneList.BinarySearch(idStruct.AddedInputConnectionId) == -1) &&
+				//	 (_connectionGeneList.BinarySearch(idStruct.AddedOutputConnectionId) == -1)) 
+
+                // BinarySearch is NOT reliably with modules (the lists need not
+                // be ordered!)
+                if ((_neuronGeneList.GetNeuronByIdAll(idStruct.AddedNeuronId) == null) &&
+                    (_connectionGeneList.IndexForId(idStruct.AddedInputConnectionId) == -1) &&
+                    (_connectionGeneList.IndexForId(idStruct.AddedOutputConnectionId) == -1)) 
                 {
                     // Return true to allow re-use of existing IDs.
                     return true;
                 }
             }
             else
-            {   // ConnectionID not found. This connectionID has not been split 
+            {
+                // ConnectionID not found. This connectionID has not been split 
                 // to add a neuron in the past, or at least as far back as the 
                 // history buffer goes. Therefore we register the structure with
                 // the history buffer.
@@ -1136,6 +1174,7 @@ namespace SharpNeat.Genomes.Neat
                     {   // Try again.
                         continue;
                     }
+
                     return Mutate_AddConnection_CreateConnection(sourceNeuron, 
                                                                  targetNeuron);
                 }
@@ -1199,7 +1238,7 @@ namespace SharpNeat.Genomes.Neat
                 visitedNeurons.Add(currNeuronId);                
 
                 // Push the current neuron's source neurons onto the work stack.
-                NeuronGene currNeuron = _neuronGeneList.GetNeuronById(currNeuronId);
+                NeuronGene currNeuron = _neuronGeneList.GetNeuronByIdAll(currNeuronId);
                 foreach (uint neuronId in currNeuron.SourceNeurons) {
                     workStack.Push(neuronId);
                 }
@@ -1271,6 +1310,7 @@ namespace SharpNeat.Genomes.Neat
 
             // Update stats.
             _genomeFactory.Stats._mutationCountAddConnection++;
+
             return newConnectionGene;
         }
 
@@ -1821,7 +1861,7 @@ namespace SharpNeat.Genomes.Neat
                 }
                 prevId = _neuronGeneList[i].Id;
             }
-
+                       
             // Checks local output neurons. prevId is taken from the last
             // local input.
             for (int i = _neuronGeneList.FirstIndex + _localIn;
@@ -1900,13 +1940,14 @@ namespace SharpNeat.Genomes.Neat
 
             Dictionary<ConnectionEndpointsStruct, object> endpointDict = 
                     new Dictionary<ConnectionEndpointsStruct,object>(count);
-            
+
             // Initialise with the first connection's details.
             ConnectionGene connectionGene = _connectionGeneList[0];
             int module = connectionGene.ModuleId;
             prevId = connectionGene.InnovationId;
             endpointDict.Add(new ConnectionEndpointsStruct(connectionGene.SourceNodeId, 
                                                            connectionGene.TargetNodeId), null);
+
 
             // Loop over remaining connections.
             for (int i = 1; i < count; ++i)
@@ -1955,6 +1996,10 @@ namespace SharpNeat.Genomes.Neat
                 NeuronConnectionInfo conInfo = new NeuronConnectionInfo();
                 conInfo._srcNeurons = new HashSet<uint>();
                 conInfo._tgtNeurons = new HashSet<uint>();
+                if (conInfoByNeuronId.ContainsKey(_neuronGeneList[j].Id))
+                {
+                    UnityEngine.Debug.Log("INTEGRITY FAIL: Two neurons have the same ID!");
+                }
                 conInfoByNeuronId.Add(_neuronGeneList[j].Id, conInfo);
             }
 
@@ -1970,7 +2015,7 @@ namespace SharpNeat.Genomes.Neat
                 {
                     ConnectionGene cGene = _connectionGeneList[i];
                     conInfoByNeuronId[cGene.SourceNodeId]._tgtNeurons.Add(cGene.TargetNodeId);
-                    conInfoByNeuronId[cGene.TargetNodeId]._srcNeurons.Add(cGene.SourceNodeId);                    
+                    conInfoByNeuronId[cGene.TargetNodeId]._srcNeurons.Add(cGene.SourceNodeId);   
                 }
             }
 

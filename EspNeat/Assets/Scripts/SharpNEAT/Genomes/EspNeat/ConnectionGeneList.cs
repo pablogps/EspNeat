@@ -268,9 +268,10 @@ namespace SharpNeat.Genomes.Neat
         /// <summary>
         /// We cannot guarantee that the connections will be sorted (in case
         /// an old module is evolved, for example). We need a slower but
-        /// reliable search method.
+        /// reliable search method. Use when the sarch is intended for all
+        /// connections, not only those in the active module!
         /// </summary>
-        public int IndexFormId(uint id)
+        public int IndexForId(uint id)
         {
             for (int i = 0; i < Count; ++i)
             {

@@ -76,6 +76,8 @@ namespace SharpNeat.Utility
         /// in some cases depending on how the RNG is used.
         /// </summary>
         static readonly int seed0 = (int)Environment.TickCount;
+        //static readonly int seed0 = 5;
+
         //static readonly FastRandom __seedRng = new FastRandom((int)Environment.TickCount);
         static readonly FastRandom __seedRng = new FastRandom(seed0);
         #endregion
@@ -101,8 +103,8 @@ namespace SharpNeat.Utility
             int nextSeed = __seedRng.NextInt();
             // Reinitialise(__seedRng.NextInt());
             Reinitialise(nextSeed);
-            // UnityEngine.Debug.Log("FastRandom original seed " + seed0);
-            // UnityEngine.Debug.Log("FastRandom initialize seed " + nextSeed);
+            //UnityEngine.Debug.Log("FastRandom original seed " + seed0);
+            //UnityEngine.Debug.Log("FastRandom initialize seed " + nextSeed);
         }
 
         /// <summary>

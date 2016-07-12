@@ -106,23 +106,23 @@ namespace SharpNeat.Genomes.Neat
 
         #endregion
 
-        /// <summary>
-        /// Gets or sets the list index for the first neuron in the module.
-        /// </summary>
-        public int FirstIndex
-        { 
-            get { return _firstModuleIndex; }
-            set { _firstModuleIndex = value; }
-        }
-        /// <summary>
-        /// Gets or sets the list index for the last neuron in the base genome:
-        /// bias + input + output + regulatory.
-        /// </summary>
-        public int LastBase
-        { 
-            get { return _lastBaseIndex; }
-            set { _lastBaseIndex = value; }
-        }
+		/// <summary>
+		/// Gets or sets the list index for the first neuron in the active module.
+		/// </summary>
+		public int FirstIndex
+		{ 
+			get { return _firstModuleIndex; }
+			set { _firstModuleIndex = value; }
+		}
+		/// <summary>
+		/// Gets or sets the list index for the last neuron in the base genome:
+		/// bias + input + output + regulatory.
+		/// </summary>
+		public int LastBase
+		{ 
+			get { return _lastBaseIndex; }
+			set { _lastBaseIndex = value; }
+		}
 
         #region Public Methods
 
@@ -147,35 +147,73 @@ namespace SharpNeat.Genomes.Neat
         }
 
         /// <summary>
+        /// Used to count the number of local in neurons when an old module
+        /// us set as active.
+        /// </summary>
+        public int CountLocalIn()
+        {
+            int returnCount = 0;
+            int activeModuleId = this[Count - 1].ModuleId;
+            for (int i = 0; i < Count; ++i)
+            {
+                if (this[i].NodeType == NodeType.Local_Input &&
+                    this[i].ModuleId == activeModuleId)
+                {
+                    ++returnCount;
+                }
+            }
+            return returnCount;
+        }
+        /// <summary>
+        /// Should this be a different method or should it be fused with
+        /// CountLocalIn?
+        /// </summary>
+        public int CountLocalOut()
+        {
+            int returnCount = 0;
+            int activeModuleId = this[Count - 1].ModuleId;
+            for (int i = 0; i < Count; ++i)
+            {
+                if (this[i].NodeType == NodeType.Local_Output &&
+                    this[i].ModuleId == activeModuleId)
+                {
+                    ++returnCount;
+                }
+            }
+            return returnCount;
+        }
+
+        /// <summary>
         /// Locates the first neuron in the active module (the last module in
         /// the list!) 
         /// </summary>
         public void LocateFirstIndex()
         {
+            // By default, the first after the base (useful in case there is only
+            // one module, where the if within the loop will never be true!)
+            _firstModuleIndex = _lastBaseIndex + 1;
+
+            // Starting at the end, looks for the first element with different
+            // module ID (end of the active module)
 			int activeModule = this[Count - 1].ModuleId;
-            for (int index = Count - 1; index > -1; --index)
+            for (int index = Count - 1; index > _lastBaseIndex; --index)
             {
                 // If the element belongs to a different module, then the 
                 // previous item was the first in the active module!
                 if (this[index].ModuleId != activeModule)
                 {
-                    // Returns the index of the previous item (and notice we
+                    // Returns the index of the previous item (notice we
                     // are going backwards).
                     _firstModuleIndex = index + 1;
-                    // If there is ONLY one module, then our count also included
-                    // the regulatory neuron (module Id = 1) before finding 
-                    // the last output neuron (module Id = 0). We need to take
-                    // this into account.
-                    if (this[_lastBaseIndex].ModuleId == 1)
-                    {
-                        ++_firstModuleIndex;
-                    }
                     return;
                 }
 			}
-			// This happens before adding the first module, where ALL elements
-            // in the base have module Id = 0.
-            _firstModuleIndex = 0;
+
+			// Before adding the first module, ALL elements have module Id = 0.
+            if (this[Count - 1].ModuleId == 0)
+            {
+                _firstModuleIndex = 0;
+            }
         }
 
         /// <summary>
@@ -225,6 +263,14 @@ namespace SharpNeat.Genomes.Neat
         /// <summary>
         /// Gets the neuron gene with the specified innovation ID using a fast 
         /// binary search. Returns null if no such gene is in the list.
+        /// 
+        /// NOTICE! This method should NOT be used in ESP, since modules may not
+        /// be in order. The only alternative would be to have a specific
+        /// method to search only the active module, getting the module Id as
+        /// a parameter or something like that. The cost of using GetNeuronByIdAll
+        /// is probably not so important in any case (specially in interactive
+        /// evolution, the time spent in producing a new generation is not
+        /// so relevant).
         /// </summary>
         public NeuronGene GetNeuronById(uint neuronId)
         {
@@ -292,6 +338,30 @@ namespace SharpNeat.Genomes.Neat
             // success.
             return 0;
         }
+
+		/// <summary>
+		/// Finds the index for the last local output neuron added to the module.
+        /// At first we were interested in teh ID, not the index, but from the
+        /// index it is easy to get the ID, not the other way around.
+		/// </summary>
+        public bool FindLastLocalOut(int module, out int index)
+		{
+            // Counts backwards, since most often we will be interested in the
+            // active module.
+            for (int i = Count - 1; i > 0; --i)
+            {
+                if (this[i].ModuleId == module && 
+                    this[i].NodeType == NodeType.Local_Output)
+                {
+                    index = i;
+                    return true;
+                }
+            }
+            // We need to assign some value to our out parameters, even in
+            // failure. This should NOT happen!
+            index = 0;
+            return false;			
+		}
 
         /// <summary>
         /// Returns the index for the regulatory neuron belonging to the 
@@ -399,6 +469,8 @@ namespace SharpNeat.Genomes.Neat
         /// binary search. Binary search is fast and can be performed so long as
         /// the genes are sorted by ID. If the genes are not sorted then the 
         /// behaviour of this method is undefined.
+        /// 
+        /// This method will only search in the active module!
         /// </summary>
         public int BinarySearch(uint id) 
         {    
@@ -407,8 +479,6 @@ namespace SharpNeat.Genomes.Neat
             // But perhaps the opposite is more likely, so we test that first.
             int lo;
             int hi;
-
-
 
             if (id >= this[_firstModuleIndex].Id)
             {

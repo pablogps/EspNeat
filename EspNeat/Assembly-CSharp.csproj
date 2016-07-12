@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Temp\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;UNITY_5_3_OR_NEWER;UNITY_5_3_4;UNITY_5_3;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITERENDERER_FLIPPING;ENABLE_SPRITES;ENABLE_SPRITE_POLYGON;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_EDITOR_METRICS_CACHING;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;ENABLE_EDITOR_TESTS_RUNNER;UNITY_STANDALONE_OSX;UNITY_STANDALONE;ENABLE_SUBSTANCE;ENABLE_GAMECENTER;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_LOG_MIXED_STACKTRACE;ENABLE_UNITYWEBREQUEST;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;ENABLE_PROFILER;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;UNITY_5_3_OR_NEWER;UNITY_5_3_5;UNITY_5_3;UNITY_5;ENABLE_NEW_BUGREPORTER;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_DUCK_TYPING;ENABLE_FRAME_DEBUGGER;ENABLE_GENERICS;ENABLE_HOME_SCREEN;ENABLE_IMAGEEFFECTS;ENABLE_LIGHT_PROBES_LEGACY;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_PLUGIN_INSPECTOR;ENABLE_SHADOWS;ENABLE_SINGLE_INSTANCE_BUILD_SETTING;ENABLE_SPRITERENDERER_FLIPPING;ENABLE_SPRITES;ENABLE_SPRITE_POLYGON;ENABLE_TERRAIN;ENABLE_RAKNET;ENABLE_UNET;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_HUB;ENABLE_CLOUD_PROJECT_ID;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_METRICS;ENABLE_EDITOR_METRICS_CACHING;INCLUDE_DYNAMIC_GI;INCLUDE_GI;INCLUDE_IL2CPP;INCLUDE_DIRECTX12;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_LOCALIZATION;ENABLE_ANDROID_ATLAS_ETC1_COMPRESSION;ENABLE_EDITOR_TESTS_RUNNER;UNITY_STANDALONE_OSX;UNITY_STANDALONE;ENABLE_SUBSTANCE;ENABLE_GAMECENTER;ENABLE_TEXTUREID_MAP;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_LOG_MIXED_STACKTRACE;ENABLE_UNITYWEBREQUEST;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;ENABLE_PROFILER;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0169</NoWarn>
@@ -46,15 +46,31 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\AddModuleWarningController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ApplyChangesButtonController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\EvolveInactivePanelController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiButtonRects.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiManager.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiVariables.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiXmlIO.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\InputNeuronController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\MenuScreens.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleCoords.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\NeuronCoords.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\OptionsPanelController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\PlayChampionButtonController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleSizes.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegulationPanelController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ResetWarningPanelController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ScreenSpaceButtonStarter.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ScreenSpaceButtonStarterEvolution.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\TimeSliderController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UIvariables.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\Visualizer.cs" />
-     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\VisualizerSlow.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\uiXmlIO.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\Optimizer.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\SimpleEvaluator.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\SimpleExperiment.cs" />
@@ -110,6 +126,7 @@
      <Compile Include="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\NeatEvolutionAlgorithmParameters.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\EspNeat\ConnectionGene.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\EspNeat\ConnectionGeneList.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Genomes\EspNeat\ConnectionGeneListBuilder.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeParameters.cs" />
@@ -120,7 +137,6 @@
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\RbfNeat\RbfGenomeFactory.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\SharpNeatCompatible\AddedNeuronGeneStruct.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\SharpNeatCompatible\ConnectionGeneComparer.cs" />
-     <Compile Include="Assets\Scripts\SharpNEAT\Genomes\SharpNeatCompatible\ConnectionGeneListBuilder.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\SharpNeatCompatible\ConnectionMutationInfo.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\SharpNeatCompatible\ConnectionMutationInfoList.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Genomes\SharpNeatCompatible\ConnectionPerturbanceType.cs" />
@@ -217,6 +233,7 @@
      <Compile Include="Assets\_Working Examples\Cars\Scripts\RoadPiece.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\CargoDockSimple.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\ChasmSimple.cs" />
+     <Compile Include="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\ClockSimple.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\WorkerSimpleController.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\CargoDock.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Chasm.cs" />
