@@ -167,7 +167,7 @@ public class OptionsPanelController : MonoBehaviour {
         GameObject panel = (GameObject)Instantiate(myPrefab);
 
         // Used to ensure correct orientation
-        moduleController.SetUpPanel(panel, myPrefab);
+        moduleController.UiManager.SetUpPanel(panel, myPrefab);
         // But SetUpPanel leaves the gameObject inactive!
         panel.SetActive(true);
 

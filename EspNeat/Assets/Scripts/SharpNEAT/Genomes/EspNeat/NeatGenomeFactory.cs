@@ -560,25 +560,13 @@ namespace SharpNeat.Genomes.Neat
         public void AddNewModule(IList<NeatGenome> genomeList, string genericFilePath,
                                  string experimentName, UIvariables uiVar)
         {
-
-            UnityEngine.Debug.Log("next Id at enter: " + _innovationIdGenerator.Peek);
-
             SavePopulation(genomeList, genericFilePath, experimentName);
 			NeatGenome champion = _optimizer.EvolutionAlgorithm.CurrentChampGenome;
 			UpdateChampionsProtectedWeights(champion, uiVar);
 			CloneChampion(genomeList, champion);
 			NewModule(genomeList, uiVar);
 
-
-			UnityEngine.Debug.Log("next Id after new module: " + _innovationIdGenerator.Peek);
-
-
             _optimizer.ResetGUI();
-
-
-			UnityEngine.Debug.Log("next Id after reset: " + _innovationIdGenerator.Peek);
-
-
         }
 
 		public void InitializeGeneratorAfterLoad(IList<NeatGenome> genomeList)

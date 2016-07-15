@@ -24,7 +24,7 @@ public class InputNeuronController : MonoBehaviour {
 
     #region Properties
 
-    public UImanager SetUiManager
+    public UImanager UiManager
     {
         set { uiManager = value; }
     }

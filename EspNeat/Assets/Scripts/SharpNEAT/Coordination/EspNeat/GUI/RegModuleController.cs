@@ -99,6 +99,23 @@ public class RegModuleController : ModuleController {
     }
 
     /// <summary>
+    /// Calls the second part, EvolveContinue. First creates a list with the
+    /// children of this module.
+    /// </summary>
+    public override void Evolve()
+    {
+        List<int> childrenList = new List<int>();
+        foreach (GameObject child in containedModules)
+        {
+            int childId = child.GetComponent<ModuleController>().ModuleId;
+            childrenList.Add(childId);
+        }
+
+        // EvolveContinue is in the base class ModuleController
+        EvolveContinue(childrenList);
+    }
+
+    /// <summary>
     /// Allows to dragg the module around the screen.
     /// </summary>
     public override void moveModule2(UnityEngine.EventSystems.BaseEventData eventData)
@@ -297,7 +314,7 @@ public class RegModuleController : ModuleController {
         // Prompts a panel asking for confirmation!
         GameObject myPrefab = (GameObject)Resources.Load("Prefabs/AddModuleWarning");
         warningPanel = (GameObject)Instantiate(myPrefab);
-        SetUpPanel(warningPanel, myPrefab);
+        uiManager.SetUpPanel(warningPanel, myPrefab);
         warningPanel.GetComponent<AddModuleWarningController>().
         RegModuleController = this;
     }

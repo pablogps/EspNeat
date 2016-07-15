@@ -1,17 +1,16 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs">
     <Files>
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleController.cs" Line="171" Column="38" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleController.cs" Line="193" Column="42" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" Line="158" Column="40" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="438" Column="53" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\SimpleExperiment.cs" Line="132" Column="71" />
-      <File FileName="Assets\Scripts\SharpNEAT\Genomes\SharpNeatCompatible\AddedNeuronGeneStruct.cs" Line="33" Column="64" />
-      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="1341" Column="27" />
-      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs" Line="897" Column="22" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegulationPanelController.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Utility\FastRandom.cs" Line="78" Column="66" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleController.cs" Line="577" Column="58" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleController.cs" Line="113" Column="9" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" Line="85" Column="13" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UIvariables.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="947" Column="27" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="701" Column="38" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\EvolveInactivePanelController.cs" Line="19" Column="35" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\TimeSliderController.cs" Line="16" Column="17" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

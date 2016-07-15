@@ -54,6 +54,7 @@
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiVariables.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiXmlIO.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\InputNeuronController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\InputToggleController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\MenuScreens.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleCoords.cs" />
@@ -66,6 +67,7 @@
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ResetWarningPanelController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ScreenSpaceButtonStarter.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ScreenSpaceButtonStarterEvolution.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\SelectInputPanelController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\TimeSliderController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UIvariables.cs" />

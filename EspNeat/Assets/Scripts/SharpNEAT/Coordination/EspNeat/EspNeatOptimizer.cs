@@ -333,13 +333,6 @@ public class EspNeatOptimizer : Optimizer
     {
         champRunning = true;
 
-        // Resets timescale ONLY if neuroevolution is not running (otherwise
-        // things can go too slow and it may be hard to abort 
-        if (EARunning == false)
-        {
-            Time.timeScale = 1;
-        }
-
         NeatGenome genome = LoadChampion();
 
         // Get a genome decoder that can convert genomes to phenomes.
@@ -428,15 +421,11 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void AskCreateModule(UIvariables uiVar)
     {
-        Debug.Log("next Id before add new: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);
         _ea.GenomeList[0].GenomeFactory.AddNewModule(
                 _ea.GenomeList, Application.persistentDataPath, experiment_name, uiVar);
 
-		Debug.Log("next Id after add new: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);
 		UpdateChampion();
         SavePopulation(Application.persistentDataPath);    
-
-
 
         // TODO: IMPORTANT NOTICE!
         // There seems to be a bug here: when a population is loaded the ID
@@ -447,15 +436,12 @@ public class EspNeatOptimizer : Optimizer
         // after loading the population. Why? Problems with references?
         // This is not usually relevant (apparently AddNewModule will find the
         // correct value again if called a second time, and for some reason in new
-        // calls the problem does not happen again).
-        // But AskMutateOnce will not correct the problem, and it may try to
-        // add elements with repeated IDs, which creates genomes that fail the
-        // integrity check.
+        // calls the problem does not happen again). But AskMutateOnce will
+        // not correct the problem, and it may try to add elements with repeated
+        // IDs, which creates genomes that fail the integrity check.
 
         // Easy patch: update the ID generator here.
-
         _ea.GenomeList[0].GenomeFactory.InitializeGeneratorAfterLoad(_ea.GenomeList);   
-        Debug.Log("next Id after final update: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);  
     }
 
     /// <summary>
@@ -630,8 +616,8 @@ public class EspNeatOptimizer : Optimizer
         _ea.Manual = false;
         // No more need for the manual GUI.
         manual = false;    
-        // Get time to its normal speed.
-        ResetTime(); 
+        // Get time to its normal speed (old feature).
+        //ResetTime(); 
     }
 
     /// <summary>
@@ -839,7 +825,7 @@ public class EspNeatOptimizer : Optimizer
     /// Calculates frames per second and reduces the time step if they are too
     /// low. Currently not in use.
     /// </summary>
-    void CheckFPS()
+    /*void CheckFPS()
     {
         const int min_fps = 10;
         const float updateInterval = 12;
@@ -862,7 +848,7 @@ public class EspNeatOptimizer : Optimizer
                 print("Lowering time scale to " + Time.timeScale);
             }
         }        
-    }
+    }*/
 
     /// <summary>
     /// Returns the latest generation in a loaded (or freshly created) population.
@@ -929,7 +915,7 @@ public class EspNeatOptimizer : Optimizer
     /// <param name="e">E.</param>
     void ea_PauseEvent(object sender, EventArgs e)
     {
-        Time.timeScale = 1;      
+        //Time.timeScale = 1;      
         SavePopulation(Application.persistentDataPath);
         DateTime endTime = DateTime.Now;
         Utility.Log("Total time elapsed: " + (endTime - startTime));
@@ -954,7 +940,7 @@ public class EspNeatOptimizer : Optimizer
     /// Now EARunning is going to be true every time we call this function 
     /// because Manual starts the evolutionary process. Change eventually?
     /// </summary>
-    void ResetTime()
+    /*void ResetTime()
     {
         if (EARunning == true)
         {
@@ -964,7 +950,7 @@ public class EspNeatOptimizer : Optimizer
         {
             Time.timeScale = 1;
         }      
-    }
+    }*/
         
     /// <summary>
     /// Select interesting units with mouse input during manual evolution-
