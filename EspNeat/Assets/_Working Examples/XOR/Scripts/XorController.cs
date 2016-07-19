@@ -10,13 +10,14 @@ public class XorController : UnitController
     IBlackBox box;  
 
     private static int ID_counter = 0;
-    private static Camera mainCamera;
+    private static Camera evolutionCamera;
     private static bool gotCamera = false;
 
     // Used for the correct lattice display.
     private static float xIni;
     private static float zIni;
-    private static float spacing = 2.5f;
+    //private static float spacing = 2.5f; // for normal scale
+    private static float spacing = 2.0f; // for scale 0,8
     private static int widthFit;
 
     private float input_1;
@@ -32,24 +33,32 @@ public class XorController : UnitController
     private Renderer render10;
     private Renderer render11;
 
-
     void Start ()
     {
         // FindWithTag is rather slow, so we only look for the camera once.
         if (!gotCamera)
         {
-            mainCamera = (GameObject.FindWithTag("MainCamera")).GetComponent<Camera>();
+            evolutionCamera = GameObject.Find("_ESPelements").transform.Find("Cameras").
+                              transform.Find("EvolutionCamera").GetComponent<Camera>();
 
             // The position of the elements depends on the camera settings.
-            Vector3 position = mainCamera.ViewportToWorldPoint(new Vector3(0.15f, 0.65f, 11));
+            // starting position for XOR normal scale
+            //Vector3 position = evolutionCamera.ViewportToWorldPoint(new Vector3(0.15f, 0.65f, 11));
+            // starting position for XOR scale 0,8
+            Vector3 position = evolutionCamera.ViewportToWorldPoint(new Vector3(0.1f, 0.65f, 11));
             xIni = position.x;
             zIni = position.z;
-            position = mainCamera.ViewportToWorldPoint(new Vector3(0.9f, 0.65f, 11));
+            // max position for XOR normal scale
+            // position = evolutionCamera.ViewportToWorldPoint(new Vector3(0.9f, 0.65f, 11));
+            // max position for XOR scale 0,8
+            position = evolutionCamera.ViewportToWorldPoint(new Vector3(0.97f, 0.65f, 11));
             float xMax = position.x;
 
             // However sound my reasoning might have been to choose 0.9f as the
             // xMax reference, the fact is we can easily fit one more.
-            widthFit = (int)((xMax - xIni) / spacing) + 1;
+            widthFit = (int)(Mathf.Abs(xMax - xIni) / spacing) + 1;
+
+            Debug.Log("ini " + xIni + " fin " + xMax + " fit " + widthFit);
 
             gotCamera = true;
         }
@@ -129,7 +138,7 @@ public class XorController : UnitController
         //if (IsRunning) {
         input_1 = 0f;
         input_2 = 0f;
-		output00 = ProcessInputPair(render00);
+        output00 = ProcessInputPair(render00);
 		// If output00 is below 0.5 we make it 0, so
 		// fitness is not concerned about this value.
 		if (output00 < 0.5f)
@@ -138,11 +147,9 @@ public class XorController : UnitController
 		}
         Paint(render00, output00);
 
-		// Debug.Log("output 00 " + output00);
-
         input_1 = 0f;
         input_2 = 1f;
-		output01 = ProcessInputPair(render01);
+        output01 = ProcessInputPair(render01);
 		// If output00 is below 0.5 we make it 0, so
 		// fitness is not concerned about this value.
 		if (output01 > 0.5f)
@@ -151,11 +158,9 @@ public class XorController : UnitController
         }
         Paint(render01, output01);
 
-        // Debug.Log("output 01 " + output01);
-
         input_1 = 1f;
         input_2 = 0f;
-		output10 = ProcessInputPair(render10);
+        output10 = ProcessInputPair(render10);
 		// If output00 is below 0.5 we make it 0, so
 		// fitness is not concerned about this value.
 		if (output10 > 0.5f)
@@ -164,11 +169,9 @@ public class XorController : UnitController
         }
         Paint(render10, output10);
 
-        // Debug.Log("output 10 " + output10);
-
         input_1 = 1f;
         input_2 = 1f;
-		output11 = ProcessInputPair(render11);
+        output11 = ProcessInputPair(render11);
 		// If output00 is below 0.5 we make it 0, so
 		// fitness is not concerned about this value.
 		if (output11 < 0.5f)
@@ -215,37 +218,21 @@ public class XorController : UnitController
 
         //Output is between 0 and 1
 		output = (float)outputArr[0];
-/*		if (output < 0.5f)
-        {
-            // output = 0f;
-            quadrant.material.color = Color.white;
-        }
-        else
-        {
-            // output = 1f;
-            quadrant.material.color = Color.black;
-        }*/
 
 /*		ISignalArray inputArr = box.InputSignalArray;
-		inputArr[0] = 1f;
-		inputArr[1] = 0f;
-		inputArr[0] = input_1;
-		inputArr[1] = input_2;
+		inputArr[0] = 0.88f;
+		inputArr[1] = 0.99f;
+		//inputArr[0] = input_1;
+		//inputArr[1] = input_2;
 		//The neural network is activated
 		box.Activate();
 		//And produces output signals (also in an array)
 		ISignalArray outputArr = box.OutputSignalArray;   
 		//Output is between 0 and 1
 		output = (float)outputArr[0];
-		if (output < 0.5f) {
-			output = 0;
-		} else {
-			output = 1;
-		}
-		Debug.Log("Raw output: " + outputArr[0]);
 		Debug.Log(" ");
 		Debug.Log("Input array: " + inputArr[0] + " " + inputArr[1]);
-		Debug.Log("Output array and value: " + outputArr[0] + " " + output);
+		Debug.Log("Output: " + output);
 		UnityEditor.EditorApplication.isPlaying = false;*/
 
         return output;
@@ -254,8 +241,8 @@ public class XorController : UnitController
     void SetPosition()
     {
         Vector3 temp = transform.position;
-        temp.x = xIni + (ID_counter % widthFit) * spacing;
-        temp.z = zIni - ((ID_counter / widthFit)) * spacing;
+        temp.x = xIni - (ID_counter % widthFit) * spacing;
+        temp.z = zIni + ((ID_counter / widthFit)) * spacing;
         transform.position = temp;
     }
 

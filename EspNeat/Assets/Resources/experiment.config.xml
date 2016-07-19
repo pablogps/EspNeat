@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
     <Config>
-      <PopulationSize>30</PopulationSize>
-      <SpecieCount>8</SpecieCount>
+      <PopulationSize>50</PopulationSize>
+      <SpecieCount>10</SpecieCount>
       <Activation>
         <Scheme>EspCyclic</Scheme>
         <Iters>5</Iters>
@@ -24,5 +24,7 @@
         scale that assigns 0 for a completely wrong response, e.g. 1.0 when 0.0 was expected. 
         An additional fitness of 10 is assigned if all four test cases are passed. Thus the 
         maximum fitness is 14, but any score >=10 indicates a successful network.
+
+        Reference values: population 50 species 10 or 30/8
       </Description>
     </Config>

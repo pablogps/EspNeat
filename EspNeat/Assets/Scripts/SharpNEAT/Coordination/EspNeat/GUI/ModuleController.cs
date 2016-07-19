@@ -520,19 +520,20 @@ public class ModuleController : MonoBehaviour {
     }
 
     /// <summary>
-    /// Resets or deletes this module. This is called from the options menu, 
+    /// Deletes this module. This is called from the options menu, 
     /// which promts a confirmation panel, since this actions may lose progress.
     /// </summary>
-    public void CallResetOrDelete()
+    public void CallDelete()
     {
         if (isActive)
         {
-            // Active module: reset
+            // Active module: set another as active and delete
 
-            // It is best if uiManager takes care of all the interaction
-            // with Optimizer (as opposed to getting a reference to
-            // Optimizer here and calling reset directly).
-            uiManager.AskResetActiveModule();
+            // Sets another module as active
+            uiManager.SetAnotherActive(moduleId);
+
+            // Now deletes this module
+            uiManager.AskDeleteModule(moduleId);
         }
         else
         {
@@ -548,8 +549,6 @@ public class ModuleController : MonoBehaviour {
     public void SetActive(bool newState)
     {
         isActive = newState;
-        optionsMenu.GetComponent<OptionsPanelController>().
-                    ToggleResetDeleteText();
     }
 
     /// <summary>
@@ -575,7 +574,7 @@ public class ModuleController : MonoBehaviour {
         {
             // This will be a new evolutionary process, so we need to set this
             // module as the active module in the genome!
-            uiManager.SetAsActiveModule(moduleId);
+            uiManager.SetModuleActive(moduleId);
         }
 
         // If this module uses basic regulation, then we set it as the only
@@ -628,6 +627,15 @@ public class ModuleController : MonoBehaviour {
     public void PassRegulation()
     {
         uiManager.GetNewRegulationScheme(moduleId, regulatoryInputList);
+    }
+
+    /// <summary>
+    /// Passes the pandemonium group back to UImanager (where all of them
+    /// are centralized in a list).
+    /// </summary>
+    public void PassPandemonium(int newPandem)
+    {
+        uiManager.GetNewPandemonium(moduleId, newPandem);
     }
 
     /// <summary>

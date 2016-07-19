@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using SharpNeat.EvolutionAlgorithms;
 using SharpNeat.Genomes.Neat;
@@ -298,6 +299,20 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
+    /// Proper sequence to end an interactive evolution process
+    /// </summary>
+    public void StopInteractiveEvolution()
+    {
+        // Old fitness values will be recovered and used to produce offspring.
+        SetAborted();
+        EndManual();        
+        // Automatic testing of units disabled (we will abort, this is not needed).
+        EaIsNextManual(true);
+        GoThenAuto();
+        StopEA(); 
+    }
+
+    /// <summary>
     /// Called by SimpleEvaluator
     ///****Why is this called "Evaluate" when it instantiates?
     /// Instantiates and activates a unit. Adds its controller (box parameter)
@@ -501,11 +516,42 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void AskResetActiveModule()
     {
+        Debug.Log("RECORDAR ELIMINAR REFERENCIAS ANTIGUAS A ASKRESETACTIVEMODULE");
+        Debug.Log("añadir aquí el panel de confirmación");
+        Debug.Log("RECORDAR ELIMINAR REFERENCIAS ANTIGUAS A ASKRESETACTIVEMODULE");
+
+        // Stops current evolution. Note this will not return the cameras to
+        // the editing menu
+        StopInteractiveEvolution();
+
+        // Restart and reset (after allowing time to stop and remove old individuals!)
+        Coroutiner.StartCoroutine(WaitResetStart());
+    }
+    /// <summary>
+    /// Second part of the method AskResetActiveModule. The first part of the
+    /// process is stopping the simulation, which needs time to remove old
+    /// individuals. Because coroutines are used, it may (will) be problematic
+    /// to continue without allowing time for this to finish.
+    /// </summary>
+    IEnumerator WaitResetStart()
+    {
+        // Some time is needed to finish removing old individuals
+        int waitForFrames = 20;
+        while (waitForFrames >= 0)
+        {
+            --waitForFrames;
+            yield return null;
+        }
+
+        // Resets the active module (resets the evolution)
         ++generation;
         _ea.GenomeList[0].GenomeFactory.ResetActiveModule(_ea.GenomeList, generation);
-
         UpdateChampion(); 
-        SavePopulation(Application.persistentDataPath);  
+        SavePopulation(Application.persistentDataPath);
+
+        // Starts a new evolutionary process
+        Manual = true;
+        StartEA();        
     }
 
     /// <summary>
@@ -519,7 +565,7 @@ public class EspNeatOptimizer : Optimizer
         // one being evolved, and is the only module that is not exactly the
         // same for all individuals in the population.
 
-		++generation;
+        ++generation;
 
 		_ea.GenomeList[0].GenomeFactory.DeleteModule(_ea.GenomeList,
                                                           generation, whichModule);

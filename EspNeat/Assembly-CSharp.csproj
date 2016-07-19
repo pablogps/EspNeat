@@ -47,7 +47,7 @@
   <ItemGroup>
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\AddModuleWarningController.cs" />
-     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ApplyChangesButtonController.cs" />
+     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\DeleteWarningPanelController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\EvolveInactivePanelController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiButtonRects.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\GuiManager.cs" />
@@ -64,7 +64,6 @@
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleSizes.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegulationPanelController.cs" />
-     <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ResetWarningPanelController.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ScreenSpaceButtonStarter.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ScreenSpaceButtonStarterEvolution.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\SelectInputPanelController.cs" />

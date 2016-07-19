@@ -139,7 +139,6 @@ public class RegulationPanelController : MonoBehaviour {
     /// <summary>
     /// Receives the pandemonium group 
     /// </summary>
-    /// <param name="newPandem">New pandem.</param>
     public void SetPandemoniumValue(int newPandem)
     {
         pandemoniumGroup = newPandem;
@@ -153,6 +152,30 @@ public class RegulationPanelController : MonoBehaviour {
             pandemString = pandemoniumGroup.ToString();
         }
         UpdatePandemoniumLabel(pandemString);
+    }
+
+    public void PandemoniumUp()
+    {
+        ++pandemoniumGroup;
+        SetPandemoniumValue(pandemoniumGroup);
+        moduleController.PassPandemonium(pandemoniumGroup);
+    }
+
+    public void PandemoniumDown()
+    {
+        --pandemoniumGroup;
+        if (pandemoniumGroup < 0)
+        {
+            pandemoniumGroup = 0;
+        }
+        SetPandemoniumValue(pandemoniumGroup);
+        moduleController.PassPandemonium(pandemoniumGroup);
+    }
+
+    public void UseAdvancedRegulation()
+    {
+        moduleController.BasicRegulation = false;
+        HidePanel();
     }
 
     #endregion

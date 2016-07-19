@@ -180,6 +180,8 @@ public class RegModuleController : ModuleController {
         // This is done first so genome statistics are updated before trying
         // to add new elements.
         ResetRegulation();
+        // The children of a regulation module will be part of a pandemonium group!
+        MoveToPandemonium();
 
         beingDragged = true;
 
@@ -187,7 +189,7 @@ public class RegModuleController : ModuleController {
         {
             uiManager.SetModuleActive(moduleId); 
         }
-
+       
         MoveModuleInside(otherModule);
 
         // The new module is added to the hierarchy dictionary in
@@ -357,7 +359,23 @@ public class RegModuleController : ModuleController {
         otherController.RegulatoryInputList = new List<newLink>();
 
         otherController.PassRegulation();
-        uiManager.UpdateInToReg();
+    }
+
+    /// <summary>
+    /// Moves the children of the regulation group into the same pandemonium, so
+    /// the regulation module only uses one of its children at a time.
+    /// </summary>
+    //  TODO: Allow otherwise?
+    void MoveToPandemonium()
+    {
+        // Uses the (unique) module ID to get a pandemonium group for the children.
+        // Adds + 100 so there is little risk that the user will use that same
+        // pandemonium value for other groups
+        int pandemoniumID = 100 + moduleId;
+
+        ModuleController otherController = otherModule.GetComponent<ModuleController>();
+        otherController.SetPandemoniumValue(pandemoniumID);
+        otherController.PassPandemonium(pandemoniumID);
     }
 
     /// <summary>

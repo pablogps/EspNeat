@@ -155,7 +155,7 @@ namespace SharpNeat.Coordination
             UpdateLocalInOutInfo();
             UpdatePandemoniums();
             UpdateLabels();
-			UpdateHierarchy();
+            UpdateHierarchy();
             InitializeRegulatoryInputList();
 		}
 
@@ -314,11 +314,11 @@ namespace SharpNeat.Coordination
 
                     // Remove from moduleLabels dictionary
                     moduleLabels.Remove(whichModule);
+                    SaveLabels();
 
                     break;
                 }
             }
-
             // The lists with input, output, labels and so on (here and in
             // the uiVar instance of UIvariables will be updated at the end
             // of the process in the factory, which calls _optimizer.ResetGUI();
@@ -326,13 +326,8 @@ namespace SharpNeat.Coordination
         }
 
         /// <summary>
-        /// Sets whichModule as the active modulein the genome
+        /// Sets whichModule as the active module in the genome
         /// </summary>
-        public void SetAsActiveModule(int whichModule)
-        {
-            SetModuleActive(whichModule);
-        }
-
         public void SetModuleActive(int whichModule)
         {
             optimizer.AskSetActive(uiVar, whichModule);
@@ -348,7 +343,27 @@ namespace SharpNeat.Coordination
             // then moves whichModule to the end of the genome. At this point
             // all of them are equal! So here we mutate them (not the first
             // one, so there is at least one copy of the champion).
-            optimizer.AskMutateOnce();       
+            optimizer.AskMutateOnce();      
+        }
+
+        /// <summary>
+        /// Gets a module ID different from that of the caller, and sets that
+        /// module as active.
+        /// </summary>
+        public void SetAnotherActive(int whichModule)
+        {
+            //uiVar.moduleIdList();
+            if (uiVar.moduleIdList.Count > 1)
+            {
+                for (int i = 1; i < uiVar.moduleIdList.Count; ++i)
+                {
+                    if (i != whichModule)
+                    {
+                        SetModuleActive(i);
+                        return;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -364,6 +379,11 @@ namespace SharpNeat.Coordination
             // Set evolution camera
             ActivateEvolutionCamera();
         }
+
+        /// <summary>
+        /// When evolving a module, we only want to see the behaviour of the selected 
+        /// module (not mixed with other modules) if possible!
+        /// </summary>
         public void MakeOnlyActiveMod(int chosenModule, newLink newRegulation,
                                       List<int> childrenId)
         {
@@ -438,14 +458,7 @@ namespace SharpNeat.Coordination
             // Note that if you select auto after this the first generation will
             // not have proper fitness values. But evaluation is the first step
             // when a evolutionary algorithm starts, so this is not a problem.
-
-            // Old fitness values will be recovered and used to produce offspring.
-            optimizer.SetAborted();
-            optimizer.EndManual();        
-            // Automatic testing of units disabled (we will abort, this is not needed).
-            optimizer.EaIsNextManual(true);
-            optimizer.GoThenAuto();
-            optimizer.StopEA();  
+            optimizer.StopInteractiveEvolution();
 
             // Sets editing camera
             DeactivateEvolutionCamera();
@@ -459,28 +472,13 @@ namespace SharpNeat.Coordination
         }
 
 		/// <summary>
-		/// Accepts changes in weights and regulation and calls the genome
-        /// factory (through optimizer).
+		/// Saves changes and restarts simulation if needed
 		/// </summary>
 		public void ApplyChanges()
-		{     
-            // Applies the changes using NeatGenomeFactory.
-			optimizer.AskChangeWeights(uiVar);
-            UpdateInToReg();
-			optimizer.AskUpdatePandem(uiVar);
+		{    
             optimizer.SimpleSavePopulation();
-
             RestartSimulation();
 		}
-
-        /// <summary>
-        /// This is a separate method so it can be called alone from 
-        /// RegModuleController (it would not hurt to all of call ApplyChanges)
-        /// </summary>
-        public void UpdateInToReg()
-        {
-            optimizer.AskUpdateInToReg(uiVar);            
-        }
 
         /// <summary>
         /// This is used by modules to update their regulation scheme if
@@ -489,7 +487,35 @@ namespace SharpNeat.Coordination
         public void GetNewRegulationScheme(int moduleId,
                                            List<newLink> regulatoryInputList)
         {
-            uiVar.regulatoryInputList[moduleId] = regulatoryInputList;
+            if (uiVar.regulatoryInputList.ContainsKey(moduleId))
+            {
+                uiVar.regulatoryInputList[moduleId] = regulatoryInputList;
+                optimizer.AskUpdateInToReg(uiVar);   
+                ApplyChanges();
+            }
+            else
+            {
+                Debug.Log("Failed to update regulation: the module was not "
+                          + "found in the dictionary.");
+            }
+        }
+
+        /// <summary>
+        /// This is used by modules to update their pandemonium group.
+        /// </summary>
+        public void GetNewPandemonium(int moduleId, int newPandem)
+        {
+            if (uiVar.pandemonium.ContainsKey(moduleId))
+            {
+                uiVar.pandemonium[moduleId] = newPandem;
+                optimizer.AskUpdatePandem(uiVar);
+                ApplyChanges();
+            }
+            else
+            {
+                Debug.Log("Failed to update pandemonium: the module was not "
+                          + "found in the dictionary.");
+            }
         }
 
         /// <summary>
@@ -500,6 +526,8 @@ namespace SharpNeat.Coordination
                                                List<newLink> newOutputList)
         {
             uiVar.localOutputList[moduleId] = newOutputList;
+            optimizer.AskChangeWeights(uiVar);
+            ApplyChanges();
         }
 
         /// <summary>
@@ -738,10 +766,13 @@ namespace SharpNeat.Coordination
             foreach (KeyValuePair<int, List<newLink>> entry in regulatoryInputListCopy)
             {
                 uiVar.regulatoryInputList.Add(entry.Key, entry.Value);
-            }   
+            } 
 
             // Saves to overwirte a perhaps incomplete saved version after
             // evolution
+            optimizer.AskUpdateInToReg(uiVar);   
+            optimizer.AskUpdatePandem(uiVar);
+            optimizer.AskChangeWeights(uiVar); 
             ApplyChanges();
         }
 
@@ -769,6 +800,7 @@ namespace SharpNeat.Coordination
                 // The list is done, so it substitues the old one (of which
                 // there is a copy in this script in localOutputListCopy)
                 uiVar.localOutputList[moduleId] = localCopy;
+                optimizer.AskChangeWeights(uiVar);
             }
             else
             {
@@ -787,7 +819,8 @@ namespace SharpNeat.Coordination
             {
                 // Takes the module outside of any pandemoniums (in case another
                 // module in said pandemonium has higher activation)
-                uiVar.pandemonium[chosenModule] = 0;               
+                uiVar.pandemonium[chosenModule] = 0;    
+                optimizer.AskUpdatePandem(uiVar);             
             }
             else
             {
@@ -801,7 +834,8 @@ namespace SharpNeat.Coordination
             {
 				List<newLink> localCopy = new List<newLink>();
 				localCopy.Add(newRegulation);
-				uiVar.regulatoryInputList[chosenModule] = localCopy;               
+                uiVar.regulatoryInputList[chosenModule] = localCopy;
+                optimizer.AskUpdateInToReg(uiVar);                 
             }
             else
             {
@@ -1382,7 +1416,7 @@ namespace SharpNeat.Coordination
             // list and their ID are the same, but not necessarily for regulatory.
 
             // First, we add the bias neuron:
-			neuronStringFromId.Add(0, "Bias");
+            neuronStringFromId.Add(0, "Bias");
             // Use <= because the bias neuron takes intex 0.
             for (int i = 1; i <= genome.Input; ++i)
             {
@@ -1400,62 +1434,68 @@ namespace SharpNeat.Coordination
 
             NeuronGeneList neuronList = genome.NeuronGeneList;
 
-            // Regulatory neurons.
-            count = 1;
-            for (int i = genome.Input + genome.Output + 1;
-                i <= neuronList.LastBase; ++i)
+            // Regulatory neurons and local input/output only come if there are
+            // modules at all! (If we do not check this we will create some
+            // out-of-range errors.)
+            if (genome.Regulatory > 0)
             {
-                // We do not write the variable "i" as the ID because, unlike
-                // output neurons, regulatory neurons may take non-consecutive
-                // values.
-				neuronStringFromId.Add(neuronList[i].Id, "R" + count.ToString());
-                ++count;
-            }
-
-            // Includes local input/output neurons in the dictionary in case there is
-            // a connection from local output to local in.
-            // Also includes local output neurons in case there is a connection
-            // from a local output to a regulatory neuron.
-            count = 1;
-            uint firstRegIndx = (uint)genome.Input + (uint)genome.Output;
-            NodeType currentType = NodeType.Local_Input;
-            for (int i = neuronList.LastBase + 1; i < neuronList.Count; ++i)
-            {
-                // Resets the count for new neuron types.
-                if (neuronList[i].NodeType != currentType)
+                // Regulatory neurons.
+                count = 1;
+                for (int i = genome.Input + genome.Output + 1;
+                    i <= neuronList.LastBase; ++i)
                 {
-                    currentType = neuronList[i].NodeType;
-                    count = 1;
+                    // We do not write the variable "i" as the ID because, unlike
+                    // output neurons, regulatory neurons may take non-consecutive
+                    // values.
+                    neuronStringFromId.Add(neuronList[i].Id, "R" + count.ToString());
+                    ++count;
                 }
 
-                // We are only interested in local_in with local_out sources.
-                // These have an Id that is always > input + 1.
-                // These connections (at least in this version) have only one
-                // source, but there is no easy way to go through hashSets.
-                if (neuronList[i].NodeType == NodeType.Local_Input)
+                // Includes local input/output neurons in the dictionary in case there is
+                // a connection from local output to local in.
+                // Also includes local output neurons in case there is a connection
+                // from a local output to a regulatory neuron.
+                count = 1;
+                uint firstRegIndx = (uint)genome.Input + (uint)genome.Output;
+                NodeType currentType = NodeType.Local_Input;
+                for (int i = neuronList.LastBase + 1; i < neuronList.Count; ++i)
                 {
-                    if (HashSetContainsBiggerThan(neuronList[i].SourceNeurons,
-                        (uint)(genome.Input + 1)))
+                    // Resets the count for new neuron types.
+                    if (neuronList[i].NodeType != currentType)
                     {
-						neuronStringFromId.Add(neuronList[i].Id, "M" +
-                            neuronList[i].ModuleId.ToString() +
-                            "i" + count.ToString());
+                        currentType = neuronList[i].NodeType;
+                        count = 1;
                     }
-                }
 
-                // We are only interested in local_out with local_in as targets.
-                // These will always have an Id > LastBase.
-                if (neuronList[i].NodeType == NodeType.Local_Output)
-                {
-                    if (HashSetContainsBiggerThan(neuronList[i].TargetNeurons,
-                        firstRegIndx))
+                    // We are only interested in local_in with local_out sources.
+                    // These have an Id that is always > input + 1.
+                    // These connections (at least in this version) have only one
+                    // source, but there is no easy way to go through hashSets.
+                    if (neuronList[i].NodeType == NodeType.Local_Input)
                     {
-						neuronStringFromId.Add(neuronList[i].Id, "M" + 
-                            neuronList[i].ModuleId.ToString() +
-                            "o" + count.ToString());
+                        if (HashSetContainsBiggerThan(neuronList[i].SourceNeurons,
+                            (uint)(genome.Input + 1)))
+                        {
+                            neuronStringFromId.Add(neuronList[i].Id, "M" +
+                                neuronList[i].ModuleId.ToString() +
+                                "i" + count.ToString());
+                        }
                     }
-                }
-                ++count;
+
+                    // We are only interested in local_out with local_in as targets.
+                    // These will always have an Id > LastBase.
+                    if (neuronList[i].NodeType == NodeType.Local_Output)
+                    {
+                        if (HashSetContainsBiggerThan(neuronList[i].TargetNeurons,
+                            firstRegIndx))
+                        {
+                            neuronStringFromId.Add(neuronList[i].Id, "M" + 
+                                neuronList[i].ModuleId.ToString() +
+                                "o" + count.ToString());
+                        }
+                    }
+                    ++count;
+                }                
             }
         }
 

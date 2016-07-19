@@ -7,20 +7,14 @@ using SharpNeat.Coordination;
 public class OptionsPanelController : MonoBehaviour {
 
 	private ModuleController moduleController;
-	private Text resetOrDeleteText;
     private GameObject weightsAdvanced;
-    private GameObject warningResetPanel;
+    private GameObject warningDeletePanel;
     private GameObject warningEvolvePanel;
 
 	void Awake()
 	{
-        resetOrDeleteText = transform.Find("ResetDeleteButton").
-		                    Find("Text").GetComponent<Text>();
         weightsAdvanced = transform.Find("EditWeightsAdvanced").gameObject;
         weightsAdvanced.SetActive(false);
-
-        // This will be the text for normal modules (not the active one)
-        resetOrDeleteText.text = "Delete";
 	}
 
 	#region PublicMethods
@@ -33,23 +27,6 @@ public class OptionsPanelController : MonoBehaviour {
         moduleController = newModuleController;
     }
 
-    public void ToggleResetDeleteText()
-    {
-
-        // The active module will offer to be reset, while other
-        // modules can be deleted. We cannot try this at awake, 
-        // since that method is called before the new module
-        // is passed.
-        if (moduleController.IsActive)
-        {
-            resetOrDeleteText.text = "Reset";
-        }
-        else
-        {
-            resetOrDeleteText.text = "Delete";
-        }
-    }
-
 	/// <summary>
 	/// Hides this panel (as opposed to creating and destroying it).
 	/// </summary>
@@ -59,22 +36,13 @@ public class OptionsPanelController : MonoBehaviour {
 	}
 
     /// <summary>
-    /// Delete/reset options require confirmation from the user, so a warning
+    /// Delete option requires confirmation from the user, so a warning
     /// panel is instantiated.
     /// </summary>
-	public void InstantiateResetWarning()
+	public void InstantiateDeleteWarning()
     {
-        warningResetPanel = InstantiateWarning("Prefabs/ResetWarningPanel");
-        warningResetPanel.GetComponent<ResetWarningPanelController>().OptionsPanel = this;
-
-        // If this is the active module we should change the delete button
-        // text to reset
-        if (moduleController.IsActive)
-        {
-            Text buttonText = warningResetPanel.transform.Find("DELETE").
-                              Find("ButtonText").GetComponent<Text>();
-            buttonText.text = "RESET";
-        }
+        warningDeletePanel = InstantiateWarning("Prefabs/DeleteWarningPanel");
+        warningDeletePanel.GetComponent<DeleteWarningPanelController>().OptionsPanel = this;
 	}
 
     /// <summary>
@@ -89,13 +57,13 @@ public class OptionsPanelController : MonoBehaviour {
     }
 
     /// <summary>
-    /// Accepts reset/delete and asks the module controller to move the order
+    /// Accepts delete and asks the module controller to move the order
     /// forward in the command chain.
     /// </summary>
-    public void ProceedResetDelete()
+    public void ProceedDelete()
     {
-        moduleController.CallResetOrDelete();
-        DestroyResetWarning();
+        moduleController.CallDelete();
+        DestroyDeleteWarning();
 	}
 
     /// <summary>
@@ -146,14 +114,14 @@ public class OptionsPanelController : MonoBehaviour {
     /// Destroys the warning panel (another possibility is to activate and
     /// deactivate it at convenience).
     /// </summary>
-	public void DestroyResetWarning()
+	public void DestroyDeleteWarning()
 	{
-        Destroy(warningResetPanel);
+        Destroy(warningDeletePanel);
         // I believe this is not necessary in Unity/C#, but is it a good
         // practice as it was in C++?
         // Note that otherwise the object could be directly deleted from its
         // own script with Destroy(this.gameObject)
-        warningResetPanel = null;
+        warningDeletePanel = null;
 	}
 
     #endregion

@@ -2,7 +2,7 @@
 using System.Collections;
 using SharpNeat.Coordination;
 
-public class ResetWarningPanelController : MonoBehaviour {
+public class DeleteWarningPanelController : MonoBehaviour {
 
 	private OptionsPanelController optionsPanel;
 
@@ -12,12 +12,12 @@ public class ResetWarningPanelController : MonoBehaviour {
 	}
 
     /// <summary>
-    /// Accepts reset/delete and asks the module controller to move the order
+    /// Accepts delete and asks the module controller to move the order
     /// forward in the command chain.
     /// </summary>
-	public void ProceedResetDelete()
+	public void ProceedDelete()
 	{
-        optionsPanel.ProceedResetDelete();
+        optionsPanel.ProceedDelete();
         // Destroy(this.gameObject);
 	}
 
@@ -30,6 +30,6 @@ public class ResetWarningPanelController : MonoBehaviour {
 	public void SelfDestroy()
 	{
         // Destroy(this.gameObject);
-        optionsPanel.DestroyResetWarning();
+        optionsPanel.DestroyDeleteWarning();
 	}
 }
