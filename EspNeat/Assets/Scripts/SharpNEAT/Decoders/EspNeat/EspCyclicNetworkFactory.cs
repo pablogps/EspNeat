@@ -108,6 +108,12 @@ namespace SharpNeat.Decoders
 
             InternalDecode();
             // Constructs phenome.
+
+/*            foreach (KeyValuePair<int, int> entry in oldToNewIndex)
+            {
+                UnityEngine.Debug.Log("old index " + entry.Key + " new index " + entry.Value);
+            }*/
+
             return new EspCyclicNetwork(phenomeVariables);
         }
 
@@ -206,7 +212,8 @@ namespace SharpNeat.Decoders
                     {
                         // This is local_out to local_in
                         localOutToRegOrLocalInList.Add(connection);
-                        ++phenomeVariables.lOutToRegOrLInModuleCount[moduleIdToIndex[connection.ModuleId]];  
+                        ++phenomeVariables.lOutToRegOrLInModuleCount[
+                                moduleIdToIndex[connection.ModuleId]];  
                     }
                     else
                     {
@@ -222,7 +229,8 @@ namespace SharpNeat.Decoders
                     {
                         // This is local_out-to-regulatory
                         localOutToRegOrLocalInList.Add(connection);
-                        ++phenomeVariables.lOutToRegOrLInModuleCount[moduleIdToIndex[connection.ModuleId]];                        
+                        ++phenomeVariables.lOutToRegOrLInModuleCount[
+                                moduleIdToIndex[connection.ModuleId]];                        
                     }
                     else
                     {
@@ -235,7 +243,8 @@ namespace SharpNeat.Decoders
                 {
                     // This can only be local_out-to-out
                     localOutToOutList.Add(connection);
-                    ++phenomeVariables.localOutToOutModuleCount[moduleIdToIndex[connection.ModuleId]];
+                    ++phenomeVariables.localOutToOutModuleCount[
+                            moduleIdToIndex[connection.ModuleId]];
                 }
             }
 

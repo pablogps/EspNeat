@@ -560,25 +560,13 @@ namespace SharpNeat.Genomes.Neat
         public void AddNewModule(IList<NeatGenome> genomeList, string genericFilePath,
                                  string experimentName, UIvariables uiVar)
         {
-
-            UnityEngine.Debug.Log("next Id at enter: " + _innovationIdGenerator.Peek);
-
             SavePopulation(genomeList, genericFilePath, experimentName);
 			NeatGenome champion = _optimizer.EvolutionAlgorithm.CurrentChampGenome;
 			UpdateChampionsProtectedWeights(champion, uiVar);
 			CloneChampion(genomeList, champion);
 			NewModule(genomeList, uiVar);
 
-
-			UnityEngine.Debug.Log("next Id after new module: " + _innovationIdGenerator.Peek);
-
-
             _optimizer.ResetGUI();
-
-
-			UnityEngine.Debug.Log("next Id after reset: " + _innovationIdGenerator.Peek);
-
-
         }
 
 		public void InitializeGeneratorAfterLoad(IList<NeatGenome> genomeList)
@@ -679,6 +667,7 @@ namespace SharpNeat.Genomes.Neat
                                       "NeatGenomeFactory");
                 return;
             }
+
             champion.ConnectionGeneList.RemoveAll(x => x.ModuleId == whichModule);
             champion.NeuronGeneList.RemoveAll(x => x.ModuleId == whichModule);
 
@@ -689,6 +678,7 @@ namespace SharpNeat.Genomes.Neat
             // Statistics works only with static variables, so we can use 
             // "champion", the only genome that is up to date
             UpdateStatistics(champion);
+
             // Updates _activeConnections count in the genomes (before mutations
             // this should be the same for all!)
             champion.ActiveConnectionsFromLoad();
@@ -703,7 +693,7 @@ namespace SharpNeat.Genomes.Neat
             // out-of-date statistics.
             CloneChampion(genomeList, champion);
 
-            _optimizer.ResetGUI(); 
+            _optimizer.ResetGUI();
         }
 
         /// <summary>
@@ -770,11 +760,11 @@ namespace SharpNeat.Genomes.Neat
 
             // There is one less regulatory neuron in the genomes (static property)
             --genomeList[0].Regulatory;
-
             // --genome.Regulatory is not included in the method so everything 
             // that is done in UpdateStatistics can be called after any other
             // process (after adding a module or changing the active module, etc)
             UpdateStatistics(genomeList[0]);
+
             _optimizer.ResetGUI();
         }
 
@@ -828,22 +818,6 @@ namespace SharpNeat.Genomes.Neat
                     }   
                 }
             }
-
-            /*
-            // This connection is no longer in use.
-
-            // Makes sure the auxiliary connection (bias-to-regulatory, used
-            // in the active module when no input has been selected for the
-            // regulatory neuron) is switched off if the caller is the active
-            // module.
-            if (moduleThatCalled == _currentModule)
-            {
-                foreach (NeatGenome genome in genomeList)
-                {
-                    genome.ConnectionGeneList[0].TargetNodeId = 0;
-                }                
-            }
-            */
         }
 
         /// <summary>
@@ -1064,7 +1038,7 @@ namespace SharpNeat.Genomes.Neat
             NeuronGeneList neuronGeneList = new NeuronGeneList(_inputNeuronCount + 
                                                                _outputNeuronCount + 1);
 
-            // We need to reset this variables, in case we have deleted the
+            // We need to reset these variables, in case we have deleted the
             // network and we are creating a new base.
             ResetGenomeStatistics();
 
@@ -1094,17 +1068,8 @@ namespace SharpNeat.Genomes.Neat
             neuronGeneList.LastBase = neuronGeneList.Count - 1;
 
             // We need a connection list for the genome. Before adding any 
-            // modules this list will only contain an auxiliary connection
-            // that will be used to keep active new evolving modules if we 
-            // wish to regulate them with modules that will be later produced
-            // (instead of, for example, with some input neuron).
-            // This auxiliary connection will always have bias as source, and
-            // forms a trivial loop with bias when it is not needed.
-            // We give it maximum weight and module 0.
+            // modules this list will be empty.
             ConnectionGeneList connectionGeneList = new ConnectionGeneList();
-            connectionGeneList.Add(new ConnectionGene(
-                    _innovationIdGenerator.NextId,  0, 0,
-                    _neatGenomeParamsCurrent.ConnectionWeightRange, 0, true));
 
             return CreateGenome(_genomeIdGenerator.NextId, birthGeneration,
                                 neuronGeneList, connectionGeneList,
@@ -1445,8 +1410,7 @@ namespace SharpNeat.Genomes.Neat
             uint afterRegulatory = _innovationIdGenerator.Peek + (uint)genome.Input + 2;
 
             // The regulatory neuron will always take the first Id value of the
-            // module. After that, the possible bias-to-regulatory would take
-            // the next (which is reserved), for input1-to-regulatory we reserve
+            // module. After that, for input1-to-regulatory we reserve
             // the next Id, and so on. Connections from bias/input to regulatory
             // will take always the same Id values (so we can add or remove these
             // easily). After these connections we have local input connections.
@@ -1491,7 +1455,7 @@ namespace SharpNeat.Genomes.Neat
 
             // Would likely work fine without this update, but better safe than
             // sorry, specially if we implement features like evolving older
-            // modules, which will make the list not sorted!
+            // modules, which will make the list not sorted! <-- This has been done!
             genome.NeuronGeneList.LocateFirstIndex();
             // Adds hidden connections.
             PopulateModule(genome, localInputId, localOutputId);
@@ -1516,45 +1480,32 @@ namespace SharpNeat.Genomes.Neat
                                                           NodeType.Regulatory, 
                                                           _currentModule, 0));
 
-            // If there are no input connections for the regulatory neuron, 
-            // we use the auxiliary connection (connecting with bias).
-            // This will be overwritten when a new module is created.
-            if (regulatoryInputList.Count == 0)
-            {
-                genome.ConnectionGeneList[0].TargetNodeId = regulatoryId;          
-            }
-            else
-            {
-                // Resets the auxiliary connection to a trivial loop with bias.
-                genome.ConnectionGeneList[0].TargetNodeId = 0;
+			// GetNeuronByIdAll is probably faster for regulatory neurons, 
+			// because they come up early in the list.
+			NeuronGene regNeuron = genome.NeuronGeneList.GetNeuronByIdAll(regulatoryId);
 
-                // GetNeuronByIdAll is probably faster for regulatory neurons, 
-                // because they come up early in the list.
-                NeuronGene regNeuron = 
-                        genome.NeuronGeneList.GetNeuronByIdAll(regulatoryId);
+			foreach (newLink element in regulatoryInputList)
+			{
+				// Creates the new connection. Here we can only be adding
+				// connections from bias or input (local_out-to-regulatory
+				// are part of the outgoing connections from the given 
+				// local output neuron). Remember bias and input have the
+				// same index and Id.
+				// Adds 1 so bias-to-reg does not have the same Id as the
+				// regulatory neuron!
+				uint connectionId = regulatoryId + element.otherNeuron + 1;
+				genome.AddConnection(new ConnectionGene(
+					   connectionId, element.otherNeuron, regulatoryId,
+					   element.weight, _currentModule, true)); 
 
-                foreach (newLink element in regulatoryInputList)
-                {
-                    // Creates the new connection. Here we can only be adding
-                    // connections from bias or input (local_out-to-regulatory
-                    // are part of the outgoing connections from the given 
-                    // local output neuron). Remember bias and input have the
-                    // same index and Id.
-                    // Adds 1 so bias-to-reg does not have the same Id as the
-                    // regulatory neuron!
-                    uint connectionId = regulatoryId + element.otherNeuron + 1;
-                    genome.AddConnection(new ConnectionGene(
-                            connectionId, element.otherNeuron, regulatoryId,
-                            element.weight, _currentModule, true)); 
+				// Adds the regulatory as the target for the used input.
+				// Bias and input neurons have the same index and Id.
+				genome.NeuronGeneList[(int)element.otherNeuron].
+                       TargetNeurons.Add(regulatoryId);
 
-                    // Adds the regulatory as the target for the used input.
-                    // Bias and input neurons have the same index and Id.
-                    genome.NeuronGeneList[(int)element.otherNeuron].TargetNeurons.Add(regulatoryId);
-
-                    // Adds the input as a source for the regulatory
-                    regNeuron.SourceNeurons.Add(element.otherNeuron);
-                }
-            }
+				// Adds the input as a source for the regulatory
+				regNeuron.SourceNeurons.Add(element.otherNeuron);
+			}
         }
 
         /// <summary>
@@ -1612,10 +1563,11 @@ namespace SharpNeat.Genomes.Neat
 
             // Register connection with endpoint neurons.
             NeuronGeneList neuronList = genome.NeuronGeneList;
-            // The source of the connection is given by LocalInputList[_currentModule][k].otherNeuron.
+            // The source of the connection is given by
+            // LocalInputList[_currentModule][k].otherNeuron.
             // We need to find its index in neuronList:
-            NeuronGene sourceNeuron = 
-                    neuronList.GetNeuronByIdAll(uiVar.localInputList[_currentModule][k].otherNeuron);
+            NeuronGene sourceNeuron = neuronList.GetNeuronByIdAll(
+                    uiVar.localInputList[_currentModule][k].otherNeuron);
             
 
 			// The new target for this neuron is the local input neuron we 
@@ -1626,7 +1578,8 @@ namespace SharpNeat.Genomes.Neat
             // The target neuron in the new connection is the last in the list.
             // The new source we need to add to this neuron is given by  
             // LocalInputList[_currentModule][k].otherNeuron.
-            neuronList[neuronList.Count - 1].SourceNeurons.Add(uiVar.localInputList[_currentModule][k].otherNeuron);  
+            neuronList[neuronList.Count - 1].SourceNeurons.Add(
+                    uiVar.localInputList[_currentModule][k].otherNeuron);  
 		}
 
         /// <summary>
@@ -1669,7 +1622,8 @@ namespace SharpNeat.Genomes.Neat
             // The new source we need to add to this neuron is given by  
             // LocalInputList[_currentModule][k].otherNeuron.
             NeuronGeneList neuronList = genome.NeuronGeneList;
-            neuronList[neuronList.Count - 1].SourceNeurons.Add(uiVar.localInputList[_currentModule][k].otherNeuron);
+            neuronList[neuronList.Count - 1].SourceNeurons.Add(
+                    uiVar.localInputList[_currentModule][k].otherNeuron);
         }
 
         /// <summary>
@@ -1702,15 +1656,17 @@ namespace SharpNeat.Genomes.Neat
                 // Register connection with endpoint neurons.
 
                 // The source of the connection (local_output) is the last in 
-                // NeuronGeneList! The new target for this neuron is LocalOutputList[_currentModule][k].otherNeuron.
-                neuronList[neuronList.Count - 1].TargetNeurons.Add(uiVar.localOutputList[_currentModule][k].otherNeuron);
+                // NeuronGeneList! The new target for this neuron is
+                // LocalOutputList[_currentModule][k].otherNeuron.
+                neuronList[neuronList.Count - 1].TargetNeurons.Add(
+                        uiVar.localOutputList[_currentModule][k].otherNeuron);
 
                 // We need to look for the index for the target neuron
                 // with ID LocalOutputList[_currentModule][k].otherNeuron.
                 // We cannot use GetNeuronById because the statistics are not
                 // updated during the creation of a new module!
-                NeuronGene targetNeuron = 
-                    neuronList.GetNeuronByIdAll(uiVar.localOutputList[_currentModule][k].otherNeuron);
+                NeuronGene targetNeuron = neuronList.GetNeuronByIdAll(
+                        uiVar.localOutputList[_currentModule][k].otherNeuron);
                 // The new neuron source we need to add to the source list is
                 // the last ID we used: _innovationIdGenerator.Peek - 1
                 targetNeuron.SourceNeurons.Add(_innovationIdGenerator.Peek - 1);                

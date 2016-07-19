@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using SharpNeat.EvolutionAlgorithms;
 using SharpNeat.Genomes.Neat;
@@ -298,6 +299,20 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
+    /// Proper sequence to end an interactive evolution process
+    /// </summary>
+    public void StopInteractiveEvolution()
+    {
+        // Old fitness values will be recovered and used to produce offspring.
+        SetAborted();
+        EndManual();        
+        // Automatic testing of units disabled (we will abort, this is not needed).
+        EaIsNextManual(true);
+        GoThenAuto();
+        StopEA(); 
+    }
+
+    /// <summary>
     /// Called by SimpleEvaluator
     ///****Why is this called "Evaluate" when it instantiates?
     /// Instantiates and activates a unit. Adds its controller (box parameter)
@@ -332,13 +347,6 @@ public class EspNeatOptimizer : Optimizer
     public void RunBest()
     {
         champRunning = true;
-
-        // Resets timescale ONLY if neuroevolution is not running (otherwise
-        // things can go too slow and it may be hard to abort 
-        if (EARunning == false)
-        {
-            Time.timeScale = 1;
-        }
 
         NeatGenome genome = LoadChampion();
 
@@ -428,15 +436,11 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void AskCreateModule(UIvariables uiVar)
     {
-        Debug.Log("next Id before add new: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);
         _ea.GenomeList[0].GenomeFactory.AddNewModule(
                 _ea.GenomeList, Application.persistentDataPath, experiment_name, uiVar);
 
-		Debug.Log("next Id after add new: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);
 		UpdateChampion();
         SavePopulation(Application.persistentDataPath);    
-
-
 
         // TODO: IMPORTANT NOTICE!
         // There seems to be a bug here: when a population is loaded the ID
@@ -447,15 +451,12 @@ public class EspNeatOptimizer : Optimizer
         // after loading the population. Why? Problems with references?
         // This is not usually relevant (apparently AddNewModule will find the
         // correct value again if called a second time, and for some reason in new
-        // calls the problem does not happen again).
-        // But AskMutateOnce will not correct the problem, and it may try to
-        // add elements with repeated IDs, which creates genomes that fail the
-        // integrity check.
+        // calls the problem does not happen again). But AskMutateOnce will
+        // not correct the problem, and it may try to add elements with repeated
+        // IDs, which creates genomes that fail the integrity check.
 
         // Easy patch: update the ID generator here.
-
         _ea.GenomeList[0].GenomeFactory.InitializeGeneratorAfterLoad(_ea.GenomeList);   
-        Debug.Log("next Id after final update: " + _ea.GenomeList[0].GenomeFactory.InnovationIdGenerator.Peek);  
     }
 
     /// <summary>
@@ -515,11 +516,42 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void AskResetActiveModule()
     {
+        Debug.Log("RECORDAR ELIMINAR REFERENCIAS ANTIGUAS A ASKRESETACTIVEMODULE");
+        Debug.Log("añadir aquí el panel de confirmación");
+        Debug.Log("RECORDAR ELIMINAR REFERENCIAS ANTIGUAS A ASKRESETACTIVEMODULE");
+
+        // Stops current evolution. Note this will not return the cameras to
+        // the editing menu
+        StopInteractiveEvolution();
+
+        // Restart and reset (after allowing time to stop and remove old individuals!)
+        Coroutiner.StartCoroutine(WaitResetStart());
+    }
+    /// <summary>
+    /// Second part of the method AskResetActiveModule. The first part of the
+    /// process is stopping the simulation, which needs time to remove old
+    /// individuals. Because coroutines are used, it may (will) be problematic
+    /// to continue without allowing time for this to finish.
+    /// </summary>
+    IEnumerator WaitResetStart()
+    {
+        // Some time is needed to finish removing old individuals
+        int waitForFrames = 20;
+        while (waitForFrames >= 0)
+        {
+            --waitForFrames;
+            yield return null;
+        }
+
+        // Resets the active module (resets the evolution)
         ++generation;
         _ea.GenomeList[0].GenomeFactory.ResetActiveModule(_ea.GenomeList, generation);
-
         UpdateChampion(); 
-        SavePopulation(Application.persistentDataPath);  
+        SavePopulation(Application.persistentDataPath);
+
+        // Starts a new evolutionary process
+        Manual = true;
+        StartEA();        
     }
 
     /// <summary>
@@ -533,7 +565,7 @@ public class EspNeatOptimizer : Optimizer
         // one being evolved, and is the only module that is not exactly the
         // same for all individuals in the population.
 
-		++generation;
+        ++generation;
 
 		_ea.GenomeList[0].GenomeFactory.DeleteModule(_ea.GenomeList,
                                                           generation, whichModule);
@@ -630,8 +662,8 @@ public class EspNeatOptimizer : Optimizer
         _ea.Manual = false;
         // No more need for the manual GUI.
         manual = false;    
-        // Get time to its normal speed.
-        ResetTime(); 
+        // Get time to its normal speed (old feature).
+        //ResetTime(); 
     }
 
     /// <summary>
@@ -839,7 +871,7 @@ public class EspNeatOptimizer : Optimizer
     /// Calculates frames per second and reduces the time step if they are too
     /// low. Currently not in use.
     /// </summary>
-    void CheckFPS()
+    /*void CheckFPS()
     {
         const int min_fps = 10;
         const float updateInterval = 12;
@@ -862,7 +894,7 @@ public class EspNeatOptimizer : Optimizer
                 print("Lowering time scale to " + Time.timeScale);
             }
         }        
-    }
+    }*/
 
     /// <summary>
     /// Returns the latest generation in a loaded (or freshly created) population.
@@ -929,7 +961,7 @@ public class EspNeatOptimizer : Optimizer
     /// <param name="e">E.</param>
     void ea_PauseEvent(object sender, EventArgs e)
     {
-        Time.timeScale = 1;      
+        //Time.timeScale = 1;      
         SavePopulation(Application.persistentDataPath);
         DateTime endTime = DateTime.Now;
         Utility.Log("Total time elapsed: " + (endTime - startTime));
@@ -954,7 +986,7 @@ public class EspNeatOptimizer : Optimizer
     /// Now EARunning is going to be true every time we call this function 
     /// because Manual starts the evolutionary process. Change eventually?
     /// </summary>
-    void ResetTime()
+    /*void ResetTime()
     {
         if (EARunning == true)
         {
@@ -964,7 +996,7 @@ public class EspNeatOptimizer : Optimizer
         {
             Time.timeScale = 1;
         }      
-    }
+    }*/
         
     /// <summary>
     /// Select interesting units with mouse input during manual evolution-

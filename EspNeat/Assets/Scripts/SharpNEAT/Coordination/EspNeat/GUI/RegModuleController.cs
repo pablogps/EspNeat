@@ -99,6 +99,23 @@ public class RegModuleController : ModuleController {
     }
 
     /// <summary>
+    /// Calls the second part, EvolveContinue. First creates a list with the
+    /// children of this module.
+    /// </summary>
+    public override void Evolve()
+    {
+        List<int> childrenList = new List<int>();
+        foreach (GameObject child in containedModules)
+        {
+            int childId = child.GetComponent<ModuleController>().ModuleId;
+            childrenList.Add(childId);
+        }
+
+        // EvolveContinue is in the base class ModuleController
+        EvolveContinue(childrenList);
+    }
+
+    /// <summary>
     /// Allows to dragg the module around the screen.
     /// </summary>
     public override void moveModule2(UnityEngine.EventSystems.BaseEventData eventData)
@@ -163,6 +180,8 @@ public class RegModuleController : ModuleController {
         // This is done first so genome statistics are updated before trying
         // to add new elements.
         ResetRegulation();
+        // The children of a regulation module will be part of a pandemonium group!
+        MoveToPandemonium();
 
         beingDragged = true;
 
@@ -170,7 +189,7 @@ public class RegModuleController : ModuleController {
         {
             uiManager.SetModuleActive(moduleId); 
         }
-
+       
         MoveModuleInside(otherModule);
 
         // The new module is added to the hierarchy dictionary in
@@ -297,7 +316,7 @@ public class RegModuleController : ModuleController {
         // Prompts a panel asking for confirmation!
         GameObject myPrefab = (GameObject)Resources.Load("Prefabs/AddModuleWarning");
         warningPanel = (GameObject)Instantiate(myPrefab);
-        SetUpPanel(warningPanel, myPrefab);
+        uiManager.SetUpPanel(warningPanel, myPrefab);
         warningPanel.GetComponent<AddModuleWarningController>().
         RegModuleController = this;
     }
@@ -340,7 +359,23 @@ public class RegModuleController : ModuleController {
         otherController.RegulatoryInputList = new List<newLink>();
 
         otherController.PassRegulation();
-        uiManager.UpdateInToReg();
+    }
+
+    /// <summary>
+    /// Moves the children of the regulation group into the same pandemonium, so
+    /// the regulation module only uses one of its children at a time.
+    /// </summary>
+    //  TODO: Allow otherwise?
+    void MoveToPandemonium()
+    {
+        // Uses the (unique) module ID to get a pandemonium group for the children.
+        // Adds + 100 so there is little risk that the user will use that same
+        // pandemonium value for other groups
+        int pandemoniumID = 100 + moduleId;
+
+        ModuleController otherController = otherModule.GetComponent<ModuleController>();
+        otherController.SetPandemoniumValue(pandemoniumID);
+        otherController.PassPandemonium(pandemoniumID);
     }
 
     /// <summary>

@@ -134,7 +134,9 @@ namespace SharpNeat.Genomes.Neat
             // The first neuron that is NOT part of the base must be a 
             // local input type, and at least index 4 (bias + 1xInput + 
             // 1xOutput + 1xRegulatory --> local in with index 4).
-            for (int index = 4; index < Count; ++index)
+            // But let us start with 3 in case there are no regulatory yet!
+            // Really, maybe we could start at 0, in practice it would be the same!
+            for (int index = 3; index < Count; ++index)
             {
                 if (this[index].NodeType == NodeType.Local_Input)
                 {
@@ -143,7 +145,9 @@ namespace SharpNeat.Genomes.Neat
                     return;
                 }
             }
-            // We should never get here! Perhaps add an exception or something.
+            // If we are here it means there are no local input yet, so the
+            // last base is... the last index!
+            _lastBaseIndex = Count - 1;
         }
 
         /// <summary>
