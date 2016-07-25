@@ -520,6 +520,16 @@ public class ModuleController : MonoBehaviour {
     }
 
     /// <summary>
+    /// When asked by OptionsPanelController, asks uiManager to ask optimizer
+    /// to ask Factory to clone this module.
+    /// Perhaps this should be simplified!!
+    /// </summary>
+    public virtual void AskClone()
+    {
+        uiManager.AskCloneModule(moduleId, isRegModule);
+    }
+
+    /// <summary>
     /// Deletes this module. This is called from the options menu, 
     /// which promts a confirmation panel, since this actions may lose progress.
     /// </summary>

@@ -283,6 +283,85 @@ namespace SharpNeat.Coordination
         }
 
         /// <summary>
+        /// Cloning regulation modules is more complicated, because we need
+        /// to clone the children as well, then we need to move the new children
+        /// inside the cloned parent and update their regulation.
+        /// 
+        /// Note this can be recursive if one child is a regulation module itself!
+        /// </summary>
+        public void AskCloneRegModule(int parentModule, bool isRegulationModule)
+        {
+            // After creating each module we need to wait a bit so the module
+            // can find a place to stop. If two are created at the same time
+            // at the same place they will try to move away from each other
+            // together!
+            Coroutiner.StartCoroutine(AskCloneRegModule2(parentModule, isRegulationModule));
+        }
+
+        /// <summary>
+        /// This is used to clone a module. Note two things:
+        /// 1) The cloned module will never be the active module! (It will be placed
+        /// immediately before.)
+        /// 2) Complex modules (such as regulation modules) will need some further
+        /// work to make sure the connexions among modules are correct.
+        /// </summary>
+        public void AskCloneModule(int whichModule, bool isRegulationModule)
+        {
+            // To increase the Dictionaries with necessary module information
+            // we first need to know the new module ID:
+            int newId = genome.FindYoungestModule() + 1;
+
+            // The new Id is added to the list of modules
+            uiVar.moduleIdList.Add(newId);
+
+            // Adds a basic-regulation connection to the list
+            IncreaseRegulationListBasic(newId);
+
+            // Cloned modules are outside of a pandemonium (except the children
+            // of regulation modules)
+            uiVar.pandemonium.Add(newId, 0);
+            uiVar.localInputList.Add(newId, uiVar.localInputList[whichModule]);
+            uiVar.localOutputList.Add(newId, uiVar.localOutputList[whichModule]);
+
+			// Does the actual work of cloning the genome
+            optimizer.AskCloneModule(uiVar, whichModule);
+
+            if (isRegulationModule)
+            {
+                // If this is a regulation module, it is added to the dictionary,
+                // but the list of contents is currently empty!
+                uiVar.hierarchy.Add(newId, new List<int>());
+            }
+
+            RestartSimulation();
+
+            // Finally the UI object is instantiated
+            moduleLabels.Add(newId, "Module" + newId.ToString());
+
+            // Saves the new labels
+            SaveLabels();
+
+            // Saves the hierarchy
+            SaveHierarchy();
+
+            GameObject newModule = null;
+            if (isRegulationModule)
+            {
+                newModule = InstantiateOneModule(newId, true);
+            }
+            else
+            {
+                newModule = InstantiateOneModule(newId, false);
+            }
+
+            // Sets the new module as INactive
+            newModule.GetComponent<ModuleController>().SetActive(false);
+
+            // Stores the module in the list
+            myModules.Add(newModule);
+        }
+
+        /// <summary>
         /// This method deletes the chosen module.
         /// 
         /// This method could be called directly from ModuleController, but
@@ -300,25 +379,19 @@ namespace SharpNeat.Coordination
         {
             // Removes the Module UI element
             // Do not forget about the options and regulation panel!
-            for (int i = myModules.Count - 1; i >= 0; --i)
-            {
-                if (myModules[i].GetComponent<ModuleController>().ModuleId == whichModule)
-                {
-                    // Gets a reference to the element we desire to delete
-                    GameObject module = myModules[i];
-                    // The element is removed from the list
-                    myModules.RemoveAt(i);
-                    // And is actually destroyed (it exist even if it is not 
-                    // in the list!)
-                    module.GetComponent<ModuleController>().RemoveModule();
+            int index = getModuleIndexById(whichModule);
+            // Gets a reference to the element we desire to delete
+            GameObject module = myModules[index];
+            // The element is removed from the list
+            myModules.RemoveAt(index);
+            // And is actually destroyed (it exist even if it is not 
+            // in the list!)
+            module.GetComponent<ModuleController>().RemoveModule();
 
-                    // Remove from moduleLabels dictionary
-                    moduleLabels.Remove(whichModule);
-                    SaveLabels();
+            // Remove from moduleLabels dictionary
+            moduleLabels.Remove(whichModule);
+            SaveLabels();
 
-                    break;
-                }
-            }
             // The lists with input, output, labels and so on (here and in
             // the uiVar instance of UIvariables will be updated at the end
             // of the process in the factory, which calls _optimizer.ResetGUI();
@@ -372,8 +445,30 @@ namespace SharpNeat.Coordination
         public void LaunchEvolution()
         {
             // Gets rid of units created with "run best" option.
-            optimizer.DestroyBest();
+            if (optimizer.ChampRunning)
+            {
+                optimizer.DestroyBest();
+            }
             optimizer.Manual = true;
+
+            Coroutiner.StartCoroutine(LaunchEvolution2());
+        }
+        /// <summary>
+        /// We want to make sure that all champion genomes have been completely
+        /// removed before proceeding!
+        /// No problems had been yet identified for this reason, but better safe
+        /// than sorry?
+        /// </summary>
+        IEnumerator LaunchEvolution2()
+        {
+            // Wait before champion genomes are deleted...
+            int waitForFrames = 20;
+            while (waitForFrames >= 0)
+            {
+                --waitForFrames;
+                yield return null;
+            }
+
             optimizer.StartEA();
 
             // Set evolution camera
@@ -571,9 +666,7 @@ namespace SharpNeat.Coordination
         }
 
         /// <summary>
-        /// This method is used to create a new, basic module. It will use
-        /// all global inputs and outputs, and will come with the default
-        /// regulation "active when bias is active" (always active).
+        /// This method is used to create a new module.
         /// </summary>
         public void AddBasicModule(bool isRegulationModule)
         {
@@ -712,6 +805,178 @@ namespace SharpNeat.Coordination
         #endregion
 
         #region PrivateMethods
+
+        /// <summary>
+        /// Because cloning uses pauses, it will be called as an enumerator.
+        /// 
+        /// Cloning regulation modules is more complicated, because we need
+        /// to clone the children as well, then we need to move the new children
+        /// inside the cloned parent and update their regulation.
+        /// 
+        /// Note this can be recursive if one child is a regulation module itself!
+        /// </summary>
+        IEnumerator AskCloneRegModule2(int parentModule, bool isRegulationModule)
+        {     
+            int parentIndex = getModuleIndexById(parentModule);
+            List<GameObject> childrenList = 
+                myModules[parentIndex].GetComponent<RegModuleController>().ContainedModules;
+
+            List<int> childrenClonesIds = new List<int>();
+
+            // Instantiates all modules involved.
+
+            // Instantiates the parent. This may result in some funny numbering
+            // of the cloned modules, but it is useful to ensure that we know
+            // the Id of the cloned child if the child is itself a regulation
+            // module (otherwise it will be instantiated after all its children
+            // and we need to count them, and they may contain more regulation...)
+            int clonedParentId = genome.FindYoungestModule() + 1;
+            AskCloneModule(parentModule, true);
+
+            // Instantiates all the children:
+            for (int i = 0; i < childrenList.Count; ++i) 
+            {
+                // Wait while the new module finds a resting place. This is 
+                // BEFORE because this can be called recursively!
+                int waitForFrames = 20;
+                while (waitForFrames >= 0)
+                {
+                    --waitForFrames;
+                    yield return null;
+                }
+
+                // Later we need to references to the CLONES, se here we save
+                // the moduleId the clone is about to receive
+                childrenClonesIds.Add(genome.FindYoungestModule() + 1);
+
+                int moduleId = childrenList[i].GetComponent<ModuleController>().ModuleId;
+                bool isChildRegModule = 
+                    childrenList[i].GetComponent<ModuleController>().IsRegModule;
+
+                // If the child is a regulation module it will call these methods
+                // recursively.
+                if (isChildRegModule)
+                {
+                    // This way the first regulation module will wait until
+                    // the child regulation module has been created (we want
+                    // to avoid instantiating elements in parallel)
+                    yield return Coroutiner.StartCoroutine(
+                        AskCloneRegModule2(moduleId, isChildRegModule));
+                }
+                else
+                {
+                    AskCloneModule(moduleId, isChildRegModule); 
+                }
+
+                int waitForFrames1 = 20;
+                while (waitForFrames1 >= 0)
+                {
+                    --waitForFrames1;
+                    yield return null;
+                }
+            }
+
+            // Moves the children into the parent (using the clones, not the
+            // originals!)
+            int waitForFrames2 = 100;
+            while (waitForFrames2 >= 0)
+            {
+                --waitForFrames2;
+                yield return null;
+            }
+            AskCloneReg_MoveChildrenIntoParent(parentIndex, clonedParentId,
+                childrenClonesIds);
+        }
+
+        /// <summary>
+        /// All children and the parent have been instantiated. Now we need to
+        /// move the children inside of the parent. We also need to rewire
+        /// the local output of the parent (to the regulation neurons of the
+        /// cloned children instead of the originals) and, finally, update the
+        /// information of the inputs used by regulation neurons in the cloned
+        /// children.
+        /// </summary>
+        void AskCloneReg_MoveChildrenIntoParent(int parentIndex, int clonedParentId,
+            List<int> childrenClonesIds)
+        {
+            parentIndex = getModuleIndexById(clonedParentId);
+            RegModuleController parentController =
+                myModules[parentIndex].GetComponent<RegModuleController>();
+
+            for (int i = 0; i < childrenClonesIds.Count; ++i) 
+            {
+                int childIndex = getModuleIndexById(childrenClonesIds[i]);
+                Collider childCollider = myModules[childIndex].GetComponent<Collider>();
+                parentController.AddModuleFromClone(childCollider);
+            }
+
+            // Updates info to rewire the cloned parent (its local output are
+            // now pointing to the original children's regulatory neurons, but
+            // we need to point to the cloned-children's regulatory neurons!)
+            for (int i = 0; i < childrenClonesIds.Count; ++i)
+            {
+                uint childRegulatoryId = 0;
+                childRegulatoryId = optimizer.RegIdFromModId(childrenClonesIds[i]);
+
+                // Remember, this property cannot be directly modified, we first
+                // need a copy!
+                newLink localOutLink = uiVar.localOutputList[clonedParentId][i];
+                localOutLink.otherNeuron = childRegulatoryId;
+                uiVar.localOutputList[clonedParentId][i] = localOutLink;
+            }
+
+            // Rewires the parent's outputs to the cloned-children's regulatory
+            // neurons
+            optimizer.AskChangeTargets(uiVar, clonedParentId);
+            ApplyChanges();
+
+            // Finally, we update the list with inputs for the regulatory neurons
+            // of the children!
+            AskCloneReg_InToReg(clonedParentId, childrenClonesIds);            
+        }
+
+        /// <summary>
+        /// Updates the list with the inputs used by the regulation neuron.
+        /// This may be useful for the interface of advanced regulation schemes.
+        /// </summary>
+        void AskCloneReg_InToReg(int clonedParentId, List<int> childrenClonesIds)
+        {
+            for (int i = 0; i < childrenClonesIds.Count; ++i)
+            {
+                uint childRegulatoryId = 0;
+                childRegulatoryId = optimizer.RegIdFromModId(childrenClonesIds[i]);
+
+                uint connectionId;
+                uint connectionSource;
+                optimizer.ConnectionIdFromModAndTarget(clonedParentId, childRegulatoryId,
+                    out connectionId, out connectionSource);
+
+                newLink regulationLink = new newLink();
+                regulationLink.id = connectionId;
+                regulationLink.otherNeuron = connectionSource;
+                regulationLink.weight = 1.0;
+
+                int childIndex = getModuleIndexById(childrenClonesIds[i]);
+                myModules[childIndex].GetComponent<ModuleController>().
+                RegulatoryInputList.Add(regulationLink);
+            }            
+        }
+
+        /// <summary>
+        /// Used to find a module in the list "myModules" when its ID is known
+        /// </summary>
+        int getModuleIndexById(int id)
+        {
+            for (int i = myModules.Count - 1; i >= 0; --i)
+            {
+                if (myModules[i].GetComponent<ModuleController>().ModuleId == id)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
 
         /// <summary>
         /// Makes a copy of the variables in UiVar that will (sometimes) be
@@ -953,19 +1218,66 @@ namespace SharpNeat.Coordination
                 yield return null;
             }
 
+            // It is better to process the Hierarchy tree in an organized way.
+            // First we will process the regulation modoules that contain no
+            // regulation modules themselves, and so on moving up one level 
+            // at a time.
+
+            // With this dictionary we know if the module has already been 
+            // processed!
+            Dictionary<int, bool> isModuleDone = new Dictionary<int, bool>();
             foreach (int parentId in uiVar.hierarchy.Keys)
             {
-                GameObject parentModule = FindModuleWithId(parentId);
-                foreach (int childId in uiVar.hierarchy[parentId])
+                isModuleDone.Add(parentId, false);
+            }
+
+            // Loop through all the regulation modules and try to add their
+            // children, but then we will check if any of them is also a
+            // regulation module, which would be processed first. When we
+            // finally add the children to a module we mark it as processed
+            // in isModuleDone, so that we can then process the parent, and
+            // so on until all the Hierarchy has been covered in good order!
+            foreach (int parentId in uiVar.hierarchy.Keys)
+            {
+                if (isModuleDone[parentId] == false)
                 {
-                    GameObject childModule = FindModuleWithId(childId);
-                    childModule.GetComponent<ModuleController>().BasicRegulation = false;
-                    Collider childCollider = childModule.GetComponent<Collider>();
-                    parentModule.GetComponent<RegModuleController>().
-                                 MoveModuleInside(childCollider);
+                    MoveAllChildrenInside(parentId, isModuleDone);                    
                 }
             }
         }
+
+        /// <summary>
+        /// Used in ApplyHierarchy so that this part can be called in a
+        /// recursive way.
+        /// </summary>
+        void MoveAllChildrenInside(int parentId, Dictionary<int, bool> isModuleDone)
+		{
+            // Is any of the children a regulation module? In that case, 
+            // do that first!
+            foreach (int childId in uiVar.hierarchy[parentId])
+            {
+                if (uiVar.hierarchy.ContainsKey(childId) &&
+                    isModuleDone[childId] == false)
+                {
+                    // One of the children of this module is a regulation
+                    // module! So we do it first:
+                    MoveAllChildrenInside(childId, isModuleDone);
+                }
+            }
+
+            // No more children are unprocessed regulation modules, so we
+            // continue and mark this module as processed.
+            isModuleDone[parentId] = true;
+			GameObject parentModule = FindModuleWithId(parentId);
+			foreach (int childId in uiVar.hierarchy[parentId])
+			{
+				GameObject childModule = FindModuleWithId(childId);
+				childModule.GetComponent<ModuleController>().BasicRegulation = false;
+				Collider childCollider = childModule.GetComponent<Collider>();
+				parentModule.GetComponent<RegModuleController>().
+				MoveModuleInside(childCollider);
+			}			
+		}
 
         /// <summary>
         /// Returns from the list the module with the desired ID
@@ -1102,8 +1414,23 @@ namespace SharpNeat.Coordination
             if (optimizer.ChampRunning)
             {
                 optimizer.DestroyBest();
-                optimizer.RunBest();
+                Coroutiner.StartCoroutine(Restart2());
             }
+        }
+        /// <summary>
+        /// We want to make sure that all champion genomes have been completely
+        /// removed before proceeding!
+        /// </summary>
+        IEnumerator Restart2()
+        {
+            // Wait before champion genomes are deleted... is this enough?
+            int waitForFrames = 5;
+            while (waitForFrames >= 0)
+            {
+                --waitForFrames;
+                yield return null;
+            }
+            optimizer.RunBest();
         }
 
         /// <summary>

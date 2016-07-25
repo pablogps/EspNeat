@@ -7,15 +7,8 @@ using SharpNeat.Coordination;
 public class OptionsPanelController : MonoBehaviour {
 
 	private ModuleController moduleController;
-    private GameObject weightsAdvanced;
     private GameObject warningDeletePanel;
     private GameObject warningEvolvePanel;
-
-	void Awake()
-	{
-        weightsAdvanced = transform.Find("EditWeightsAdvanced").gameObject;
-        weightsAdvanced.SetActive(false);
-	}
 
 	#region PublicMethods
 
@@ -65,6 +58,15 @@ public class OptionsPanelController : MonoBehaviour {
         moduleController.CallDelete();
         DestroyDeleteWarning();
 	}
+
+    /// <summary>
+    /// Ask moduleController to deliver the order to clone this module.
+    /// </summary>
+    public void AskClone()
+    {
+        moduleController.AskClone();
+        HidePanel();
+    }
 
     /// <summary>
     /// Tries to start an evolutionary process. If this is the active module

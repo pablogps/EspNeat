@@ -84,6 +84,11 @@ public class RegModuleController : ModuleController {
         set { beingDragged = value; }
     }
 
+    public List<GameObject> ContainedModules
+    {
+        get { return containedModules; }
+    }
+
     /// <summary>
     /// When the user clicks on a regulation module, it is set as "being dragged".
     /// This way it is possible to know which module was dropped into which
@@ -170,6 +175,17 @@ public class RegModuleController : ModuleController {
         containedModules.Add(other.gameObject); 
     }
 
+
+    /// <summary>
+    /// When asked by OptionsPanelController, asks uiManager to ask optimizer
+    /// to ask Factory to clone this module.
+    /// Perhaps this should be simplified!!
+    /// </summary>
+    public override void AskClone()
+    {
+        uiManager.AskCloneRegModule(moduleId, isRegModule);
+    }
+
     /// <summary>
     /// Adds the module (saved in the reference otherModule) to this regulation
     /// module
@@ -200,6 +216,36 @@ public class RegModuleController : ModuleController {
         UpdateLocalOutAndNotify();  
 
         warningPanel.SetActive(false);  
+    }
+
+    /// <summary>
+    /// After cloning regulation modules we need to take the cloned children
+    /// into the cloned parent. The delicate point here is that the local outputs
+    /// int the parent have already been created! Also, we do NOT want the 
+    /// parent to end up being the active module. So there are a few diferences.
+    /// </summary>
+    public void AddModuleFromClone(Collider other)
+    {
+        // We save a reference to the other module
+        otherModule = other;
+
+        // The regulation scheme of the other module is reset (cleaned)
+        // This is done first so genome statistics are updated before trying
+        // to add new elements.
+        ResetRegulation();
+        // The children of a regulation module will be part of a pandemonium group!
+        MoveToPandemonium();
+
+        beingDragged = true;
+
+        MoveModuleInside(otherModule);
+
+        // The new module is added to the hierarchy dictionary in
+        // UImanager
+        uiManager.GetNewRegulationModuleContent(
+            moduleId, otherModule.GetComponent<ModuleController>().ModuleId);
+
+        warningPanel.SetActive(false); 
     }
 
     /// <summary>
@@ -345,7 +391,7 @@ public class RegModuleController : ModuleController {
         other.transform.position += new Vector3(0.51f, 0f, 0f);
 
         // 6) Canvas layer 0 (so it is surely on top!)
-        otherController.ObjectCanvas.GetComponent<Canvas>().sortingLayerID = 0;
+        otherController.ObjectCanvas.GetComponent<Canvas>().sortingOrder = 0;
     }
 
     /// <summary>

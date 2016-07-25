@@ -460,6 +460,36 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
+    /// This is used to clone a module. Note two things:
+    /// 1) The cloned module will never be the active module! (It will be placed
+    /// immediately before.)
+    /// 2) Complex modules (such as regulation modules) will need some further
+    /// work to make sure the connexions among modules are correct.
+    /// </summary>
+    public void AskCloneModule(UIvariables uiVar, int whichModule)
+    {
+        _ea.GenomeList[0].GenomeFactory.CloneModule(
+                _ea.GenomeList, Application.persistentDataPath, experiment_name,
+				uiVar, whichModule);   
+		UpdateChampion();
+		SavePopulation(Application.persistentDataPath);   
+    }
+
+    /// <summary>
+    /// Used to rewire cloned regulation modules (note that while cloning them
+    /// in factory we do not know the IDs for the cloned children)
+    /// </summary>
+    public uint RegIdFromModId(int moduleId)
+    {
+        // The base is the same for all genomes, so we use the first one.
+        // First finds the index for the regulatory neuron, then returns
+        // the ID of this neuron.
+        int regIndex = 0;
+        _ea.GenomeList[0].NeuronGeneList.FindRegulatory(moduleId, out regIndex);
+        return _ea.GenomeList[0].NeuronGeneList[regIndex].Id;
+    }
+
+    /// <summary>
     /// Used from regulation modules to add a new local output neuron connected
     /// to the regulatory neuron of the module we are adding. Also creates 
     /// connections from local inputs to the new local output.
@@ -482,6 +512,38 @@ public class EspNeatOptimizer : Optimizer
     {
         _ea.GenomeList[0].GenomeFactory.ChangeWeights(_ea.GenomeList, uiVar);
         UpdateChampion();
+    }
+
+    /// <summary>
+    /// Used from UImanager to change only the local output targets of a 
+    /// module in the genome population.
+    /// </summary>
+    public void AskChangeTargets(UIvariables uiVar, int whichModule)
+    {
+        _ea.GenomeList[0].GenomeFactory.ChangeTargets(_ea.GenomeList, uiVar, whichModule);
+        UpdateChampion();
+    }
+
+    /// <summary>
+    /// Given a module and target, returns the ID of a protected connection with
+    /// such target, as well as the source.
+    /// </summary>
+    public void ConnectionIdFromModAndTarget(int moduleId, uint targetId,
+                                             out uint connectionId, out uint sourceId)
+    {
+        connectionId = 0;
+        sourceId = 0;
+
+        foreach (ConnectionGene connection in _ea.GenomeList[0].ConnectionGeneList)
+        {
+            if (connection.ModuleId == moduleId &&
+                connection.TargetNodeId == targetId)
+            {
+                connectionId = connection.InnovationId;
+                sourceId = connection.SourceNodeId;
+                return;
+            }
+        }
     }
 
     /// <summary>
