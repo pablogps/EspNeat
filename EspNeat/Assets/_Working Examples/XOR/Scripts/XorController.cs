@@ -57,8 +57,7 @@ public class XorController : UnitController
             // However sound my reasoning might have been to choose 0.9f as the
             // xMax reference, the fact is we can easily fit one more.
             widthFit = (int)(Mathf.Abs(xMax - xIni) / spacing) + 1;
-
-            Debug.Log("ini " + xIni + " fin " + xMax + " fit " + widthFit);
+            //Debug.Log("ini " + xIni + " fin " + xMax + " fit " + widthFit);
 
             gotCamera = true;
         }
@@ -77,7 +76,7 @@ public class XorController : UnitController
 
     void OnDestroy()
     {
-        --ID_counter;   
+        --ID_counter;  
     }	
 
     //Used (hopefully well) in Optimizer --> DestroyBest

@@ -19,3 +19,6 @@ C:\Users\Public\Documents\Unity Projects\NEATmanualSelect\Temp\bin\Debug\UnityEn
 C:\Users\Public\Documents\Unity Projects\NEATmanualSelect\obj\Debug\Assembly-CSharp.csprojResolveAssemblyReference.cache
 C:\Users\Public\Documents\Unity Projects\NEATmanualSelect\obj\Debug\Assembly-CSharp.dll
 C:\Users\Public\Documents\Unity Projects\NEATmanualSelect\obj\Debug\Assembly-CSharp.pdb
+C:\Users\Public\Documents\Unity Projects\_GitHub\EspNeatGitHubVersion\EspNeat\obj\Debug\Assembly-CSharp.csprojResolveAssemblyReference.cache
+C:\Users\Public\Documents\Unity Projects\_GitHub\EspNeatGitHubVersion\EspNeat\obj\Debug\Assembly-CSharp.dll
+C:\Users\Public\Documents\Unity Projects\_GitHub\EspNeatGitHubVersion\EspNeat\obj\Debug\Assembly-CSharp.pdb
