@@ -92,6 +92,10 @@ public class EspNeatOptimizer : Optimizer
     // Manual evolution extension.
     static NeatManualEvolution<NeatGenome> manual_ea;
 
+    // This is used when the user wants to choose the champion genome (but
+    // not to proceed with evolution!)
+    private bool isSetChampion = false;
+
     #region Properties
 
     /// <summary>
@@ -141,6 +145,11 @@ public class EspNeatOptimizer : Optimizer
     {
         get { return manualWait; }
         set { manualWait = value; }
+    }
+
+    public bool IsSetChampion
+    {
+        set { isSetChampion = value; }
     }
 
     #endregion
@@ -305,7 +314,7 @@ public class EspNeatOptimizer : Optimizer
     {
         // Old fitness values will be recovered and used to produce offspring.
         SetAborted();
-        EndManual();        
+        EndManual(); 
         // Automatic testing of units disabled (we will abort, this is not needed).
         EaIsNextManual(true);
         GoThenAuto();
@@ -675,6 +684,20 @@ public class EspNeatOptimizer : Optimizer
         // problematic, so at least warns the developer:
         Debug.Log("Champion not found in the current population!");
     }
+    public void UpdateChampion(uint champId)
+    {
+        foreach (NeatGenome genome in _ea.GenomeList)
+        {
+            if (genome.Id == champId)
+            {
+                _ea.CurrentChampGenome = genome;
+                return;
+            }
+        }
+        // If the genome is not found, leaves things as they are. Which may be
+        // problematic, so at least warns the developer:
+        Debug.Log("Champion not found in the current population!");
+    }
 
     /// <summary>
     /// Used from GuiManager to delete save files!
@@ -767,6 +790,16 @@ public class EspNeatOptimizer : Optimizer
             isReward = true;
             manual_ea.IsReward = true;
         }
+    }
+
+    /// <summary>
+    /// In manual selection we sometimes want to select an interesting individual
+    /// as champion, but NOT to continue evolution. This method is to do that.
+    /// </summary>
+    public void ManualEvolutionSetChampion()
+    {
+        isSetChampion = true;
+        manual_ea.ActivateSetChampion();
     }
 
     #endregion
@@ -1107,20 +1140,48 @@ public class EspNeatOptimizer : Optimizer
         // in them! (It MIGHT work as expected, but this should be really 
         // clear before allowing these units to be selected. 
         // if (hit.collider.tag == "Unit" || hit.collider.tag == "BestUnit") { 
+
+        // First we get the game object
+        GameObject targetObject = null;
         if (hit_collider.tag == unit_tag)
         {
-            // Let us highlight this units
-            CreateBubble(hit_collider.gameObject);            
-            // This function will mark units as selected and will send them to 
-            // NeatManualEvolution
-            MarkAndSend(hit_collider.gameObject.GetComponent<UnitController>()); 
+            targetObject = hit_collider.gameObject;
+            ProcessHit2(targetObject);
         }
         else if (hit_collider.tag == "UnitChild")
         {          
-            // The same, but accessing the parent GameObject
-            CreateBubble(hit_collider.transform.parent.gameObject);   
-            MarkAndSend(hit_collider.transform.parent.GetComponent<UnitController>());          
-        }    
+            targetObject = hit_collider.transform.parent.gameObject; 
+            ProcessHit2(targetObject);          
+        }  
+    }
+
+    /// <summary>
+    /// We have a valid target, here we decide what to do with it. If we are
+    /// in normal interactive evolution the unit is marked/unmarked and added
+    /// or removed from the list of selected units (in the script NeatManuaEvolution)
+    /// 
+    /// If we are trying to select a champion, we send the selected unit to
+    /// NeatManualEvolution (using a different method) and we do not mark or
+    /// unmark the unit.
+    /// </summary>
+    void ProcessHit2(GameObject targetObject)
+    {
+        // If we are in normal interactive evolution, we process the unit
+        if (isSetChampion == false)
+        {
+            // Let us highlight this units
+            CreateBubble(targetObject);            
+            // This function will mark units as selected and will send them to 
+            // NeatManualEvolution
+            MarkAndSend(targetObject.GetComponent<UnitController>()); 
+        }
+        else
+        {                   
+            // If we were looking for a champion, we also pass the unit for
+            // (different) processing:
+            manual_ea.SelectChampion(
+                targetObject.GetComponent<UnitController>().GetBox());
+        }  
     }
 
     /// <summary>

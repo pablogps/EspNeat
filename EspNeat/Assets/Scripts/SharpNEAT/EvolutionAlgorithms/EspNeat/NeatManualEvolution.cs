@@ -25,6 +25,7 @@ public class NeatManualEvolution<TGenome>
 	// We need a reference to optimizer so we can instantiate objects!
 	private EspNeatOptimizer optimizer;
     private IGenomeDecoder<TGenome,IBlackBox> decoder;
+    IList<TGenome> genome_list;
     private double[] saved_fitness;
     private IBlackBox[] unit_brains;
     private bool next_generation = false;
@@ -33,6 +34,15 @@ public class NeatManualEvolution<TGenome>
 	private Dictionary<IBlackBox, int> brain_index = new Dictionary<IBlackBox, int>();
 	private double fitness_for_chosen = 10.0;
     private bool isReward = true;
+
+    // These are used when the user wants to choose the champion genome (but
+    // not to proceed with evolution!)
+    private bool isSetChampion = false;
+    // Mouse texture
+    private Texture2D cursorTexture = (Texture2D)Resources.Load("Textures/NewUI/championCursor");
+    private Vector2 cursorCentreOffset = new Vector2(100f, 100f);
+
+    #region Properties
 
     public NeatManualEvolution(EspNeatOptimizer sourceOptimizer, double fitness)
     {
@@ -61,18 +71,24 @@ public class NeatManualEvolution<TGenome>
         set { isReward = value; }
     }
 
+    #endregion
+
+    #region Public Methods
+
     /// <summary>
     /// This function coordinates the manual selection process
     /// </summary>
     /// <param name="genome_list">Genome list.</param>
-	public void ManualSelection(IList<TGenome> genome_list)
+	public void ManualSelection(IList<TGenome> given_genome_list)
     {
+        genome_list = given_genome_list;
+
         // Resets the abort trigger!
         is_aborted = false;
 
 		// First we copy the fitness values in case we want to abort, 
         // then we set fitness to 0
-		saved_fitness = CopyAndClear(genome_list);
+		saved_fitness = CopyAndClear();
         // Here we will save the brains (which we will need to kill our units)
         if (unit_brains == null)
         {
@@ -84,15 +100,26 @@ public class NeatManualEvolution<TGenome>
         // Resets the list for selected genomes.
         selected_genomes = new Dictionary<int, bool>();
         // Creates the units...
-        WakeUp(genome_list);
+        WakeUp();
         // Now we need to wait while the useer chooses different units and we 
         // let optimizer that this process can start.
         optimizer.ManualWait = false;
         // We call this function from coroutiner since it is an IEnumerator
-		Coroutiner.StartCoroutine(ManualEvaluation(genome_list));
+		Coroutiner.StartCoroutine(ManualEvaluation());
         // Then units are killed and NeatEvolutionAlgorithm continues 
         // creating the offspring!
         // Kill is called at the end of ManualEvaluation
+    }
+
+    /// <summary>
+    /// In manual selection we sometimes want to select an interesting individual
+    /// as champion, but NOT to continue evolution. This option allows to do
+    /// this (and affects GetChosenPhenome)
+    /// </summary>
+    public void ActivateSetChampion()
+    {
+        isSetChampion = true;
+        Cursor.SetCursor(cursorTexture, cursorCentreOffset, CursorMode.Auto);
     }
 
 	/// <summary>
@@ -104,14 +131,14 @@ public class NeatManualEvolution<TGenome>
 	public void GetChosenPhenome(IBlackBox unit_brain)
 	{
 		// TODO: Prepare for exception if the brain is not found in the dictionary!
-		int genome_id = brain_index[unit_brain]; 
-        // UnityEngine.Debug.Log("chosen brain " + genome_id);
+        int genome_idx = brain_index[unit_brain]; 
+        // UnityEngine.Debug.Log("chosen brain " + genome_idx);
 
-		//If this genome is not already included
-        if (!selected_genomes.ContainsKey(genome_id))
-		{
-            selected_genomes.Add(genome_id, isReward);			
-		}
+        //If this genome is not already included
+        if (!selected_genomes.ContainsKey(genome_idx))
+        {
+            selected_genomes.Add(genome_idx, isReward);          
+        }  
 	}
 
     /// <summary>
@@ -121,20 +148,53 @@ public class NeatManualEvolution<TGenome>
     public void DeselectPhenome(IBlackBox unit_brain)
     {
         // TODO: Prepare for exception if the brain is not found in the dictionary!
-        int genome_id = brain_index[unit_brain];
-        // UnityEngine.Debug.Log("dechosen brain " + genome_id);
+        int genome_idx = brain_index[unit_brain];
+        // UnityEngine.Debug.Log("dechosen brain " + genome_idx);
 
         //See if it was already there
-        if (selected_genomes.ContainsKey(genome_id))
+        if (selected_genomes.ContainsKey(genome_idx))
         {           
-            selected_genomes.Remove(genome_id);      
+            selected_genomes.Remove(genome_idx);      
         }
         else
         {
             // TODO: Create exception, if it needs to be deselected it SHOULD
             // be found!!
-        }
-           
+        }           
+    }
+
+    /// <summary>
+    /// Gets the champion from optimizer, and updates this information in
+    /// Factory.
+    /// </summary>
+    public void SelectChampion(IBlackBox unit_brain)
+    {
+        // TODO: Prepare for exception if the brain is not found in the dictionary!
+        int genome_idx = brain_index[unit_brain];
+
+        // Perhaps surprisingly this script does not have access to
+        // NeatEvolutionAlgorithm, so we will use Otimizer to update the
+        // champion!
+        uint champId = genome_list[genome_idx].Id;
+        optimizer.UpdateChampion(champId);
+
+        // We have the champion, so we can deactivate the search.
+        DeactivateSetChampion();
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// We already have a champion, or the user changed her mind and decided
+    /// to cancel evolution or create a new generation.
+    /// </summary>
+    void DeactivateSetChampion()
+    {
+        isSetChampion = false;
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+        optimizer.IsSetChampion = false;
     }
 
     /// <summary>
@@ -149,7 +209,7 @@ public class NeatManualEvolution<TGenome>
 	/// two times as desirable for reproduction, a value of 3 will make them 3
 	/// times as desirable and so on.
     /// </summary>
-    double[] CopyAndClear(IList<TGenome> genome_list) 
+    double[] CopyAndClear() 
     {
 		double[] copy = new double[genome_list.Count];
 		for (int index = 0; index < genome_list.Count; ++index) 
@@ -165,7 +225,7 @@ public class NeatManualEvolution<TGenome>
     /// instantiate units. Phenomes are saved (to call the unit's killing)
 	/// </summary>
 	/// <param name="genome_list">Genome list.</param>
-    void WakeUp(IList<TGenome> genome_list)
+    void WakeUp()
 	{
         for (int index = 0; index < genome_list.Count; ++index)
         {
@@ -189,7 +249,7 @@ public class NeatManualEvolution<TGenome>
     /// function in Update() (not available now) (does this make sense?)
 	/// </summary>
 	/// <returns>The evaluation.</returns>
-	IEnumerator ManualEvaluation(IList<TGenome> genome_list) 
+	IEnumerator ManualEvaluation() 
     {
         while (next_generation == false)
         {
@@ -197,16 +257,20 @@ public class NeatManualEvolution<TGenome>
         }
         // When this is finished, we reset the waiting variable
         next_generation = false;
+
+        // Just in case we deactivate "set champion"
+        DeactivateSetChampion();
+
         // User evaluation is complete, now units are not needed
         Kill();
 		// Now it is time to update fitness values
 		if (is_aborted) 
 		{
-			Abort(genome_list);
+			Abort();
 		}
 		else
 		{
-			UpdateFitness(genome_list);
+			UpdateFitness();
 		}
     }
 
@@ -225,10 +289,10 @@ public class NeatManualEvolution<TGenome>
 	/// <summary>
 	/// In case we need to exit the manual selection without completing the
 	/// process (maybe the user changed his/her mind?)
-	/// Reset fitness values and proceed with automatic evolution:
+	/// Reset fitness values:
 	/// maybe change so that evolution stops completely
 	/// </summary>
-	void Abort(IList<TGenome> genome_list)
+	void Abort()
 	{
 		for (int index = 0; index < genome_list.Count; ++index) 
 		{
@@ -236,7 +300,7 @@ public class NeatManualEvolution<TGenome>
 		}
 	}
 
-	void UpdateFitness(IList<TGenome> genome_list)
+	void UpdateFitness()
 	{
         foreach (KeyValuePair<int, bool> pair in selected_genomes)
         {
@@ -251,7 +315,9 @@ public class NeatManualEvolution<TGenome>
                 genome_list[pair.Key].EvaluationInfo.SetFitness(0.0); 
             } 
         }
-	}
+    }
+
+    #endregion
 }
 
 /*

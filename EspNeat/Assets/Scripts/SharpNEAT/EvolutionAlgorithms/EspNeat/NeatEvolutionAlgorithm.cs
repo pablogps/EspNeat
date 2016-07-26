@@ -279,11 +279,12 @@ namespace SharpNeat.EvolutionAlgorithms
                 yield return new WaitForSeconds(0.1f);
 
                 // Before proceeding with offspring we need to SortSpecies again
-                // (we have changed fitness values). It is not really worth 
-                // checking if we have aborted without changes.
-                SortSpecieGenomes();
-                // Store reference to best genome.
-                UpdateBestGenome();
+                // If we have aborted then we have not changed fitness values!
+                if (!manual_ea.IsAborted)
+                {
+                    SortSpecieGenomes();
+                    UpdateBestGenome();
+                }
 
                 isManualStop = manual_ea.IsAborted;
             }
@@ -905,6 +906,7 @@ namespace SharpNeat.EvolutionAlgorithms
                     bestSpecieIdx = i;
                 }
             }
+
             _currentBestGenome = bestGenome;
             _bestSpecieIdx = bestSpecieIdx;
         }
