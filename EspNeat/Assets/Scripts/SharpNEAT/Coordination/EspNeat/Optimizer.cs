@@ -18,10 +18,10 @@ public abstract class Optimizer : MonoBehaviour
 	// Evolution algorithms will need access to a few variables.
 
     // Number of trials per generation (to get an average fitness value).
-    public int trials = 3;
-    public float trial_duration = 70;
+    private int trials = 1;
+    private float trial_duration = 40;
     // Fitness goal. If reached the evolutionary process stops.
-    public float stopping_fitness = 500;
+    private float stopping_fitness = 500;
 
     public int Trials
     {
