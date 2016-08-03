@@ -66,7 +66,7 @@ namespace SharpNeat.Genomes.Neat
     public class NeuronGeneList : List<NeuronGene>, INodeList
     {
         static readonly NeuronGeneComparer __neuronGeneComparer = 
-            new NeuronGeneComparer();
+                new NeuronGeneComparer();
         // Indicates the first neuron that belongs to the current module.
         // It will be of type local_input (regulatory neurons are stored
         // before the modules).

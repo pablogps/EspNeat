@@ -104,17 +104,36 @@ public class RegModuleController : ModuleController {
     }
 
     /// <summary>
+    /// Adds the ID of the children.
+    /// 
+    /// Independent method so it can be called if any of the children is itself
+    /// a regulation module.
+    /// </summary>
+    public void AddChildrenToList(List<int> childrenList)
+    {
+        foreach (GameObject child in containedModules)
+        {
+            ModuleController childController = child.GetComponent<ModuleController>();
+            int childId = childController.ModuleId;
+            childrenList.Add(childId);
+
+            // If the child is also a regulation module we need to add its
+            // children as well!
+            if (childController.IsRegModule)
+            {
+                child.GetComponent<RegModuleController>().AddChildrenToList(childrenList);
+            }
+        }        
+    }
+
+    /// <summary>
     /// Calls the second part, EvolveContinue. First creates a list with the
     /// children of this module.
     /// </summary>
     public override void Evolve()
     {
         List<int> childrenList = new List<int>();
-        foreach (GameObject child in containedModules)
-        {
-            int childId = child.GetComponent<ModuleController>().ModuleId;
-            childrenList.Add(childId);
-        }
+        AddChildrenToList(childrenList);
 
         // EvolveContinue is in the base class ModuleController
         EvolveContinue(childrenList);
@@ -184,6 +203,34 @@ public class RegModuleController : ModuleController {
     public override void AskClone()
     {
         uiManager.AskCloneRegModule(moduleId, isRegModule);
+    }
+
+    //
+
+    /// <summary>
+    /// Deletes the regulation module and all its children.
+    /// 
+    /// When the user tries to delete a regulation module we want to
+    /// 1st) Pass the children list to UImanager
+    /// 2nd) Delete the parent (which requires accessing the base function)
+    /// 3rd) Delete the children 
+    /// 
+    /// It is possible to delete the children FIRST (which could be called from
+    /// here!) but that requires rewiring the parent's output to avoid trouble
+    /// in the process.
+    /// </summary>
+    public override void CallDelete()
+    {      
+        uiManager.AskDeleteRegulation(moduleId, containedModules);
+    }
+
+    /// <summary>
+    /// Second part of CallDelete: after the children list has been provided
+    /// to UImanager, the parent is deleted via de base function CallDelete.
+    /// </summary>
+    public void CallBaseDelete()
+    {
+        base.CallDelete();
     }
 
     /// <summary>

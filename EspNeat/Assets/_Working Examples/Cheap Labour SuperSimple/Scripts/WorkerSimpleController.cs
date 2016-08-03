@@ -9,7 +9,8 @@ public class WorkerSimpleController : UnitController {
   public float rotation_speed = 100f;
   // These variable characterize the unit's sensors
   public float sensor_range = 2f; // proximity sensor's reach
-  public float seeing_range = 10f; // how far the eyes see  
+  //  How far the eyes see. The original value was 10, about half the arena. 
+  public float seeing_range = 10f; // 
   public float field_of_view = 20f; // in degrees
   public LayerMask see_layer; // will only see objects in this layer (performance)
   public LayerMask no_sense_layer; // will NOT sense objects in this layer (performance)
@@ -264,7 +265,7 @@ public class WorkerSimpleController : UnitController {
     if (rigid_body.velocity.magnitude > max_speed) {
       // This fixes the magnitude of the vector but still allows to change direction!
       rigid_body.velocity = rigid_body.velocity.normalized * max_speed;
-    }  */  
+    } */ 
   }  
 //------------------------------------------------------------------------------
   // This are the range sensors for the input
@@ -294,7 +295,7 @@ public class WorkerSimpleController : UnitController {
       // To change this, we need to know the distance to the different objects
       if (hit.transform.name == target || hit.transform.name == "ChasmTrigger") {
         // Cambiar color ojos?
-        return 1f - hit.distance / seeing_range;
+        return 1f - (hit.distance / seeing_range);
       } 
     }
     return 0f;
