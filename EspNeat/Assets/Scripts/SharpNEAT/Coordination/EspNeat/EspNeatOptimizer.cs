@@ -369,6 +369,7 @@ public class EspNeatOptimizer : Optimizer
         UnitController controller = obj.GetComponent<UnitController>();
         ControllerMap.Add(phenome, controller);
         controller.Activate(phenome);
+
         // Special tag so we can selectively actuate on these units.
         // For instance to kill them while neuroevolution is active
         obj.tag = "BestUnit";
@@ -649,12 +650,6 @@ public class EspNeatOptimizer : Optimizer
     {
         ++generation;
 
-/*        Debug.Log("enter mutate once!");
-        for (int i = 0; i < _ea.GenomeList[0].NeuronGeneList.Count; ++i)
-        {
-            UnityEngine.Debug.Log("index " + i + " id " + _ea.GenomeList[0].NeuronGeneList[i].Id);
-        }*/
-
         foreach (NeatGenome genome in _ea.GenomeList)
         {
             genome.SimpleMutation();
@@ -690,7 +685,8 @@ public class EspNeatOptimizer : Optimizer
         {
             if (genome.Id == champId)
             {
-                _ea.CurrentChampGenome = genome;
+				_ea.CurrentChampGenome = genome;
+				SavePopulation(Application.persistentDataPath);    
                 return;
             }
         }
@@ -805,6 +801,24 @@ public class EspNeatOptimizer : Optimizer
     #endregion
 
     #region Private Methods
+
+	/// <summary>
+	/// Debugging porpuses
+	/// </summary>
+	void DisplayUnit(NeatGenome genome)
+	{
+		Debug.Log("Nodes");
+		foreach (NeuronGene neuron in genome.NeuronGeneList)
+		{
+			Debug.Log("id " + neuron.Id + " module " + neuron.ModuleId + " pandem " + neuron.Pandemonium);
+		}
+
+		Debug.Log("Connections");
+		foreach (ConnectionGene link in genome.ConnectionGeneList)
+		{
+			Debug.Log("id " + link.InnovationId + " source " + link.SourceNodeId + " target " + link.TargetNodeId + " weight " + link.Weight);
+		}
+	}
 
     /// <summary>
     /// Reads the configuration document and passes some object instances

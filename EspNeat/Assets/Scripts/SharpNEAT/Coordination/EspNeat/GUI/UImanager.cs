@@ -361,6 +361,32 @@ namespace SharpNeat.Coordination
             myModules.Add(newModule);
         }
 
+        public void AskDeleteRegulation(int whichModule, List<GameObject> children)
+        {
+            // Gets parent game object
+            int parentIndex = getModuleIndexById(whichModule);
+            GameObject parent = myModules[parentIndex];
+
+            // Removes the parent entry from the hierarchy dictionary
+            uiVar.hierarchy.Remove(whichModule);
+            SaveHierarchy();
+
+            // Deletes the parent first (this way we do not have to rewire
+            // its output so as to avoid trouble!
+            parent.GetComponent<RegModuleController>().CallBaseDelete();
+
+            // Deletes the children
+            for (int i = children.Count - 1; i >= 0; --i)
+            {
+                ModuleController childController =
+                        children[i].GetComponent<ModuleController>();
+
+                int moduleId = childController.ModuleId;
+
+                childController.CallDelete();
+            }
+        }
+
         /// <summary>
         /// This method deletes the chosen module.
         /// 
@@ -425,14 +451,14 @@ namespace SharpNeat.Coordination
         /// </summary>
         public void SetAnotherActive(int whichModule)
         {
-            //uiVar.moduleIdList();
             if (uiVar.moduleIdList.Count > 1)
             {
                 for (int i = 1; i < uiVar.moduleIdList.Count; ++i)
                 {
-                    if (i != whichModule)
+                    int candidateId = uiVar.moduleIdList[i];
+                    if (candidateId != whichModule)
                     {
-                        SetModuleActive(i);
+                        SetModuleActive(candidateId);
                         return;
                     }
                 }
@@ -728,7 +754,7 @@ namespace SharpNeat.Coordination
             {
                 // Local out to all output neurons!
                 IncreaseLocalOutputListBasic(newId);
-            }
+			}
 
             // Adds a basic-regulation connection to the list
             IncreaseRegulationListBasic(newId);

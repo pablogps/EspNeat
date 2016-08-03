@@ -560,14 +560,13 @@ namespace SharpNeat.Genomes.Neat
         public void AddNewModule(IList<NeatGenome> genomeList, string genericFilePath,
                                  string experimentName, UIvariables uiVar)
         {
-            SavePopulation(genomeList, genericFilePath, experimentName);
+			SavePopulation(genomeList, genericFilePath, experimentName);
 			NeatGenome champion = _optimizer.EvolutionAlgorithm.CurrentChampGenome;
             // This is now done before calling new module, so this should be
             // not neccessary
 			UpdateChampionsProtectedWeights(champion, uiVar);
 			CloneChampion(genomeList, champion);
 			NewModule(genomeList, uiVar);
-
             _optimizer.ResetGUI();
         }
 
@@ -1766,7 +1765,7 @@ namespace SharpNeat.Genomes.Neat
 			genomeList[0].ConnectionGeneList.LocateFirstId();
 
             foreach (NeatGenome genome in genomeList)
-            {           
+			{      
                 _innovationIdGenerator.Reset(lastId);
                 MakeModule(genome, uiVar);
 			}
@@ -1862,7 +1861,7 @@ namespace SharpNeat.Genomes.Neat
             // innovationId values) and their connections, marked as "protected".
             // We also count how many come from local output (this is used to
             // spare a predictable amount of IDs in the next lines).
-            int fromLocalOut = 0;
+			int fromLocalOut = 0;
             List<uint> localInputId = MakeLocalInput(
                     genome, uiVar.localInputList[_currentModule], out fromLocalOut);
 
@@ -1897,7 +1896,7 @@ namespace SharpNeat.Genomes.Neat
             // sorry, specially if we implement features like evolving older
             // modules, which will make the list not sorted! <-- This has been done!
             genome.NeuronGeneList.LocateFirstIndex();
-            // Adds hidden connections.
+			// Adds hidden connections.
             PopulateModule(genome, localInputId, localOutputId);
         }
 

@@ -116,6 +116,9 @@ namespace SharpNeat.Genomes.Neat
         /// </summary>
         public void LocateFirstId()
         {
+            // We need to set the value to 0 first, in case there are no 
+            // connections at all! (So that the loop would never even begin!)
+            _firstActiveIndex = 0;
             for (int index = Count - 1; index > -1; --index)
             {
                 // If the element is protected, then the previous item was the 

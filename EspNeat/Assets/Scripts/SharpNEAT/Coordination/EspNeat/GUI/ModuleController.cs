@@ -533,7 +533,7 @@ public class ModuleController : MonoBehaviour {
     /// Deletes this module. This is called from the options menu, 
     /// which promts a confirmation panel, since this actions may lose progress.
     /// </summary>
-    public void CallDelete()
+    public virtual void CallDelete()
     {
         if (isActive)
         {

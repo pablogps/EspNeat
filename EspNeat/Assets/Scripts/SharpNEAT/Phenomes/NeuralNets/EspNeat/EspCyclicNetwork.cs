@@ -515,8 +515,9 @@ namespace SharpNeat.Phenomes.NeuralNets
                 {
 					// We need to identify the neuron with maximum pre-activation
                     // activity.
-                    int maxIndex = 0;
-                    double maxPreActivity = 0;
+                    int maxIndex = -1;
+					// We require at least a small activation threshold
+                    double maxPreActivity = 0.05;
 					for (int k = 0; k < _phenVars.pandemoniumCounts[j]; ++k)
 					{
                         // UnityEngine.Debug.Log("Regulatory in " + j + ", index " + _pandemonium[j][k]);
@@ -531,7 +532,11 @@ namespace SharpNeat.Phenomes.NeuralNets
                         _preActivationArray[_pandemonium[j][k]] = 0.0;
                         _postActivationArray[_pandemonium[j][k]] = 0.0;
 					}
-                    _postActivationArray[maxIndex] = 1.0;
+					// If there is at least one regulatory neuron above threshold:
+					if (maxIndex != -1)
+					{
+						_postActivationArray[maxIndex] = 1.0;						
+					}
 				}
 /*				UnityEngine.Debug.Log("CHECK after pandemonium MATRIX update CHECK CHECK CHECK");
 				for (int h = 0; h < _phenVars.neuronCount; ++h)
