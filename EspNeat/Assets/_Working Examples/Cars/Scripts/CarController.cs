@@ -8,12 +8,17 @@ public class CarController : UnitController {
 	public float turn_speed = 180f;
 	public float sensor_range = 10f;
 
-	// We need to consider the trial lenght so fitness does not depend on the trial length! (See Start())
+    public LayerMask onlyDefaultLayer;
+    public LayerMask carsLayer;
+
+	// We need to consider the trial lenght so fitness does not depend
+    // on the trial length! (See Start())
 	private static float fit_experiment_length = 0f;
 	private float fit_advance_multiplier = 0.3f;
 	private float fit_wall_hit_multiplier = 0.1f;
 
-	// Upon start cars will substract 1 point when they detect the first road piece, so we offset the value
+	// Upon start cars will substract 1 point when they detect the first
+    // road piece, so we offset the value
 	private int advanced = 1; 
 	private int wall_hits = 0; 
 	private int last_piece = 17;
@@ -41,10 +46,14 @@ public class CarController : UnitController {
   
 	public override float GetFitness()
 	{
-		float fit =  (advanced * fit_advance_multiplier - wall_hits * fit_wall_hit_multiplier) * fit_experiment_length;
-		//Debug.Log(fit + " " + (advanced * fit_advance_multiplier - wall_hits * fit_wall_hit_multiplier)  + " " + 
-		//	      (advanced * fit_advance_multiplier + " " + wall_hits * fit_wall_hit_multiplier) );
-		// After evaluation the unit is destroyed, so we do not need to reset values, but it does not hurt either!
+		float fit =  (advanced * fit_advance_multiplier - wall_hits *
+                     fit_wall_hit_multiplier) * fit_experiment_length;
+		//Debug.Log(fit + " " + (advanced * fit_advance_multiplier - wall_hits *
+        //          fit_wall_hit_multiplier)  + " " + 
+		//	        (advanced * fit_advance_multiplier + " " + wall_hits *
+        //          fit_wall_hit_multiplier) );
+		// After evaluation the unit is destroyed, so we do not need to reset
+        // values, but it does not hurt either!
 		advanced = 0;
 		wall_hits = 0;
 		if (fit > 0)
@@ -55,12 +64,14 @@ public class CarController : UnitController {
 	}
 
 	void Start()
-	{
+	{        
 		// We are evolving a controller for a car driving alone: we do not want it to collide with
 		// other cars during evolution! (This is specially damaging at start, where all units start
 		// at the same point!)
-		int car_layer = LayerMask.NameToLayer("Car");
-		Physics.IgnoreLayerCollision(car_layer, car_layer, true);
+        // Note: carsLayer.value = 256 (2^8) but name to layer will return 8, 
+        // which is the value needed in IgnoreLayerCollision.
+        int carsLayerInt = LayerMask.NameToLayer("Car");
+        Physics.IgnoreLayerCollision(carsLayerInt, carsLayerInt, true);
 
 		// Looking for objects is expensive, so we make this static and only look for 
 		// them in the first instance!
@@ -69,12 +80,13 @@ public class CarController : UnitController {
 			fit_experiment_length = 1f / 
 				GameObject.Find("Evaluator").GetComponent<Optimizer>().TrialDuration;
 		}
+
+        RandomizeStartConditions();
 	}
 
 	// Update is called once per frame
 	void FixedUpdate()
-	{
-		
+	{		
 		//MANUAL DRIVING
 		/*
 		//grab the input axes
@@ -103,53 +115,25 @@ public class CarController : UnitController {
 			float leftSensor = 0f;
 			float rightFrontSensor = 0f;
 			float rightSensor = 0f;
-			// Front sensor
-			RaycastHit hit;
-			if (Physics.Raycast(transform.position + transform.forward * 1.1f, 
-								transform.TransformDirection(new Vector3(0, 0, 1).normalized), 
-								out hit, sensor_range))
-			{
-				if (hit.collider.tag.Equals("Wall"))
-				{
-					frontSensor = 1 - hit.distance / sensor_range;
-				}
-			}
-			if (Physics.Raycast(transform.position + transform.forward * 1.1f, 
-								transform.TransformDirection(new Vector3(0.5f, 0, 1).normalized), 
-								out hit, sensor_range))
-			{
-				if (hit.collider.tag.Equals("Wall"))
-				{
-					rightFrontSensor = 1 - hit.distance / sensor_range;
-				}
-			}
-			if (Physics.Raycast(transform.position + transform.forward * 1.1f, 
-								transform.TransformDirection(new Vector3(1, 0, 0).normalized), 
-								out hit, sensor_range))
-			{
-				if (hit.collider.tag.Equals("Wall"))
-				{
-					rightSensor = 1 - hit.distance / sensor_range;
-				}
-			}
-			if (Physics.Raycast(transform.position + transform.forward * 1.1f, 
-								transform.TransformDirection(new Vector3(-0.5f, 0, 1).normalized), 
-								out hit, sensor_range))
-			{
-				if (hit.collider.tag.Equals("Wall"))
-				{
-					leftFrontSensor = 1 - hit.distance / sensor_range;
-				}
-			}
-			if (Physics.Raycast(transform.position + transform.forward * 1.1f, 
-								transform.TransformDirection(new Vector3(-1, 0, 0).normalized), 
-								out hit, sensor_range))
-			{
-				if (hit.collider.tag.Equals("Wall"))
-				{
-					leftSensor = 1 - hit.distance / sensor_range;
-				}
-			}
+            float trafficLightsSensor = 0f;
+
+            frontSensor = CastRay(
+                    transform.TransformDirection(new Vector3(0, 0, 1).normalized),
+                    sensor_range, "Wall");
+            rightFrontSensor = CastRay(
+                    transform.TransformDirection(new Vector3(0.5f, 0, 1).normalized),
+                    sensor_range, "Wall");
+            rightSensor = CastRay(
+                    transform.TransformDirection(new Vector3(1, 0, 0).normalized),
+                    sensor_range, "Wall");
+            leftFrontSensor = CastRay(
+                transform.TransformDirection(new Vector3(-0.5f, 0, 1).normalized),
+                sensor_range, "Wall");
+            leftSensor = CastRay(
+                transform.TransformDirection(new Vector3(-1, 0, 0).normalized),
+                sensor_range, "Wall");
+
+            trafficLightsSensor = LookForLights();
 
 			//Input signals are used in the neural controller
 			ISignalArray inputArr = box.InputSignalArray;
@@ -157,7 +141,8 @@ public class CarController : UnitController {
 			inputArr[1] = leftFrontSensor;
 			inputArr[2] = leftSensor;
 			inputArr[3] = rightFrontSensor;
-			inputArr[4] = rightSensor;
+            inputArr[4] = rightSensor;
+            inputArr[5] = trafficLightsSensor;
 			//Which is activated
 			box.Activate();
 			//And produces output signals (also in an array)
@@ -175,6 +160,51 @@ public class CarController : UnitController {
 			transform.Translate(Vector3.forward * move_dist);
 		}
 	}
+
+    /// <summary>
+    /// Casts rays for the different sensors
+    /// </summary>
+    float CastRay(Vector3 direction, float range, string target)
+    {
+        Vector3 fromPosition = transform.position + transform.forward * 1.1f;
+
+        RaycastHit hit;
+        if (Physics.Raycast(fromPosition, direction, out hit, range, onlyDefaultLayer))
+        {
+            if (hit.collider.tag.Equals(target))
+            {
+                return 1f - hit.distance / sensor_range;
+            }
+        }
+        return 0f;
+    }
+
+    /// <summary>
+    /// Casts a ray looking for traffic lights. If any are found, returns its state.
+    /// </summary>
+    float LookForLights()
+    {
+        float returnValue = 0f;
+
+        RaycastHit hit;
+        Vector3 fromPosition = transform.position + transform.forward * 1.1f;
+        Vector3 direction = transform.TransformDirection(new Vector3(0, 0, 1).normalized);
+        float range = 10f;
+
+        //if (Physics.Raycast(fromPosition, direction, out hit, range, ~carsLayer))
+        if (Physics.Raycast(fromPosition, direction, out hit, range, ~carsLayer))
+        {
+            if (hit.collider.tag.Equals("TrafficLightDetector"))
+            {
+                // TrafficLight found!
+                returnValue = 
+                        hit.collider.gameObject.
+                        GetComponentInParent<TrafficLightController>().GetLightStateAsFloat();
+            }
+        }
+
+        return returnValue;
+    }
 
 	// This is only to see if the cars are advancing from a road segment to another. For collisions
 	// we want "OnCollisionStay"
@@ -221,4 +251,21 @@ public class CarController : UnitController {
 			++wall_hits;
 		}		
 	}
+
+    /// <summary>
+    /// This is used so cars start from slightly different points and directions.
+    /// Noise is good!
+    /// </summary>
+    void RandomizeStartConditions()
+    {
+        Vector3 currentPosition = transform.position;
+        // Shift x position by (-2 < rand < 2)
+        currentPosition.x += Random.value * 4f - 2f;
+        transform.position = currentPosition;
+
+        float maxRotation = 25f;
+        // So we get something between (-maxRotation, maxRotation)
+        float rotationValue = Random.value * maxRotation * 2 - maxRotation;
+        transform.Rotate(new Vector3(0, rotationValue, 0));
+    }
 }
