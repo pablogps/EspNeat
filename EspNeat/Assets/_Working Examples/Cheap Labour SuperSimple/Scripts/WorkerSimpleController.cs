@@ -10,7 +10,7 @@ public class WorkerSimpleController : UnitController {
   // These variable characterize the unit's sensors
   public float sensor_range = 2f; // proximity sensor's reach
   //  How far the eyes see. The original value was 10, about half the arena. 
-  public float seeing_range = 10f; // 
+  public float seeing_range = 35f; // 
   public float field_of_view = 20f; // in degrees
   public LayerMask see_layer; // will only see objects in this layer (performance)
   public LayerMask no_sense_layer; // will NOT sense objects in this layer (performance)
@@ -181,6 +181,7 @@ public class WorkerSimpleController : UnitController {
         inputArr[4] = 0.6;
         inputArr[5] = 0.8;
         inputArr[6] = 0.99;
+        inputArr[7] = 0.999;
         // Which is activated
         box.Activate();
         // And produces output signals (also in an array)
@@ -199,25 +200,28 @@ public class WorkerSimpleController : UnitController {
     float front_eco_sensor = 0f;
     float left_front_eco_sensor = 0f;
     float right_front_eco_sensor = 0f;
-    float left_eye = 0f;
-    float right_eye = 0f;
+    float blue_eye = 0f;
+	  float red_eye = 0f;
+	  float pink_eye = 0f;
     // Range sensors go from 0 (no object detected) to about 1 (collision)
     front_eco_sensor = RangeRay(new Vector3(0f, 0f, 1f).normalized);
     right_front_eco_sensor = RangeRay(new Vector3(1f, 0f, 1f).normalized);
     left_front_eco_sensor = RangeRay(new Vector3(-1f, 0f, 1f).normalized);   
     // Each eye will see a different cargo dock, and both will also respond to the chasm
-    left_eye = See("CargoDock2");
-    right_eye = See("CargoDock1");
+    red_eye = See("CargoDock2");
+    blue_eye = See("CargoDock1");
+    pink_eye = See("ChasmTrigger");
 
     // Input signals are used in the neural controller
     ISignalArray inputArr = box.InputSignalArray;
     inputArr[0] = front_eco_sensor;
     inputArr[1] = left_front_eco_sensor;
     inputArr[2] = right_front_eco_sensor;
-    inputArr[3] = left_eye;
-    inputArr[4] = right_eye;
-    inputArr[5] = input_cargo; // is cargo bay loaded?
-    inputArr[6] = (float)clock_script.GetState(); // clock value (blue/red)
+    inputArr[3] = blue_eye;
+    inputArr[4] = red_eye;
+    inputArr[5] = pink_eye;
+    inputArr[6] = input_cargo; // is cargo bay loaded?
+    inputArr[7] = (float)clock_script.GetState(); // clock value (blue/red)
 
     // Which is activated
     box.Activate();
@@ -233,7 +237,7 @@ public class WorkerSimpleController : UnitController {
 //------------------------------------------------------------------------------
   void Move(float gas, float steer) {
     // USING NEURAL NETWORK OUTPUT:
-    // First the unit rotates 
+    // First the unit rotates
     transform.rotation = Quaternion.Euler(0f, steer * rotation_speed * 
                                           Time.deltaTime, 0f) * transform.rotation; 
     // then it advances in the new direction
@@ -245,17 +249,18 @@ public class WorkerSimpleController : UnitController {
       rigid_body.velocity = rigid_body.velocity.normalized * max_speed;
     }
     // Average speed is computed for fitness.
-    /*av_speed = ((av_speed * my_time) + (rigid_body.velocity.magnitude * 
-                                          Mathf.Sign(gas) * Time.deltaTime)) / 
-                                          (my_time + Time.deltaTime);*/
+    //av_speed = ((av_speed * my_time) + (rigid_body.velocity.magnitude * 
+    //                                      Mathf.Sign(gas) * Time.deltaTime)) / 
+    //                                      (my_time + Time.deltaTime);
     av_speed = ((av_speed * my_time) + (rigid_body.velocity.magnitude * 
                                         Time.deltaTime)) / 
                                         (my_time + Time.deltaTime);
-    my_time += Time.deltaTime;  
+    my_time += Time.deltaTime; 
 
     // USING USER INPUT (for debugging)    
     // Use user input to move the robot (for debugging)
-/*    float rotate = Input.GetAxis("Horizontal");
+    /*
+    float rotate = Input.GetAxis("Horizontal");
     float advance = Input.GetAxis("Vertical");    
     transform.rotation = Quaternion.Euler(0f, rotate * rotation_speed *
                                           Time.deltaTime, 0f) * transform.rotation;
@@ -265,7 +270,7 @@ public class WorkerSimpleController : UnitController {
     if (rigid_body.velocity.magnitude > max_speed) {
       // This fixes the magnitude of the vector but still allows to change direction!
       rigid_body.velocity = rigid_body.velocity.normalized * max_speed;
-    } */ 
+    }*/
   }  
 //------------------------------------------------------------------------------
   // This are the range sensors for the input
@@ -293,8 +298,15 @@ public class WorkerSimpleController : UnitController {
       RaycastHit hit = hits[i];
       // ALL OBJECTS ARE SEEN THROUGH
       // To change this, we need to know the distance to the different objects
+      /*
+      // The two-eyes model worked with only two eyes, each reacting to either
+      // the red or blue area AND the chasm (unload region).
       if (hit.transform.name == target || hit.transform.name == "ChasmTrigger") {
         // Cambiar color ojos?
+        return 1f - (hit.distance / seeing_range);
+      }
+      */
+      if (hit.transform.name == target) {
         return 1f - (hit.distance / seeing_range);
       } 
     }

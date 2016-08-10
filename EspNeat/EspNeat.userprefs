@@ -2,18 +2,16 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\EspNeat\EspCyclicNetwork.cs">
     <Files>
-      <File FileName="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\EspNeat\EspCyclicNetwork.cs" Line="535" Column="68" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\OptionsPanelController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UIvariables.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\EspNeat\EspCyclicNetwork.cs" Line="538" Column="45" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleController.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleController.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\EspNeat\NeatManualEvolution.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeuronGeneList.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Utility\FastRandom.cs" Line="1" Column="1" />
-      <File FileName="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\WorkerSimpleController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\EspNeat\InverseAbsoluteSteepSigmoid.cs" Line="59" Column="23" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
