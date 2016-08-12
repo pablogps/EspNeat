@@ -233,7 +233,9 @@
      <Compile Include="Assets\Scripts\SharpNEAT\Utility\Utilities.cs" />
      <Compile Include="Assets\Scripts\SharpNEAT\Utility\ZigguratGaussianSampler.cs" />
      <Compile Include="Assets\_Working Examples\Cars\Scripts\CarController.cs" />
+     <Compile Include="Assets\_Working Examples\Cars\Scripts\DirectionSignalController.cs" />
      <Compile Include="Assets\_Working Examples\Cars\Scripts\RoadPiece.cs" />
+     <Compile Include="Assets\_Working Examples\Cars\Scripts\TrackSelectorController.cs" />
      <Compile Include="Assets\_Working Examples\Cars\Scripts\TrafficLightController.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\CargoDockSimple.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\ChasmSimple.cs" />

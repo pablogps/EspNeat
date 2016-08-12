@@ -116,6 +116,7 @@ public class CarController : UnitController {
 			float rightFrontSensor = 0f;
 			float rightSensor = 0f;
             float trafficLightsSensor = 0f;
+            float directionSignalSensor = 0f;
 
             frontSensor = CastRay(
                     transform.TransformDirection(new Vector3(0, 0, 1).normalized),
@@ -134,6 +135,7 @@ public class CarController : UnitController {
                 sensor_range, "Wall");
 
             trafficLightsSensor = LookForLights();
+            directionSignalSensor = LookForDirection();
 
 			//Input signals are used in the neural controller
 			ISignalArray inputArr = box.InputSignalArray;
@@ -143,6 +145,7 @@ public class CarController : UnitController {
 			inputArr[3] = rightFrontSensor;
             inputArr[4] = rightSensor;
             inputArr[5] = trafficLightsSensor;
+            inputArr[6] = directionSignalSensor;
 			//Which is activated
 			box.Activate();
 			//And produces output signals (also in an array)
@@ -191,7 +194,6 @@ public class CarController : UnitController {
         Vector3 direction = transform.TransformDirection(new Vector3(0, 0, 1).normalized);
         float range = 10f;
 
-        //if (Physics.Raycast(fromPosition, direction, out hit, range, ~carsLayer))
         if (Physics.Raycast(fromPosition, direction, out hit, range, ~carsLayer))
         {
             if (hit.collider.tag.Equals("TrafficLightDetector"))
@@ -200,6 +202,32 @@ public class CarController : UnitController {
                 returnValue = 
                         hit.collider.gameObject.
                         GetComponentInParent<TrafficLightController>().GetLightStateAsFloat();
+            }
+        }
+
+        return returnValue;
+    }
+
+    /// <summary>
+    /// Casts a ray looking for direction signals. If any are found, returns its state.
+    /// </summary>
+    float LookForDirection()
+    {
+        float returnValue = 0f;
+
+        RaycastHit hit;
+        Vector3 fromPosition = transform.position + transform.forward * 1.1f;
+        Vector3 direction = transform.TransformDirection(new Vector3(0, 0, 1).normalized);
+        float range = 15f;
+
+        if (Physics.Raycast(fromPosition, direction, out hit, range, ~carsLayer))
+        {
+            if (hit.collider.tag.Equals("IntersectionTrigger"))
+            {
+                // Direction sign found!
+                returnValue = 
+                    hit.collider.gameObject.
+                    GetComponentInParent<DirectionSignalController>().GetDirectionAsFloat();
             }
         }
 

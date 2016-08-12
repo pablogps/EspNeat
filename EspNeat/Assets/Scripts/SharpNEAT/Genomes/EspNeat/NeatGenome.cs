@@ -1999,6 +1999,7 @@ namespace SharpNeat.Genomes.Neat
                 if (conInfoByNeuronId.ContainsKey(_neuronGeneList[j].Id))
                 {
                     UnityEngine.Debug.Log("INTEGRITY FAIL: Two neurons have the same ID!");
+                    UnityEngine.Debug.Log("Conflicting ID: " + _neuronGeneList[j].Id);
                 }
                 conInfoByNeuronId.Add(_neuronGeneList[j].Id, conInfo);
             }

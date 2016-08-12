@@ -31,6 +31,12 @@ namespace SharpNeat.Coordination
         private List<GameObject> inputNeurons;
         private List<GameObject> outputNeurons;
 
+        // We need to be able to access the time-scale sliders, so that we can
+        // reset the right time-scales when starting and ending evolutionary
+        // processes.
+        private GameObject sliderEvolution;
+        private GameObject sliderChampDisplay;
+
         // These are used to save the real network connectivity if provisional
         // changes are intended (to evolve only one module, for example)
         private bool isCopyInUse = false;
@@ -90,6 +96,11 @@ namespace SharpNeat.Coordination
             punishOrReward1 = GameObject.Find("ToggleGoodOrEvil(1)");
             punishOrReward2 = GameObject.Find("ToggleGoodOrEvil(2)");
             punishOrReward2.SetActive(false);
+
+            // Looks for the time-scale sliders. Do this before the evolution
+            // canvas (with all its children) is turned off!
+            sliderChampDisplay = GameObject.Find("TimeScaleSlider");
+            sliderEvolution = GameObject.Find("TimeScaleSliderEvolution");
 
             editingCanvas = GameObject.Find("ScreenSpaceCanvas");
             evolutionCanvas = GameObject.Find("ScreenSpaceCanvasEvolution");
@@ -470,12 +481,9 @@ namespace SharpNeat.Coordination
         /// </summary>
         public void LaunchEvolution()
         {
-            // Gets rid of units created with "run best" option.
-            if (optimizer.ChampRunning)
-            {
-                optimizer.DestroyBest();
-            }
-            optimizer.Manual = true;
+
+            // Sets time-scale to the corresponding value
+            sliderEvolution.GetComponent<TimeSliderController>().SetTimeScale();
 
             Coroutiner.StartCoroutine(LaunchEvolution2());
         }
@@ -487,8 +495,27 @@ namespace SharpNeat.Coordination
         /// </summary>
         IEnumerator LaunchEvolution2()
         {
-            // Wait before champion genomes are deleted...
+            // MakeOnlyActiveMod ends with ApplyChanges, which resets champions.
+            // This takes some time, so we need to wait before trying to destroy
+            // champions (otherwise we will attempt to remove them, but a champion
+            // will be instantiated AFTER that!). A bit messy all this (my
+            // inexperience with IEnumerators perhaps).
             int waitForFrames = 20;
+            while (waitForFrames >= 0)
+            {
+                --waitForFrames;
+                yield return null;
+            }
+
+            // Gets rid of units created with "run best" option.
+            if (optimizer.ChampRunning)
+            {
+                optimizer.DestroyBest();
+            }
+            optimizer.Manual = true;
+
+            // Wait before champion genomes are deleted...
+            waitForFrames = 20;
             while (waitForFrames >= 0)
             {
                 --waitForFrames;
@@ -590,6 +617,15 @@ namespace SharpNeat.Coordination
             // affect protected properties (regulation and output weights) that
             // may NOT change during evolution. Now they are loaded again.
             ReloadSavedUiVar();
+
+            // Resets time-scale to the desired value
+            sliderChampDisplay.GetComponent<TimeSliderController>().SetTimeScale();
+            // If the timeScale is 0 the program will not remove the old units
+            // and problems may happen: set to small value.
+            if (Time.timeScale < 0.05f)
+            {
+                Time.timeScale = 0.05f;
+            }
         }
 
 		/// <summary>
@@ -725,6 +761,16 @@ namespace SharpNeat.Coordination
         }
 
         /// <summary>
+        /// Reverts some steps in AddBasicModule
+        /// </summary>
+        public void AbortNewModule()
+        {
+            --numberOfModules;
+            int newId = uiVar.moduleIdList[uiVar.moduleIdList.Count - 1];
+            uiVar.moduleIdList.Remove(newId);
+        }
+
+        /// <summary>
         /// Continues creating the module once the user has decided which
         /// inputs to use!
         /// </summary>
@@ -745,7 +791,7 @@ namespace SharpNeat.Coordination
             if (isRegulationModule)
             {
                 // Regulation modules start with no local outputs!
-                // To be safe (although this is believed NOT to be necessary
+                // To be safe (although this is believed NOT to be necessary)
                 // we create a single local output to the first output, with
                 // weight 0. This will be modified later.
                 IncreaseLocalOutputListRegulation(newId);
@@ -762,10 +808,11 @@ namespace SharpNeat.Coordination
             // Pandeomonium set to 0
             uiVar.pandemonium.Add(newId, 0);
 
-            // Then it is created. Both normal modules and regulation modules
-            // can share this method, since some innovation indices are saved 
-            // anyway after local out in case it is someday possible to add
-            // local outputs to a module!
+            // Then it is created. Extra local outputs are considered also for
+            // regular modules, so regulation modules and normal modules can
+            // share this method (remember we need to reserve some IDs for
+            // new local output neurons that will be created when adding new
+            // modules to a regulation module).
             optimizer.AskCreateModule(uiVar);
 
             if (isRegulationModule)

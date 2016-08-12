@@ -589,23 +589,21 @@ public class ModuleController : MonoBehaviour {
 
         // If this module uses basic regulation, then we set it as the only
         // active module! (its children will also remain active!)
-        // In principle advanced regulation should also apply, but it is harder
-        // to deal with some specific cases, so it is not supported yet.
-        if (basicRegulation)
-        {
-            newLink newRegulation = new newLink();
-            // Regulation from bias
-            newRegulation.otherNeuron = 0;
-            // With weight 1
-            newRegulation.weight = 1.0;
-            // Takes the ID following that of the regulatory neuron
-            newRegulation.id = regulatoryId + 1;
+        //
+        // USE WITH ADVANCED REGULATION IS NOT FULLY SUPPORTED YET: USE WITH
+        // CAUTION!
+        newLink newRegulation = new newLink();
+        // Regulation from bias
+        newRegulation.otherNeuron = 0;
+        // With weight 1
+        newRegulation.weight = 1.0;
+        // Takes the ID following that of the regulatory neuron
+        newRegulation.id = regulatoryId + 1;
 
-            uiManager.MakeOnlyActiveMod(moduleId, newRegulation, childrenId);
-        }
+        uiManager.MakeOnlyActiveMod(moduleId, newRegulation, childrenId);
 
         //regulatoryMenu.GetComponent<>()
-        uiManager.LaunchEvolution();        
+        uiManager.LaunchEvolution();               
     }
 
     /// <summary>

@@ -566,7 +566,7 @@ namespace SharpNeat.Genomes.Neat
             // not neccessary
 			UpdateChampionsProtectedWeights(champion, uiVar);
 			CloneChampion(genomeList, champion);
-			NewModule(genomeList, uiVar);
+            NewModule(genomeList, uiVar);
             _optimizer.ResetGUI();
         }
 
@@ -847,10 +847,10 @@ namespace SharpNeat.Genomes.Neat
 
             // Gets the highest Id (the previous highest has been likely deleted)
             uint lastId = champion.FindLastId() + 1;
-            _innovationIdGenerator.Reset(lastId);
 
             foreach (NeatGenome genome in genomeList)
             {
+                _innovationIdGenerator.Reset(lastId);
                 genome.BirthGeneration = generation;
                 PopulateModule(genome, localInputId, localOutputId);
             }
@@ -1887,7 +1887,8 @@ namespace SharpNeat.Genomes.Neat
             // We reserve some IDs so local output (and input) neurons and protected
             // connections will have the lowest IDs in the module even if we
             // add more local output neurons in the future.
-            const uint extraLocal = 8;
+            uint extraLocal = 8;
+
             // *2 so we have space for neurons and their protected connection.
             _innovationIdGenerator.Reset(_innovationIdGenerator.Peek +
                                          extraLocal * 2);
@@ -2117,10 +2118,6 @@ namespace SharpNeat.Genomes.Neat
         void PopulateModule(NeatGenome genome, List<uint> localInputId,
                             List<uint> localOutputId)
         {
-            // Resets the ID generator:
-            uint lastId = genome.FindLastId();
-            _innovationIdGenerator.Reset(lastId + 1);
-
             // Defines all possible connections between the local_input and 
             // local_output neurons (fully interconnected).
             // TODO: A more optimal approach may be to do this outside of the 
@@ -2278,6 +2275,10 @@ namespace SharpNeat.Genomes.Neat
 
             localInputList = ReturnLocalIn(genome.NeuronGeneList);
             localOutputList.Add(genome.NeuronGeneList[oldLocalOutIndex + 1].Id);
+
+            // Resets the ID generator:
+            uint lastId = genome.FindLastId();
+            _innovationIdGenerator.Reset(lastId + 1);
 
             PopulateModule(genome, localInputList, localOutputList);
         }
