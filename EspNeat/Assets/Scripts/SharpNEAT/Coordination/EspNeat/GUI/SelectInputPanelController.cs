@@ -108,6 +108,16 @@ public class SelectInputPanelController : MonoBehaviour {
         Destroy(this.gameObject);
     }
 
+    /// <summary>
+    /// Aborts the process!
+    /// </summary>
+    /// <returns><c>true</c> if this instance cancel operation; otherwise, <c>false</c>.</returns>
+    public void CancelOperation()
+    {
+        uiManager.AbortNewModule();
+        Destroy(this.gameObject); 
+    }
+
     #endregion
 
     #region PrivateMethods

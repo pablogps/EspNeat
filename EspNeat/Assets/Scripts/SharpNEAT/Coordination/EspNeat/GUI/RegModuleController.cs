@@ -258,7 +258,7 @@ public class RegModuleController : ModuleController {
         // The new module is added to the hierarchy dictionary in
         // UImanager
         uiManager.GetNewRegulationModuleContent(
-            moduleId, otherModule.GetComponent<ModuleController>().ModuleId);
+                moduleId, otherModule.GetComponent<ModuleController>().ModuleId);
 
         UpdateLocalOutAndNotify();  
 
