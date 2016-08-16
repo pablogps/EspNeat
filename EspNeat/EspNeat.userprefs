@@ -1,17 +1,24 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\EspNeat\EspCyclicNetwork.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegulationPanelController.cs">
     <Files>
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegulationPanelController.cs" Line="5" Column="30" />
+      <File FileName="Assets\_Working Examples\Cars\Scripts\CarController.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UIvariables.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\EspNeat\EspCyclicNetwork.cs" Line="538" Column="45" />
+      <File FileName="Assets\Scripts\SharpNEAT\Phenomes\NeuralNets\EspNeat\EspCyclicNetwork.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\RegModuleController.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeuronGeneList.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Network\ActivationFunctions\EspNeat\InverseAbsoluteSteepSigmoid.cs" Line="59" Column="23" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\SceneSelectorController.cs" Line="1" Column="1" />
+      <File FileName="Assets\_Working Examples\Cars\Scripts\TrackSelectorController.cs" Line="1" Column="1" />
+      <File FileName="Assets\_Working Examples\Cars\Scripts\DirectionSignalController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\TimeSliderController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\PlayChampionButtonController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\SelectInputPanelController.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

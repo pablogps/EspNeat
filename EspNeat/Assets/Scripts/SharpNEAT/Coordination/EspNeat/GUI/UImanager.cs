@@ -176,6 +176,7 @@ namespace SharpNeat.Coordination
 		public void InstantiateLoadedElements()
 		{
             UpdateHierarchy();
+  
             Coroutiner.StartCoroutine(InstantiateLoadedModules());
             InstantiateInputOutput();
 		}
@@ -1240,6 +1241,7 @@ namespace SharpNeat.Coordination
                     // Instantiate as normal module
                     newModule = InstantiateOneModule(moduleId, false);
                 }
+
                 // A reference to the GameObject is stored in this script
                 myModules.Add(newModule);
 

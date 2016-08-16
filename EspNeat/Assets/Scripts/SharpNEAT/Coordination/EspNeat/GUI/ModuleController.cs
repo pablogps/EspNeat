@@ -461,9 +461,9 @@ public class ModuleController : MonoBehaviour {
             // The module will be active when regulationList[0].otherNeuron
             // is active:
             regulatoryMenu.GetComponent<RegulationPanelController>().
-                    SetDropdownValue((int)regulationList[0].otherNeuron);
+            SetActiveWhenActive();
             regulatoryMenu.GetComponent<RegulationPanelController>().
-                    SetActiveWhenActive();
+                    SetDropdownValue((int)regulationList[0].otherNeuron);
         }
         else if (regulationList.Count == 2) 
         {
@@ -484,9 +484,9 @@ public class ModuleController : MonoBehaviour {
                 {
                     // This is a basic regulation case!
                     regulatoryMenu.GetComponent<RegulationPanelController>().
-                            SetDropdownValue((int)regulationList[1].otherNeuron);
+                    SetActiveWhenInactive();
                     regulatoryMenu.GetComponent<RegulationPanelController>().
-                            SetActiveWhenInactive();
+                            SetDropdownValue((int)regulationList[1].otherNeuron);
                     return;                
                 }
             }
