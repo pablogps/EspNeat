@@ -97,7 +97,7 @@ public class RegulationPanelController : MonoBehaviour {
     /// <summary>
     /// Creates the desired regulation scheme
     /// </summary>
-    public void UpdateBasicRegulation()
+    private void UpdateBasicRegulation()
     {
         // First resets the regulation list
         moduleController.ResetRegulation();
