@@ -13,7 +13,8 @@ public class InputNeuronController : MonoBehaviour {
 
 	// Use this for initialization
 	void Awake()
-    {
+	{
+		uiManager = GameObject.Find("Evaluator").GetComponent<UImanager>();
         inputField = transform.Find("ShowInputFieldButton").transform.
                      Find("InputField").gameObject;
         label = transform.Find("ShowInputFieldButton").transform.
@@ -21,15 +22,6 @@ public class InputNeuronController : MonoBehaviour {
         idLabel = transform.Find("IdLabel").GetComponent<Text>();
 		inputId = 0;
     }
-
-    #region Properties
-
-    public UImanager UiManager
-    {
-        set { uiManager = value; }
-    }
-
-    #endregion
 
     #region PublicMethods
 

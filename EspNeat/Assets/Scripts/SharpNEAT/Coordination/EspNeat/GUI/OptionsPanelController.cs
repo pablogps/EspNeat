@@ -64,6 +64,9 @@ public class OptionsPanelController : MonoBehaviour {
     /// </summary>
     public void AskClone()
     {
+        string moduleId = moduleController.ModuleId.ToString();
+        moduleController.UiManager.WriteToRecord("Clone " + moduleId);
+
         moduleController.AskClone();
         HidePanel();
     }

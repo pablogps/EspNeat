@@ -18,6 +18,9 @@ public class TrackSelectorController : MonoBehaviour {
             Application.LoadLevel("CarSceneLights");
             break;
         case 2:
+            Application.LoadLevel("CarSceneJunctionsEasy");
+            break;
+        case 3:
             Application.LoadLevel("CarSceneComplete");
             break;
         }

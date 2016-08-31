@@ -774,7 +774,7 @@ namespace SharpNeat.EvolutionAlgorithms
                 // An index that keeps track of how many offspring have been 
                 // produced in total.
                 int matingsCount = 0;
-                for (; matingsCount<crossSpecieMatings; matingsCount++)
+                for (; matingsCount < crossSpecieMatings; matingsCount++)
                 {
                     TGenome offspring = 
                             CreateOffspring_CrossSpecieMating(rwl, rwlArr, 

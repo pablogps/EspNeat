@@ -19,7 +19,11 @@ public abstract class Optimizer : MonoBehaviour
 
     // Number of trials per generation (to get an average fitness value).
     private int trials = 1;
-    private float trial_duration = 40;
+    // Reference durations:
+    // XOR - 10
+	// CheapLabour - 80
+	// Short tracks 26;
+    private float trial_duration = 26;
     // Fitness goal. If reached the evolutionary process stops.
     private float stopping_fitness = 500;
 

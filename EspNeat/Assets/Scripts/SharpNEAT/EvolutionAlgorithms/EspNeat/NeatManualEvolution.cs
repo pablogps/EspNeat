@@ -137,7 +137,7 @@ public class NeatManualEvolution<TGenome>
         //If this genome is not already included
         if (!selected_genomes.ContainsKey(genome_idx))
         {
-            selected_genomes.Add(genome_idx, isReward);          
+            selected_genomes.Add(genome_idx, isReward);    
         }  
 	}
 

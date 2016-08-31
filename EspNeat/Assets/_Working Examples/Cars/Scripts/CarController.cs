@@ -1,12 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using SharpNeat.Phenomes;
+using Cars;
 
 public class CarController : UnitController {
 
-	public float speed = 5f;
-	public float turn_speed = 180f;
-	public float sensor_range = 10f;
+	private float speed = 5f;
+    private float turn_speed = 180f;
+    private float front_sensors_range = 10f;
+    private float side_sensors_range = 5f;
+    private float lights_range = 5f;
+    private float directions_range = 15f;
 
     public LayerMask onlyDefaultLayer;
     public LayerMask carsLayer;
@@ -14,19 +19,28 @@ public class CarController : UnitController {
 	// We need to consider the trial lenght so fitness does not depend
     // on the trial length! (See Start())
 	private static float fit_experiment_length = 0f;
-	private float fit_advance_multiplier = 0.3f;
-	private float fit_wall_hit_multiplier = 0.1f;
+	private float fit_advance_multiplier = 20f;
+	private float fit_wall_hit_multiplier = 0.5f;
+    private float traffic_lights_multiplier = 5f;
+    private float directions_multiplier = 20f;
 
 	// Upon start cars will substract 1 point when they detect the first
     // road piece, so we offset the value
 	private int advanced = 1; 
-	private int wall_hits = 0; 
-	private int last_piece = 17;
+	private int wall_hits = 0;
+    private int traffic_light_violations = 0;
+    private int junctions_count = 0;
+	private int last_piece = 35;
 	private int current_road_piece = 0;
 
 	// This variable is the "brain" of the unit
 	private IBlackBox box;
 	private bool IsRunning;
+
+    // Variables used to determine if the directions are correct
+    private bool isDirectionPending = false;
+    private DirectionTaken currentDirection = new DirectionTaken();
+    private DirectionTaken expectedDirection = new DirectionTaken();
 
 	public override IBlackBox GetBox()
 	{
@@ -46,16 +60,25 @@ public class CarController : UnitController {
   
 	public override float GetFitness()
 	{
-		float fit =  (advanced * fit_advance_multiplier - wall_hits *
-                     fit_wall_hit_multiplier) * fit_experiment_length;
-		//Debug.Log(fit + " " + (advanced * fit_advance_multiplier - wall_hits *
-        //          fit_wall_hit_multiplier)  + " " + 
-		//	        (advanced * fit_advance_multiplier + " " + wall_hits *
-        //          fit_wall_hit_multiplier) );
+		float fit = (advanced * fit_advance_multiplier -
+			         wall_hits * fit_wall_hit_multiplier - 
+			         traffic_light_violations * traffic_lights_multiplier +
+                     junctions_count * directions_multiplier) *
+                     fit_experiment_length;
+
+
+		Debug.Log("Advance term: " + (advanced * fit_advance_multiplier) + " advanced: " + advanced);
+        Debug.Log("Hits term: " + (wall_hits * fit_wall_hit_multiplier) + " hits: " + wall_hits);
+        Debug.Log("Lights term: " + (traffic_light_violations * traffic_lights_multiplier) + " lights: " + traffic_light_violations);
+        Debug.Log("Directions term: " + (junctions_count * directions_multiplier) + " junctions_count: " + junctions_count);
+
+
 		// After evaluation the unit is destroyed, so we do not need to reset
         // values, but it does not hurt either!
 		advanced = 0;
 		wall_hits = 0;
+		traffic_light_violations = 0;
+        junctions_count = 0;
 		if (fit > 0)
 		{
 			return fit;
@@ -82,6 +105,7 @@ public class CarController : UnitController {
 		}
 
         RandomizeStartConditions();
+        //InitializeLookUpTable();
 	}
 
 	// Update is called once per frame
@@ -120,22 +144,29 @@ public class CarController : UnitController {
 
             frontSensor = CastRay(
                     transform.TransformDirection(new Vector3(0, 0, 1).normalized),
-                    sensor_range, "Wall");
+                    front_sensors_range, "Wall");
             rightFrontSensor = CastRay(
                     transform.TransformDirection(new Vector3(0.5f, 0, 1).normalized),
-                    sensor_range, "Wall");
+                    front_sensors_range, "Wall");
             rightSensor = CastRay(
                     transform.TransformDirection(new Vector3(1, 0, 0).normalized),
-                    sensor_range, "Wall");
+                    side_sensors_range, "Wall");
             leftFrontSensor = CastRay(
-                transform.TransformDirection(new Vector3(-0.5f, 0, 1).normalized),
-                sensor_range, "Wall");
+                    transform.TransformDirection(new Vector3(-0.5f, 0, 1).normalized),
+                    front_sensors_range, "Wall");
             leftSensor = CastRay(
-                transform.TransformDirection(new Vector3(-1, 0, 0).normalized),
-                sensor_range, "Wall");
-
+                    transform.TransformDirection(new Vector3(-1, 0, 0).normalized),
+                    side_sensors_range, "Wall");
+            
             trafficLightsSensor = LookForLights();
             directionSignalSensor = LookForDirection();
+
+            /*            Debug.Log("front " + frontSensor);
+            Debug.Log("rightFrontSensor " + rightFrontSensor);
+            Debug.Log("rightSensor " + rightSensor);
+            Debug.Log("leftFrontSensor " + leftFrontSensor);
+            Debug.Log("leftSensor " + leftSensor);
+            Debug.Log("directionSignalSensor " + directionSignalSensor);*/
 
 			//Input signals are used in the neural controller
 			ISignalArray inputArr = box.InputSignalArray;
@@ -154,6 +185,15 @@ public class CarController : UnitController {
 			//The vehicle moves with the output from the neural network
 			float steer = (float)outputArr[0] * 2f - 1f;
 			float gas =   (float)outputArr[1] * 2f - 1f;
+
+            // Is it complying with traffic lights?
+            // Green (0) and orange (0.5) are Ok, red (1) means stop.
+            // Gas goes from -1 to 1, so we want its absolute value below 0.05.
+            if (trafficLightsSensor > 0.55f &&
+                System.Math.Abs(gas) > 0.05)
+            {
+                ++traffic_light_violations;
+            }
 
 			float move_dist = gas * speed * Time.deltaTime;
 			// A car can only turn if it advances (this is why we multiply by gas)
@@ -176,7 +216,7 @@ public class CarController : UnitController {
         {
             if (hit.collider.tag.Equals(target))
             {
-                return 1f - hit.distance / sensor_range;
+                return 1f - hit.distance / range;
             }
         }
         return 0f;
@@ -192,9 +232,8 @@ public class CarController : UnitController {
         RaycastHit hit;
         Vector3 fromPosition = transform.position + transform.forward * 1.1f;
         Vector3 direction = transform.TransformDirection(new Vector3(0, 0, 1).normalized);
-        float range = 10f;
 
-        if (Physics.Raycast(fromPosition, direction, out hit, range, ~carsLayer))
+        if (Physics.Raycast(fromPosition, direction, out hit, lights_range, ~carsLayer))
         {
             if (hit.collider.tag.Equals("TrafficLightDetector"))
             {
@@ -218,9 +257,8 @@ public class CarController : UnitController {
         RaycastHit hit;
         Vector3 fromPosition = transform.position + transform.forward * 1.1f;
         Vector3 direction = transform.TransformDirection(new Vector3(0, 0, 1).normalized);
-        float range = 15f;
 
-        if (Physics.Raycast(fromPosition, direction, out hit, range, ~carsLayer))
+        if (Physics.Raycast(fromPosition, direction, out hit, directions_range, ~carsLayer))
         {
             if (hit.collider.tag.Equals("IntersectionTrigger"))
             {
@@ -228,6 +266,19 @@ public class CarController : UnitController {
                 returnValue = 
                     hit.collider.gameObject.
                     GetComponentInParent<DirectionSignalController>().GetDirectionAsFloat();
+            
+                // Write down the expected outcome:
+                isDirectionPending = true;
+
+                // Left is returnValue 0.33, more than that is straight or right
+                if (returnValue < 0.4)
+                {
+                    expectedDirection = DirectionTaken.left;
+                }
+                else
+                {
+                    expectedDirection = DirectionTaken.rightOrStraight;
+                }
             }
         }
 
@@ -249,22 +300,49 @@ public class CarController : UnitController {
 			}
 			else
 			{
-				advanced -= 2;
+                --advanced;
 			}
 
-			// Special situation: from start (0) backwards (last piece, 17) or vice versa
+			// Special situation: from start (0) backwards (last piece, 35) or vice versa
 			if (road_piece.PieceNumber == 0 && current_road_piece == last_piece)
 			{
-				// We are actually advancing! (Add 1 and correct the previous -2, because 0 < 17)
-				advanced += 3;
+				// We are actually advancing! (Add 1 and correct the previous -1,
+                // because 0 < last_piece)
+                advanced += 2;
 			}
-			else if (road_piece.PieceNumber == last_piece && current_road_piece == 0)
+            // From first to last (we check 0 AND 1 to prevent evolution from
+            // spamming time-precision glitches)
+            else if (road_piece.PieceNumber == last_piece &&
+                     (current_road_piece == 0 || current_road_piece == 1))
 			{
-				// We are actually going in reverse! (Substract 2 and correct the previous +1)
-				advanced -= 3;				
+				// We are actually going in reverse! Extra penalty if done at the start.
+                advanced -= 3;				
 			}
 
 			current_road_piece = road_piece.PieceNumber;
+
+            // If we have to determine the result of a junction, and we are 
+            // outside of the junction...
+            if (isDirectionPending && road_piece.roadType != DirectionTaken.isJunction)
+            {
+                if (road_piece.roadType != expectedDirection)
+                {
+                    //Debug.Log("APPLY PENALTY");
+                    // Take into account that in a simple track with 2 real 
+                    // junctions and 2 easy ones (where two roads meet) a
+                    // car going "always right" would get 3 right and 1 wrong,
+                    // but we need this to be counted as a mistake, so 1 penalty
+                    // must, at least, make up for 3 rewards.
+                    junctions_count -= 8;
+                }
+                else
+                {
+                    //Debug.Log("APPLY REWARD");
+                    ++junctions_count;
+                }
+                isDirectionPending = false;
+            }
+
 		}
 
 	}
@@ -296,4 +374,14 @@ public class CarController : UnitController {
         float rotationValue = Random.value * maxRotation * 2 - maxRotation;
         transform.Rotate(new Vector3(0, rotationValue, 0));
     }
+
+    /// <summary>
+    /// Here we make a look up table with the correct road segments that must
+    /// follow in a junction
+    /// </summary>
+/*    void InitializeLookUpTable()
+    {
+        directionLookUp = new Dictionary<int, List<int>>();
+        // There are 9 junctions, somo of them can be seen from different road tiles
+    }*/
 }

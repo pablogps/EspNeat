@@ -32,24 +32,28 @@ namespace SharpNeat.Genomes.Neat
     {
         #region Constants
 
-		const double DefaultConnectionWeightRange = 5.0;
-		// const double DefaultInitialInterconnectionsProportion = 0.05;
+        // Set of values inspired in original NEAT experiments
+/*		const double DefaultConnectionWeightRange = 5.0;
 		const double DefaultInitialInterconnectionsProportion = 0.99;
         const double DefaultDisjointExcessGenesRecombineProbability = 0.1;
 
         // High level mutation probabilities
 		const double DefaultConnectionWeightMutationProbability = 0.8;
-		// const double DefaultConnectionWeightMutationProbability = 0.988;
 		const double DefaultAddNodeMutationProbability = 0.03;
-		// const double DefaultAddNodeMutationProbability = 0.005;
         const double DefaultAddConnectionMutationProbability = 0.05;
         const double DefaultNodeAuxStateMutationProbability = 0.00;
-        const double DefaultDeleteConnectionMutationProbability = 0.004;
-        //const double DefaultAddNodeMutationProbability = 0.001;
-        //const double DefaultAddConnectionMutationProbability = 0.01;
-        //const double DefaultNodeAuxStateMutationProbability = 0.00;
-        //const double DefaultDeleteConnectionMutationProbability = 0.001;
-        //const double DefaultConnectionWeightMutationProbability = 0.888;
+        const double DefaultDeleteConnectionMutationProbability = 0.004;*/
+
+        const double DefaultConnectionWeightRange = 5.0;
+        const double DefaultInitialInterconnectionsProportion = 0.95;
+        const double DefaultDisjointExcessGenesRecombineProbability = 0.15;
+
+        // High level mutation probabilities
+        const double DefaultConnectionWeightMutationProbability = 0.8;
+        const double DefaultAddNodeMutationProbability = 0.1;
+        const double DefaultAddConnectionMutationProbability = 0.07;
+        const double DefaultNodeAuxStateMutationProbability = 0.00;
+        const double DefaultDeleteConnectionMutationProbability = 0.03;
 
         #endregion
 
@@ -419,14 +423,25 @@ namespace SharpNeat.Genomes.Neat
 		{
 			ConnectionMutationInfoList list = new ConnectionMutationInfoList(2);
 
-			// Gaussian jiggle with sigma=0.02 (most values between +-0.04)
+            // Inspired by original NEAT
+/*			// Gaussian jiggle with sigma=0.02 (most values between +-0.04)
 			// Jiggle 90% of connections with 90% chance.
 			list.Add(new ConnectionMutationInfo(0.9, ConnectionPerturbanceType.JiggleGaussian,
 				ConnectionSelectionType.Proportional, 0.9, 0, 0.0, 0.02));
 			
 			// Reset 10% of connections with 10% chance.
 			list.Add(new ConnectionMutationInfo(0.1, ConnectionPerturbanceType.Reset,
-				ConnectionSelectionType.Proportional, 0.1, 0, 0.0, 0));
+				ConnectionSelectionType.Proportional, 0.1, 0, 0.0, 0));*/
+
+            // Gaussian jiggle with sigma=0.04
+            // Jiggle 90% of connections with 90% chance.
+            list.Add(new ConnectionMutationInfo(0.9, ConnectionPerturbanceType.JiggleGaussian,
+                ConnectionSelectionType.Proportional, 0.9, 0, 0.0, 0.02));
+
+            // Reset 20% of connections with 10% chance.
+            list.Add(new ConnectionMutationInfo(0.1, ConnectionPerturbanceType.Reset,
+                ConnectionSelectionType.Proportional, 0.2, 0, 0.0, 0));
+
 			list.Initialize();
 			return list;
 		}

@@ -50,10 +50,10 @@ namespace SharpNeat.Coordination
     /// links in the same list. We need a source or target (other neuron) and
     /// the weight. (Located in the GuiVariables script.)
     /// </summary>
-/*    public struct newLink
+    public struct newLink
     {
         public uint otherNeuron;
         public double weight;
         public uint id;
-    }*/
+    }
 }
