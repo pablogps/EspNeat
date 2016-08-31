@@ -252,7 +252,11 @@ public class RegModuleController : ModuleController {
         {
             uiManager.SetModuleActive(moduleId); 
         }
-       
+
+        // We record this action:
+        string otherId = otherModule.GetComponent<ModuleController>().ModuleId.ToString();
+        uiManager.WriteToRecord("Move " + otherId + " into " + moduleId);
+
         MoveModuleInside(otherModule);
 
         // The new module is added to the hierarchy dictionary in

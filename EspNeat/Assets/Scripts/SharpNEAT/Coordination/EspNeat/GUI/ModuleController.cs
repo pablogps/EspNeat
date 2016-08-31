@@ -535,6 +535,9 @@ public class ModuleController : MonoBehaviour {
     /// </summary>
     public virtual void CallDelete()
     {
+        // We record this action:
+        uiManager.WriteToRecord("Delete " + moduleId.ToString());
+
         if (isActive)
         {
             // Active module: set another as active and delete
@@ -718,7 +721,7 @@ public class ModuleController : MonoBehaviour {
     /// Using the slider, gets a new weight for all output connections. 
     /// </summary>
     public void newOutputWeightBasic()
-    {
+    {        
         double newWeight = (double)slider.value;
         for (int i = 0; i < localOutputList.Count; ++i)
         {
@@ -728,6 +731,9 @@ public class ModuleController : MonoBehaviour {
         }
         // Returns the new values back to UImanager
         uiManager.GetNewOutputConnectionList(moduleId, localOutputList);
+
+        // We record this action:
+        uiManager.WriteToRecord("New weights for " + moduleId + " now: " + newWeight.ToString());
     }
 
     /// <summary>

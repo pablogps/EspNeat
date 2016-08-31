@@ -40,13 +40,6 @@ public class EspNeatOptimizer : Optimizer
     // In case we want to change the size of the highlight bubble for manual mode.
     public float selection_sphere_radius = 1f;
 
-	// In the editor we conveniently define all our styles within a GUISkin.
-    // This needs to be assigned to a public variable in the game object's
-    // Unity inspector. We will use this skins in Visualizer, but this script
-    // is instantiated at runtime, so we cannot directly assign the skin there.
-    // Instead, we do it here and pass the variable via a public function.
-	public GUISkin mySkin;
-
     // Used in Update to calculate frames per second.
     private DateTime startTime;
     int frames = 0;
@@ -54,8 +47,6 @@ public class EspNeatOptimizer : Optimizer
     float accum = 0.0f;
 
 	private UImanager uiManager;
-    private GuiManager guiManager;
-    private Visualizer visualizer;
 
     private uint generation;
     private double fitness;
@@ -75,7 +66,7 @@ public class EspNeatOptimizer : Optimizer
     // process is started it will load genome populations from here. If this is 
     // not wanted, change the name of the experiment (in the GameObject "Evaluator")
     // or delete these files.
-    private string popFileSavePath, champFileSavePath;
+    private string popFileSavePath, champFileSavePath, baseFilesPath;
     // These two are used to save ALL the genomes in each generation! This is
     // for research purposes and can be controlled by the variable writeAllGenerations.
     private string timeStamp = "";
@@ -124,7 +115,12 @@ public class EspNeatOptimizer : Optimizer
     public bool ChampRunning
     {
         get { return champRunning; }
-    }
+	}
+
+	public string ExperimentName
+	{
+		get { return experiment_name; }
+	}
 
     public string TimeStamp
     {
@@ -200,14 +196,6 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
-    /// Sets the current menu screen selector.
-    /// </summary>
-    public void SetMenuScreen(MenuScreens chosenScreen)
-    {
-        //guiManager.SetMenuScreen(chosenScreen);
-    }
-
-    /// <summary>
     /// Overload so we can specify other save paths (used from NeatGenomeFactory
     /// before adding a new module so the genome diversity is not lost if we
     /// want to reset the addition of the new module, which overwrites every
@@ -240,7 +228,7 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void SimpleSavePopulation()
     {
-        SavePopulation(Application.persistentDataPath);  
+        SavePopulation(baseFilesPath);  
     }
     /// <summary>
     /// Saves the population and champion genome in the default path.
@@ -258,6 +246,15 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void SaveResearch(string directoryPath)
     {
+        string fitnessDirectory = directoryPath + "/" + experiment_name + ".fitnessEvol.dat";
+        using (System.IO.StreamWriter file =
+                new System.IO.StreamWriter(fitnessDirectory, true))
+        {
+            string line = "Generation: " + generation.ToString() +
+                          ", max fitness: " + fitness.ToString();
+            file.WriteLine(line);
+        }
+
         if (writeAllGenerations)
         {
             XmlWriterSettings _xwSettings = new XmlWriterSettings();
@@ -289,9 +286,8 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void ResetGUI()
     {
-        // We update the genome used in visualizer. For the schematic view all 
+        // We update the genome used in uiManager. For the schematic view all 
         // genomes are exactly the same, so we can pass any we like.
-        // visualizer.UpdateModelGenome(_ea.GenomeList[0]);
         uiManager.UpdateModelGenome(_ea.GenomeList[0]);
     }
 
@@ -382,7 +378,28 @@ public class EspNeatOptimizer : Optimizer
         {
             child.gameObject.tag = "Untagged";
         }
-    }
+
+        // This is called if we want the champions to be evaluated, mostly for
+        // research reasons.
+        if (true)
+        {
+            Coroutiner.StartCoroutine(EvaluateChamp(phenome));
+        }
+	}
+
+    /// <summary>
+    /// Waits for the trial duration and then asks for a fitness evaluation.
+    /// Used mainly for research.
+    /// </summary>
+	public IEnumerator EvaluateChamp(SharpNeat.Phenomes.IBlackBox brain) {
+        while (champRunning)
+        {
+            yield return new WaitForSeconds(base.TrialDuration);
+            float fit = GetFitness(brain); 
+
+            Debug.Log("Fitness evaluation returns: " + fit + "\n");
+        }  
+	}
 
     /// <summary>
     /// Gets the fitness corresponding to the unit which uses the controller "box"
@@ -430,8 +447,7 @@ public class EspNeatOptimizer : Optimizer
     public void AskSetActive(UIvariables uiVar, int whichModule)
     {
         _ea.GenomeList[0].GenomeFactory.SetModuleActive(
-                _ea.GenomeList, Application.persistentDataPath, experiment_name,
-                uiVar, whichModule);
+                _ea.GenomeList, baseFilesPath, experiment_name, uiVar, whichModule);
 
         // Sets whichModule as the current module in the factory!
         _ea.GenomeList[0].GenomeFactory.CurrentModule = whichModule;
@@ -447,10 +463,10 @@ public class EspNeatOptimizer : Optimizer
     public void AskCreateModule(UIvariables uiVar)
     {
         _ea.GenomeList[0].GenomeFactory.AddNewModule(
-                _ea.GenomeList, Application.persistentDataPath, experiment_name, uiVar);
+                _ea.GenomeList, baseFilesPath, experiment_name, uiVar);
 
 		UpdateChampion();
-        SavePopulation(Application.persistentDataPath);    
+        SimpleSavePopulation();    
 
         // TODO: IMPORTANT NOTICE!
         // There seems to be a bug here: when a population is loaded the ID
@@ -479,10 +495,9 @@ public class EspNeatOptimizer : Optimizer
     public void AskCloneModule(UIvariables uiVar, int whichModule)
     {
         _ea.GenomeList[0].GenomeFactory.CloneModule(
-                _ea.GenomeList, Application.persistentDataPath, experiment_name,
-				uiVar, whichModule);   
+                _ea.GenomeList, baseFilesPath, experiment_name, uiVar, whichModule);   
 		UpdateChampion();
-		SavePopulation(Application.persistentDataPath);   
+        SimpleSavePopulation();   
     }
 
     /// <summary>
@@ -507,10 +522,9 @@ public class EspNeatOptimizer : Optimizer
     public void AskAddModuleToRegModule(UIvariables uiVar, newLink localOutInfo)
     {
         _ea.GenomeList[0].GenomeFactory.AddModuleToRegModule(
-                _ea.GenomeList, Application.persistentDataPath, experiment_name,
-                uiVar, localOutInfo);
+                _ea.GenomeList, baseFilesPath, experiment_name, uiVar, localOutInfo);
         UpdateChampion();
-        SavePopulation(Application.persistentDataPath);  
+        SimpleSavePopulation();  
         
     }
 
@@ -588,9 +602,8 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void AskResetActiveModule()
     {
-        Debug.Log("RECORDAR ELIMINAR REFERENCIAS ANTIGUAS A ASKRESETACTIVEMODULE");
-        Debug.Log("añadir aquí el panel de confirmación");
-        Debug.Log("RECORDAR ELIMINAR REFERENCIAS ANTIGUAS A ASKRESETACTIVEMODULE");
+        // We record this action:
+        uiManager.WriteToRecord("Reset");
 
         // Stops current evolution. Note this will not return the cameras to
         // the editing menu
@@ -619,7 +632,7 @@ public class EspNeatOptimizer : Optimizer
         ++generation;
         _ea.GenomeList[0].GenomeFactory.ResetActiveModule(_ea.GenomeList, generation);
         UpdateChampion(); 
-        SavePopulation(Application.persistentDataPath);
+        SimpleSavePopulation();
 
         // Starts a new evolutionary process
         Manual = true;
@@ -643,7 +656,7 @@ public class EspNeatOptimizer : Optimizer
                                                           generation, whichModule);
 
         UpdateChampion(); 
-		SavePopulation(Application.persistentDataPath); 		
+        SimpleSavePopulation(); 		
 	}
 
     public void AskMutateOnce()
@@ -656,7 +669,7 @@ public class EspNeatOptimizer : Optimizer
         }
 
         UpdateChampion();
-        SavePopulation(Application.persistentDataPath);     
+        SimpleSavePopulation();     
     }
 
     /// <summary>
@@ -686,7 +699,7 @@ public class EspNeatOptimizer : Optimizer
             if (genome.Id == champId)
             {
 				_ea.CurrentChampGenome = genome;
-				SavePopulation(Application.persistentDataPath);    
+                SimpleSavePopulation();    
                 return;
             }
         }
@@ -765,9 +778,8 @@ public class EspNeatOptimizer : Optimizer
         generation = FindOldGeneration();
         _ea.CurrentGeneration = generation;
 
-        // We pass a genome to the visualizer. For the schematic view all 
+        // We pass a genome to the uiManager. For the schematic view all 
 		// genomes are exactly the same, so we can pass any we like.
-        //visualizer.UpdateModelGenome(_ea.GenomeList[0]);
         uiManager.UpdateModelGenome(_ea.GenomeList[0]);
     }
 
@@ -862,6 +874,17 @@ public class EspNeatOptimizer : Optimizer
         // The time stamp will allow to distinguish different experiments.
         timeStamp = DateTime.Now.ToString("HHmm");
 
+        // Fast, hidden address:
+        // C:\Users\userName\AppData\LocalLow\CompanyNameInProject\ProjectName
+        baseFilesPath = Application.persistentDataPath;
+        // Slow, normal address:
+        // baseFilesPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+        // baseFilesPath += "/" + Application.productName;
+        champFileSavePath = baseFilesPath + "/" + experiment_name + ".champ.xml";
+        popFileSavePath   = baseFilesPath + "/" + experiment_name + ".pop.xml";
+        // Useful reference! Delete these files for a fresh start.
+        Debug.Log("Local files' path: " + baseFilesPath);
+
         // Initializes GUI-related classes.
         InitGUI();
 
@@ -883,15 +906,6 @@ public class EspNeatOptimizer : Optimizer
         // Loads the experiment parameters from the xml file "experiment.config" 
         experiment.Initialize(experiment_name, xmlConfig.DocumentElement, 
                               num_inputs, num_outputs);
-        champFileSavePath = Application.persistentDataPath + 
-                            string.Format("/{0}.champ.xml", experiment_name);
-        popFileSavePath   = Application.persistentDataPath + 
-        	                string.Format("/{0}.pop.xml", experiment_name);
-        // Useful reference! Delete this files for a fresh start.
-        print(champFileSavePath);
-        // We pass this path to guiManager (it will neeed to check if it exists
-        // at different times, and the files may be deleted!)
-        //guiManager.SavePath = popFileSavePath;
 
         // Use if you need your rays in manual selection to interact only with
         // a given set of layers. 
@@ -938,25 +952,10 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     void InitGUI()
     {
-		// Here we start all the GUI-related variables.
-        //guiManager = transform.gameObject.AddComponent<GuiManager>();
-        //visualizer = transform.gameObject.AddComponent<Visualizer>();
-        //guiManager.Optimizer = this;
-        //guiManager.Initialize(visualizer);
-        //guiManager.SetSkin(mySkin);
-        //visualizer.SetGuiManager(guiManager);
-        //visualizer.SetSkin(mySkin);
-        //visualizer.SetNamesPath(Application.persistentDataPath + 
-        //                        string.Format("/{0}.names.xml", experiment_name));
-
-
-
 		uiManager = GetComponent<UImanager>();
-        uiManager.SetNamesPath(Application.persistentDataPath + 
-                               string.Format("/{0}.names.xml", experiment_name));
-
-		uiManager.SetHierarchyPath(Application.persistentDataPath + 
-			                       string.Format("/{0}.hierarchy.xml", experiment_name));
+        uiManager.SetPaths(baseFilesPath + "/" + experiment_name);
+        // Needed if sub-folders are used (in uiManager, for instance)
+        //IsThereDirectory(baseFilesPath + "/" + experiment_name);
 	}
 
     /// <summary>
@@ -1059,7 +1058,7 @@ public class EspNeatOptimizer : Optimizer
                                    // _ea.Statistics._bestFitnessMA.Mean, 
         	                       // _ea.Statistics._bestFitnessMA.Length));
 
-        SaveResearch(Application.persistentDataPath);
+        SaveResearch(baseFilesPath);
     }
 
     /// <summary>
@@ -1071,7 +1070,7 @@ public class EspNeatOptimizer : Optimizer
     void ea_PauseEvent(object sender, EventArgs e)
     {
         //Time.timeScale = 1;      
-        SavePopulation(Application.persistentDataPath);
+        SimpleSavePopulation();
         DateTime endTime = DateTime.Now;
         Utility.Log("Total time elapsed: " + (endTime - startTime));
 		// Why this line??

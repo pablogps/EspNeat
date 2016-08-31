@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/_Working Examples/XOR/_Scenes/XOR.unity
+- path: Assets/_Working Examples/Cars/_Scenes/CarScene.unity
   isLoaded: 1
   isActive: 1

@@ -20,6 +20,7 @@ namespace SharpNeat.Coordination
         private NeatGenome genome;
 		private string namesPath;
 		private string hierarchyPath;
+		private string eventsRecordPath;
 
         private Camera backgroundCamera;
         private Camera editingCamera;
@@ -190,21 +191,37 @@ namespace SharpNeat.Coordination
             get { return genome; }
         }
 
-        public void SetNamesPath(string path)
-        {
-            namesPath = path;
-            uiXmlIO.NamesPath = path;
-		}
-
-		public void SetHierarchyPath(string path)
-		{
-			hierarchyPath = path;
-			uiXmlIO.HierarchyPath = path;
-		}
-
 		#endregion
 
 		#region PublicMethods
+
+        /// <summary>
+        /// This is used to write events to the events record file. For instance,
+        /// "reset used".
+        /// </summary>
+		public void WriteToRecord(string info)
+		{
+			using (System.IO.StreamWriter file =
+				    new System.IO.StreamWriter(eventsRecordPath, true))
+			{
+                file.WriteLine(info);
+			}
+		}
+
+        /// <summary>
+        /// Instead of passing the three individually, we pass the base address
+        /// and make the rest here.
+        /// </summary>
+		public void SetPaths(string baseFilesPath)
+		{
+			namesPath = baseFilesPath + ".names.xml";
+			uiXmlIO.NamesPath = namesPath;
+
+			hierarchyPath = baseFilesPath + ".hierarchy.xml";
+			uiXmlIO.HierarchyPath = hierarchyPath;
+
+			eventsRecordPath = baseFilesPath + ".eventsRecord.dat";
+		}
 
         /// <summary>
         /// Moves modules further or closer upon mouse scroll. Essentially
@@ -482,9 +499,8 @@ namespace SharpNeat.Coordination
         /// </summary>
         public void LaunchEvolution()
         {
-
             // Sets time-scale to the corresponding value
-            sliderEvolution.GetComponent<TimeSliderController>().SetTimeScale();
+			sliderEvolution.GetComponent<TimeSliderController>().SetTimeScale();
 
             Coroutiner.StartCoroutine(LaunchEvolution2());
         }
@@ -527,6 +543,65 @@ namespace SharpNeat.Coordination
 
             // Set evolution camera
             ActivateEvolutionCamera();
+        }
+
+		/// <summary>
+		/// This is used to visualize champions in the bigger evolution screen.
+		/// The goal is to have more resolution in screenshots for papers and the like.
+		/// </summary>
+		public void UseEvolutionCameraSecretFunction()
+		{
+			ActivateEvolutionCamera();
+		}
+
+		public void UseEditingCameraSecretFunction()
+		{
+			DeactivateEvolutionCamera();
+		}
+
+        /// <summary>
+        /// EspNeat is intended to be used with interactive evolution. However, 
+        /// for research porpuses it may be useful to compare with automatic
+        /// evolution. Note this is not fully-tested.
+        /// 
+        /// This does not take care of champion-genome instances.
+        /// </summary>
+        public void LaunchAutoSecretFunction()
+        {
+            // Sets time-scale to the corresponding value
+            sliderEvolution.GetComponent<TimeSliderController>().SetTimeScale();
+            optimizer.StartEA();
+
+            // Set evolution camera
+            ActivateEvolutionCamera();
+        }
+
+        /// <summary>
+        /// Complement to LaunchAutoSecretFunction.
+        /// </summary>
+        public void StopAutoSecretFunction()
+        {
+            optimizer.SimpleSavePopulation();
+            optimizer.StopEA();
+
+            // Sets editing camera
+            DeactivateEvolutionCamera();
+
+            // Sometimes evolution uses a version of the genome with some changes
+            // (so, for example, the activity of other modules is hidden to see
+            // clearly what the evolving module is doing). Those changes only
+            // affect protected properties (regulation and output weights) that
+            // may NOT change during evolution. Now they are loaded again.
+            //ReloadSavedUiVar();
+
+            // Resets time-scale to the desired value
+            sliderChampDisplay.GetComponent<TimeSliderController>().SetTimeScale();
+            // If the timeScale is 0 the program will not remove the old units
+            // and problems may happen: set to small value.
+            if (Time.timeScale < 0.05f)
+            {
+                Time.timeScale = 0.05f;
+            }
         }
 
         /// <summary>
@@ -586,11 +661,15 @@ namespace SharpNeat.Coordination
             optimizer.TogglePunishReward();
             if (punishOrReward1.activeSelf)
             {
+                // We record this action:
+                WriteToRecord("Set to punish mode");
                 punishOrReward1.SetActive(false);
                 punishOrReward2.SetActive(true);
             }
             else
             {
+                // We record this action:
+                WriteToRecord("Set to reward mode");
                 punishOrReward1.SetActive(true);
                 punishOrReward2.SetActive(false);
             }
@@ -733,6 +812,15 @@ namespace SharpNeat.Coordination
         /// </summary>
         public void AddBasicModule(bool isRegulationModule)
         {
+            if (isRegulationModule)
+            {
+                WriteToRecord("Add regulation module");
+            }
+            else
+            {
+                WriteToRecord("Add module");
+            }
+
             // Before the module is created we need to update the information
             // required for its construction!
 
@@ -2090,7 +2178,18 @@ namespace SharpNeat.Coordination
             for (int i = 1; i <= genome.Input; ++i)
             {
                 inputLabels.Add("Input" + (i).ToString()); 
-            } 
+            }
+
+			// Cheap labour and cars have pre-defined labels to help in user-tests
+			if (optimizer.ExperimentName == "_ESP_CheapLabour")
+			{
+				CheapLabourDefaultInput();
+			}
+			else if (optimizer.ExperimentName == "_ESP_Cars")
+			{
+				CarsDefaultInput();
+			}
+
             for (int i = 0; i < genome.Output; ++i)
             {
                 outputLabels.Add("Output" + (i + 1).ToString()); 
@@ -2103,6 +2202,33 @@ namespace SharpNeat.Coordination
                                  "Module" + uiVar.moduleIdList[i].ToString());
             }  
         }
+
+		/// <summary>
+		/// These two will give custom default labels for two of the provided
+        /// examples, Cheap Labour and Cars. Of course these may be removed
+        /// (or adapted) for a general use of this code.
+		/// </summary>
+		void CheapLabourDefaultInput()
+		{
+			inputLabels[1] = "Front";
+			inputLabels[2] = "Front-L";
+			inputLabels[3] = "Front-R";
+			inputLabels[4] = "Blue";
+			inputLabels[5] = "Red";
+			inputLabels[6] = "Pink";
+			inputLabels[7] = "Cargo";
+			inputLabels[8] = "Clock";
+		}
+		void CarsDefaultInput()
+		{
+			inputLabels[1] = "Front";
+			inputLabels[2] = "Front-L";
+			inputLabels[3] = "Left";
+			inputLabels[4] = "Front-R";
+			inputLabels[5] = "Right";
+			inputLabels[6] = "TrLights";
+			inputLabels[7] = "Junctions";
+		}
 
         /// <summary>
         /// Initializes the list with the inputs for regulatory neurons.

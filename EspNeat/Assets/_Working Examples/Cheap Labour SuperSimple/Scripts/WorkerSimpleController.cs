@@ -21,13 +21,13 @@ public class WorkerSimpleController : UnitController {
   private float av_speed;
   private float collision_counter;
   private float my_time;
-  private float fit_speed_multiplier = 10f;
+  private float fit_speed_multiplier = 5f;
   private float fit_hit_multiplier = 0.1f;
   private static float fit_experiment_length = 0f;
   private float fit; // here we include the fitness related to cargo-delivery
   // Cargo-related fitness penaties and rewards
   private float bonus_pick_up_cargo = +30f;
-  private float penalty_wrong_dock = -300f;
+  private float penalty_wrong_dock = -100f;
   private float penalty_full_on_dock = -25f;
   private float bonus_delivery = +40f;
   private float penalty_delivery_empty = -20f;
@@ -101,18 +101,27 @@ public class WorkerSimpleController : UnitController {
   public override float GetFitness() {
     float fitness = fit_speed_multiplier * av_speed - 
                     collision_counter * fit_hit_multiplier * fit_experiment_length + 
-                    fit;
-    // This line allows to see each contribution to the fines!
-    // Debug.Log(fit_speed_multiplier * av_speed + " " + 
-    //           collision_counter * fit_hit_multiplier * fit_experiment_length + " " + fit);
+					fit * fit_experiment_length;
+    // Different contributions to fitnes!
+     Debug.Log("Speed component: " + fit_speed_multiplier * av_speed +
+               " where average speed is: " + av_speed);
+     Debug.Log("Collisions component: " + collision_counter * fit_hit_multiplier * fit_experiment_length +
+               " where collision number is: " + collision_counter);
+     Debug.Log("Events component: " + fit * fit_experiment_length +
+               " where fit is: " + fit);
+    
+
+
+
     fit = 0f;
-	collision_counter = 0f;
+    collision_counter = 0f;
+    my_time = 0f;
 	av_speed = 0f;
+
     if (fitness > 0f) {
       return fitness;
-    } else {
-      return 0f;
     }
+    return 0f;
   }  
 //------------------------------------------------------------------------------
   // What happens in a cargo dock: load if empty (apply fitness bonusses and penalties)

@@ -46,9 +46,8 @@ public class DirectionSignalController : MonoBehaviour {
                                             directionArrow.transform.eulerAngles.y,
                                             directionArrow.transform.eulerAngles.z);
         
-        // Starts with a random allowed direction (we initialize it as straight
-        // to match the initial texture orientation)
-        currentDirection = arrowDirection.Straight;
+        // Starts with a random allowed direction
+        currentDirection = arrowDirection.Left;
         StartDirection();
 	}
 
@@ -133,6 +132,21 @@ public class DirectionSignalController : MonoBehaviour {
         {
             NewDirection();
         }
+
+        // For automatic evolution (because NewDirection is now predictable,
+        // we need to make it random here)
+        if (isRight && isLeft)
+        {
+            if (Random.value < 0.5f)
+            {
+                currentDirection = arrowDirection.Right;
+            }
+            else
+            {
+                currentDirection = arrowDirection.Left;
+            }
+            DirectionChange();
+        }
     }
 
     /// <summary>
@@ -140,7 +154,12 @@ public class DirectionSignalController : MonoBehaviour {
     /// </summary>
     private void NewPeriod()
     {
-        period = Random.value * maxPeriod + minPeriod;
+        //period = Random.value * maxPeriod + minPeriod;
+
+        // For auto evolution we want all lights to change at the same time...
+        // For more safety chose a value that is not a multiple or factor of
+        // the trial length.
+        period = 32;
     }
 
     /// <summary>
@@ -148,7 +167,7 @@ public class DirectionSignalController : MonoBehaviour {
     /// </summary>
     private void NewDirection()
     {
-        // Easy way to get a random, valid choice
+/*        // Easy way to get a random, valid choice
         while (true)
         {
             float myRandom = Random.value;
@@ -178,6 +197,29 @@ public class DirectionSignalController : MonoBehaviour {
                     currentDirection = arrowDirection.Right;
                     break;
                 } 
+            }
+        }*/
+
+        // This is used for automatic evolution, so that junctions change
+        // in a predictable way (and we can avoid all directions in the same way)
+        if (isStraight)
+        {
+            currentDirection = arrowDirection.Straight;
+        }
+        else if (isRight && !isLeft)
+        {
+            currentDirection = arrowDirection.Right;
+        }
+        else
+        {
+            // Right or left
+            if (currentDirection == arrowDirection.Right)
+            {
+                currentDirection = arrowDirection.Left;
+            }
+            else
+            {
+                currentDirection = arrowDirection.Right;
             }
         }
 

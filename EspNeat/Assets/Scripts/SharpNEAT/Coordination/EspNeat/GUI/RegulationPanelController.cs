@@ -55,7 +55,7 @@ public class RegulationPanelController : MonoBehaviour {
     /// in basic regulation mode), used to set the initial value.
     /// </summary>
     public void SetDropdownValue(int newValue)
-    {
+    {        
         inputSelector.value = newValue;
     }
         
@@ -107,9 +107,19 @@ public class RegulationPanelController : MonoBehaviour {
         {
             // "Active when X is active" is the easiest case:
             moduleController.AddInputToReg(inputSelector.value, 1.0);
+
+            // We record this action:
+            moduleController.UiManager.WriteToRecord(
+                    "New regulation for module " + moduleController.ModuleId +
+                    ": when " + inputSelector.value.ToString() + " active");
         }
         else
         {
+            // We record this action:
+            moduleController.UiManager.WriteToRecord(
+                    "New regulation for module " + moduleController.ModuleId +
+                    ": when " + inputSelector.value.ToString() + " inactive");
+
             // First checks the special case for "active when bias is inactive"
             // In this case we do not want 2 different connections from bias
             // which would be problematic, because they would share Id!
@@ -155,14 +165,23 @@ public class RegulationPanelController : MonoBehaviour {
     }
 
     public void PandemoniumUp()
-    {
+    {        
         ++pandemoniumGroup;
         SetPandemoniumValue(pandemoniumGroup);
         moduleController.PassPandemonium(pandemoniumGroup);
+
+        // We record this action:
+        moduleController.UiManager.WriteToRecord(
+                "New pandemonium for" + moduleController.ModuleId +
+                " now: " + pandemoniumGroup);
     }
 
     public void PandemoniumDown()
     {
+        // We record this action:
+        moduleController.UiManager.WriteToRecord("New pandemonium " +
+                                                 moduleController.ModuleId);
+        
         --pandemoniumGroup;
         if (pandemoniumGroup < 0)
         {
