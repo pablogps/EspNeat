@@ -17,7 +17,10 @@ public class RegModuleController : ModuleController {
     private GameObject addElements;
     private GameObject background;
     private GameObject plusSymbol;
-    private GameObject plusSymbolHover;
+	private GameObject plusSymbolHover;
+	private GameObject evolveButton;
+	private GameObject optionsButton;
+    private GameObject childrenToggle;
 
     GameObject warningPanel = null;
 
@@ -32,7 +35,9 @@ public class RegModuleController : ModuleController {
         // Do not forget about the parent-class' initializer!
         base.Awake();
 
-        mainTexture = transform.Find("ModuleCanvas").Find("MainTexture").gameObject;
+		mainTexture = transform.Find("ModuleCanvas").Find("MainTexture").gameObject;
+		evolveButton = transform.Find("ModuleCanvas").Find("EvolveButton").gameObject;
+		optionsButton = transform.Find("ModuleCanvas").Find("OptionsButton").gameObject;
         regulationElements = transform.Find("ModuleCanvas").
                                        Find("RegulationElements").gameObject;
         background = transform.Find("ModuleCanvas").Find("Add-Elements").
@@ -43,6 +48,8 @@ public class RegModuleController : ModuleController {
         plusSymbolHover = transform.Find("ModuleCanvas").Find("Add-Elements").
                                     Find("PlusSymbolHover").gameObject;
         plusSymbolHover.SetActive(false);
+        childrenToggle =  transform.Find("ModuleCanvas").Find("ChildrenToggle").gameObject;
+        childrenToggle.SetActive(false);
 
         regModuleSizes = new RegModuleSizes();
         modulesContained = 0;
@@ -89,6 +96,11 @@ public class RegModuleController : ModuleController {
         get { return containedModules; }
     }
 
+    public void ActivateToggle()
+    {
+        childrenToggle.SetActive(true);
+    }
+
     /// <summary>
     /// When the user clicks on a regulation module, it is set as "being dragged".
     /// This way it is possible to know which module was dropped into which
@@ -127,16 +139,29 @@ public class RegModuleController : ModuleController {
     }
 
     /// <summary>
-    /// Calls the second part, EvolveContinue. First creates a list with the
-    /// children of this module.
+    /// This function will take all children and remove them from the pandemonium.
     /// </summary>
-    public override void Evolve()
+    public override void ChildrenToNoPandem()
     {
-        List<int> childrenList = new List<int>();
-        AddChildrenToList(childrenList);
-
-        // EvolveContinue is in the base class ModuleController
-        EvolveContinue(childrenList);
+        foreach (GameObject child in containedModules)
+        {
+            otherModule = child.GetComponent<Collider>();
+            // Will set pandemonium value to 0
+            MoveToPandemonium(0);
+        }        
+    }
+    /// <summary>
+    /// This function will take all children and move them into the pandemonium
+    /// group that corresponds to this regulation module.
+    /// </summary>
+    public override void ChildrenToPandem()
+    {
+        foreach (GameObject child in containedModules)
+        {
+            otherModule = child.GetComponent<Collider>();
+            // Will set pandemonium value to 100 + regulation moduleId
+            MoveToPandemonium();
+        }
     }
 
     /// <summary>
@@ -171,11 +196,13 @@ public class RegModuleController : ModuleController {
         // Hides input/output in the module that will be included
         // (otherwise they take too much space!)
         other.GetComponent<ModuleController>().SetActiveIOelements(false);
+
         // Makes the new module smaller
         other.transform.localScale = new Vector3(0.7f, 1f, 0.7f);
         // Fixes the position of the module!
         other.transform.position = this.transform.position +
                                    regModuleSizes.moduleOffset[modulesContained];
+		
         // We do not want to interact with modules that are already
         // part of the group!
         other.GetComponent<BoxCollider>().enabled = false;
@@ -184,16 +211,20 @@ public class RegModuleController : ModuleController {
         // If we are adding a regulation module we need a few extra steps
         if (other.GetComponent<ModuleController>().IsRegModule)
         {
-           AddRegModule(other);
+            other.GetComponent<RegModuleController>().ActivateToggle();
+            HideChildren(other);
         }
 
         // After adding a module, we reset the plus icon to normal state
         plusSymbol.SetActive(true);
         plusSymbolHover.SetActive(false);
 
-        containedModules.Add(other.gameObject); 
-    }
+        containedModules.Add(other.gameObject);
 
+        // We indicate that the activation regime of the child depends now on the
+        // parent.
+        other.GetComponent<ModuleController>().ActivationLabelAsChild();
+    }
 
     /// <summary>
     /// When asked by OptionsPanelController, asks uiManager to ask optimizer
@@ -310,6 +341,30 @@ public class RegModuleController : ModuleController {
         warningPanel.SetActive(false);  
     }
 
+	/// <summary>
+	/// Used by the user to show or hide the children of a regulation module
+    /// within another regulation module.
+	/// </summary>
+	public void ToggleShowChildren(bool isShow)
+	{
+        if (isShow)
+        {
+            // Makes the module normal size again
+            transform.localScale = new Vector3(1f, 1f, 1f);
+            ShowChildren();
+        }
+        else
+        {
+            // Makes the module small size again
+            transform.localScale = new Vector3(0.7f, 1f, 0.7f);
+
+            // HideChildren can be used by other methods to hide other modules,
+            // so we need to pass the collider.
+            HideChildren(this.GetComponent<Collider>());
+        }
+	}
+
+
     /// <summary>
     /// When the number of elements in the regulation module changes, so does
     /// its size on screen. Instead of making calculations, we simply load
@@ -333,11 +388,30 @@ public class RegModuleController : ModuleController {
             regModuleSizes.addPlusPosition[numberOfElements];
         plusSymbolHover.GetComponent<RectTransform>().anchoredPosition =
             regModuleSizes.addPlusPosition[numberOfElements]; 
+		
+		evolveButton.GetComponent<RectTransform>().anchoredPosition =
+			regModuleSizes.evolvePosition[numberOfElements];
+		
+		optionsButton.GetComponent<RectTransform>().anchoredPosition =
+			regModuleSizes.optionsPosition[numberOfElements];
 
         this.GetComponent<BoxCollider>().center = 
             regModuleSizes.colliderCenter[numberOfElements];
         this.GetComponent<BoxCollider>().size = 
             regModuleSizes.colliderSize[numberOfElements];
+    }
+
+    /// <summary>
+    /// Calls the second part, EvolveContinue. First creates a list with the
+    /// children of this module.
+    /// </summary>
+    protected override void Evolve()
+    {
+        List<int> childrenList = new List<int>();
+        AddChildrenToList(childrenList);
+
+        // EvolveContinue is in the base class ModuleController
+        EvolveContinue(childrenList);
     }
 
     /// <summary>
@@ -418,7 +492,13 @@ public class RegModuleController : ModuleController {
         RegModuleController = this;
     }
 
-    void AddRegModule(Collider other)
+	/// <summary>
+	/// When a regulation module is moved inside of another, its children (the
+    /// granchildren of the regulatio module higher in hierarchy) are hidden
+    /// for clarity. ShowChildren allows to show them again, in case it is 
+    /// necessary to continue their evolution.
+	/// </summary>
+    void HideChildren(Collider other)
     {
         RegModuleController otherController = other.GetComponent<RegModuleController>();
 
@@ -434,16 +514,39 @@ public class RegModuleController : ModuleController {
         // 3) Switches off the Add-Elements group
         otherController.addElements.SetActive(false);
 
-        // 4) Main texture needs a custom size:
-        otherController.mainTexture.GetComponent<RectTransform>().sizeDelta =
-                new Vector2(255.3f, 122.3f);
+        // 4) Position needs an extra touch:
+        other.transform.position += new Vector3(-0.1f, 0f, 0.1f);
 
-        // 5) Position needs an extra touch:
-        other.transform.position += new Vector3(0.51f, 0f, 0f);
-
-        // 6) Canvas layer 0 (so it is surely on top!)
+        // 5) Canvas layer 0 (so it is surely on top!)
         otherController.ObjectCanvas.GetComponent<Canvas>().sortingOrder = 0;
+
+        // 6) Corrects the position of all its children!
+        int childIndex = 1;
+        foreach (GameObject module in otherController.containedModules)
+        {
+            module.transform.position = other.transform.position +
+                    regModuleSizes.moduleOffset[childIndex];
+            ++childIndex;
+        }
     }
+
+	/// <summary>
+	/// Used by the user to reveal the children in a regulation module!
+	/// </summary>
+	void ShowChildren()
+	{
+		// 1) Switches on children
+		foreach (GameObject module in containedModules)
+		{
+			module.SetActive(true);
+		}
+
+		// 2) Sets the module to the right size!
+		GetNewSizes(modulesContained);
+
+		// 4) Undo position offset:
+		transform.position += new Vector3(+0.1f, 0f, -0.1f);		
+	}
 
     /// <summary>
     /// Resets the regulation scheme of the other module. It is also set as
@@ -470,9 +573,13 @@ public class RegModuleController : ModuleController {
         // pandemonium value for other groups
         int pandemoniumID = 100 + moduleId;
 
+        MoveToPandemonium(pandemoniumID);
+    }
+    void MoveToPandemonium(int pandemValue)
+    {
         ModuleController otherController = otherModule.GetComponent<ModuleController>();
-        otherController.SetPandemoniumValue(pandemoniumID);
-        otherController.PassPandemonium(pandemoniumID);
+        otherController.SetPandemoniumValue(pandemValue);
+        otherController.PassPandemonium(pandemValue);        
     }
 
     /// <summary>
