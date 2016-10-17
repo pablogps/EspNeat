@@ -179,7 +179,11 @@ namespace SharpNeat.Coordination
             UpdateHierarchy();
   
             Coroutiner.StartCoroutine(InstantiateLoadedModules());
-            InstantiateInputOutput();
+
+			// We do not need a on-screen representation of input neurons
+			// anymore. This will be substitued by a dropdown that allows
+			// to see and change their labels.
+            //InstantiateInputOutput();
 		}
 
         #endregion
@@ -1783,11 +1787,12 @@ namespace SharpNeat.Coordination
 
             // Local input and outputs are added
             newModuleController.AddLocalIO(localInSources[moduleId], true);
+            // Local output currentyl not shown at all!
             // Local output is not shown for regulation modules!
-            if (!isRegulationModule)
+/*          if (!isRegulationModule)
             {
                 newModuleController.AddLocalIO(localOutTargets[moduleId], false);                
-            }
+            }*/
 
             // We need the complete input list in the regulation menu panel
             newModuleController.AddInToRegulationMenu(inputLabels);
@@ -1797,7 +1802,6 @@ namespace SharpNeat.Coordination
 
 			// Also passes the output connections (so we can easily modify their
             // weights)
-
             newModuleController.LoadOutputList(uiVar.localOutputList[moduleId]);
 
             // Passes the module label

@@ -4,11 +4,11 @@ using SharpNeat.Coordination;
 
 public class EvolveInactivePanelController : MonoBehaviour {
 
-    private OptionsPanelController optionsPanel;
+    private ModuleController myModuleController;
 
-    public OptionsPanelController OptionsPanel
+    public ModuleController MyModuleController
     {
-        set { optionsPanel = value; }
+        set { myModuleController = value; }
     }
 
     /// <summary>
@@ -16,7 +16,7 @@ public class EvolveInactivePanelController : MonoBehaviour {
     /// </summary>
     public void ProceedEvolve()
     {
-        optionsPanel.ProceedEvolve();
+        myModuleController.ProceedEvolve();
         // Destroy(this.gameObject);
     }
 
@@ -29,6 +29,6 @@ public class EvolveInactivePanelController : MonoBehaviour {
     public void SelfDestroy()
     {
         // Destroy(this.gameObject);
-        optionsPanel.DestroyEvolutionWarning();
+        myModuleController.DestroyEvolutionWarning();
     }
 }

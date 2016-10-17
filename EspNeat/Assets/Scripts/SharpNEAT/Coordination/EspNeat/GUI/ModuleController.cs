@@ -6,17 +6,21 @@ using SharpNeat.Coordination;
 
 public class ModuleController : MonoBehaviour {
 
+    // This has been made public so it can be determined in the prefab.
+    // Note that the get/set functions have been left as before.
+    public bool isRegModule = false;
+
     protected UImanager uiManager;
 
     protected int moduleId = 0;
     protected bool isActive = false;
 
-    protected bool isRegModule = false;
-
     // We sometimes need to place a module where it does not collide with any
     // others. We use these:
     protected bool colliderAsProbe = false;
     protected int collisions = 0;
+
+    protected GameObject warningEvolvePanel;
 
     // We need the canvas GameObject so that we can add UI elements with this 
     // canvas as parent. We also need to create other elements using a screen
@@ -28,9 +32,8 @@ public class ModuleController : MonoBehaviour {
     protected int totalInNeurons;
     protected int totalOutNeurons;
 
-    // This is the regulation menu. It will be activated or deactivated (as
+    // This is the options menu. It will be activated or deactivated (as
     // opposed to instantiated and destroyed).
-    protected GameObject regulatoryMenu;
     protected GameObject optionsMenu;
 
     // Stores a reference for all elements instantiated to represent
@@ -49,8 +52,6 @@ public class ModuleController : MonoBehaviour {
     // useful in case we want to display and modify their weights (for example).
     protected List<newLink> localOutputList;
 
-    private Slider slider = null;
-
     // Determines whether a basic regulation scheme is being used
     protected bool basicRegulation = true;
 
@@ -58,6 +59,7 @@ public class ModuleController : MonoBehaviour {
     protected Text moduleIdLabel;
     protected Text moduleLabelButtonText;
     protected GameObject moduleLabelInputField;
+	// This label is currently hidden (so all related text could be commented)
     protected Text regIdLabel;
 
     // Even if this is not used here, other objects may need it!
@@ -82,7 +84,7 @@ public class ModuleController : MonoBehaviour {
     /// this Awake method and their own! This one should be virtual (and may
     /// be accessed via base.Awake())
     /// </summary>
-    protected virtual void Awake () {
+    protected virtual void Awake() {
         // Gets uiManager this way (not with a set property function) because
         // it needs to be referenced already during Awake!
         uiManager = GameObject.Find("Evaluator").GetComponent<UImanager>();
@@ -109,19 +111,10 @@ public class ModuleController : MonoBehaviour {
         dragButton = transform.Find("ModuleCanvas").
                                Find("DragModuleButton").gameObject;
 
-        // Regulation modules will not have sliders (or will they?)
-        if (transform.Find("ModuleCanvas").Find("Slider") != null)
-        {
-            // Reference to the slider
-            slider = transform.Find("ModuleCanvas").Find("Slider").GetComponent<Slider>();           
-        }
-
         // Connections and labels will be created as child objects (for the 
         // local inputs and local outputs, which cannot be made in the prefab)
         myConnections = new List<GameObject>();
         myLocalIOlabels = new List<GameObject>();
-        // Instantiates the regulation menu panel associated with this module.
-		InstantiateRegulationPanel();
 
         // Instantiates the options menu panel associated with this module.
 		InstantiateOptionsPanel();
@@ -225,10 +218,6 @@ public class ModuleController : MonoBehaviour {
 
     #region PublicSetupMethods
 
-    /// <summary>
-    /// Also creates the connection for bias (which is often created and
-    /// destroyed when using basic regulation!)
-    /// </summary>
     public void SetRegulatoryId(uint newId)
     {
         regulatoryId = newId;
@@ -258,14 +247,16 @@ public class ModuleController : MonoBehaviour {
     /// </summary>
     public void SetPandemoniumValue(int newPandem)
     {
-        regulatoryMenu.GetComponent<RegulationPanelController>().
-                       SetPandemoniumValue(newPandem);
+        optionsMenu.GetComponent<OptionsPanelController>().SetPandemoniumValue(newPandem);
     }
 
     /// <summary>
     /// This method adds the graphical representation (connections and labels)
     /// for local inputs and local outputs. A special tag is used, so that
     /// these elements are not hard to remove in case this is needed.
+    /// 
+    /// Currently local outputs are NOT shown, which could simplify this method.
+    /// However, the gain is probably not worth the loss of flexibility in the future.
     /// </summary>
     public void AddLocalIO(List<string> localList, bool isLocalIn)
     {
@@ -274,15 +265,16 @@ public class ModuleController : MonoBehaviour {
         float yPosition;
         float yPositionLabel;
 
-        const float yPosShortUp = 90.7f;
-        const float yPosLongUp = 110.9f;
-        const float yPosLabShortUp = 121.9f;
-        const float yPosLabLongUp = 162.4f;
+		// Offset for input/output elements (lines and texts)
+        const float yPosShortUp = 87.7f;
+        const float yPosLongUp = 107.9f;
+        const float yPosLabShortUp = 118.9f;
+        const float yPosLabLongUp = 159.4f;
 
-        const float yPosShortDown = -55.6f;
-        const float yPosLongDown = -77.2f;
-        const float yPosLabShortDown = -94.3f;
-        const float yPosLabLongDown = -136.2f;
+        const float yPosShortDown = -108.6f;
+        const float yPosLongDown = -130.2f;
+        const float yPosLabShortDown = -147.3f;
+        const float yPosLabLongDown = -189.2f;
 
         if (isLocalIn)
         {
@@ -374,7 +366,7 @@ public class ModuleController : MonoBehaviour {
     // so the GameObject will exist.
     public void AddInToRegulationMenu(List<string> inputList)
     {
-        regulatoryMenu.GetComponent<RegulationPanelController>().GetInputList(inputList);
+        optionsMenu.GetComponent<OptionsPanelController>().GetInputList(inputList);
     }
 
     /// <summary>
@@ -397,11 +389,7 @@ public class ModuleController : MonoBehaviour {
 		}
 
         // If we are here, all local outputs have the same weights.
-        // Slider will be null for regulation modules!
-        if (slider != null)
-        {
-            slider.value = (float)firstValue;            
-        }
+        optionsMenu.GetComponent<OptionsPanelController>().SetSliderValue((float)firstValue);
     }
 
     /// <summary>
@@ -441,9 +429,9 @@ public class ModuleController : MonoBehaviour {
             if (regulationList[0].otherNeuron == 0 &&
                 System.Math.Abs(regulationList[0].weight - 0) < delta)
             {
-                regulatoryMenu.GetComponent<RegulationPanelController>().
+                optionsMenu.GetComponent<OptionsPanelController>().
                 SetDropdownValue((int)regulationList[0].otherNeuron);
-                regulatoryMenu.GetComponent<RegulationPanelController>().
+                optionsMenu.GetComponent<OptionsPanelController>().
                 SetActiveWhenInactive();
                 return;
             }
@@ -460,9 +448,9 @@ public class ModuleController : MonoBehaviour {
 
             // The module will be active when regulationList[0].otherNeuron
             // is active:
-            regulatoryMenu.GetComponent<RegulationPanelController>().
+            optionsMenu.GetComponent<OptionsPanelController>().
             SetActiveWhenActive();
-            regulatoryMenu.GetComponent<RegulationPanelController>().
+            optionsMenu.GetComponent<OptionsPanelController>().
                     SetDropdownValue((int)regulationList[0].otherNeuron);
         }
         else if (regulationList.Count == 2) 
@@ -483,9 +471,9 @@ public class ModuleController : MonoBehaviour {
                     regulationList[1].otherNeuron  <= (uint)totalInNeurons)
                 {
                     // This is a basic regulation case!
-                    regulatoryMenu.GetComponent<RegulationPanelController>().
+                    optionsMenu.GetComponent<OptionsPanelController>().
                     SetActiveWhenInactive();
-                    regulatoryMenu.GetComponent<RegulationPanelController>().
+                    optionsMenu.GetComponent<OptionsPanelController>().
                             SetDropdownValue((int)regulationList[1].otherNeuron);
                     return;                
                 }
@@ -507,13 +495,25 @@ public class ModuleController : MonoBehaviour {
     #region OtherPublicMethods
 
     /// <summary>
+    /// These two are only relevant in regulation modules. We include them
+    /// here so they can be called from the common controller script
+    /// OptionsPanelController
+    /// </summary>
+    public virtual void ChildrenToNoPandem() {}
+    public virtual void ChildrenToPandem() {}
+
+    public void ActivationLabelAsChild()
+    {
+        optionsMenu.GetComponent<OptionsPanelController>().ActivationLabelAsChild();
+    }
+
+    /// <summary>
     /// Removes the GameObject to which this script belongs (the module UI
     /// elements). Also takes care of its associated menu screens.
     /// </summary>
     public void RemoveModule()
     {
-        // Do not forget to destroy the regulation and options menues!
-        Destroy(regulatoryMenu);
+        // Do not forget to destroy the options menu!
         Destroy(optionsMenu);
         // Commits suicide!
         Destroy(this.gameObject);
@@ -565,48 +565,72 @@ public class ModuleController : MonoBehaviour {
     }
 
     /// <summary>
-    /// Calls the second part, EvolveContinue. First creates a list with the
-    /// children of this module. In this case this is a normal module, with no
-    /// children!
+    /// Tries to start an evolutionary process. If this is the active module
+    /// simply asks to continue the process. Otherwise a panel warns that
+    /// population diversity will be lost. If accepted, a new process is
+    /// created and the previously active module simply takes the champion
+    /// genome for all individuals in the population.
     /// </summary>
-    public virtual void Evolve()
+    public void TryEvolve()
     {
-        // This is a normal module, with no children
-        List<int> noChildren = new List<int>();
-        EvolveContinue(noChildren);
-    }
-    /// <summary>
-    /// Make this the active module if it is not already.
-    /// If the module has basic regulation it is also (provisionally) made
-    /// the only active module (children left normal). This is so during evolution
-    /// only the behaviour of this module is shown, with no interference.
-    /// </summary>
-    public void EvolveContinue(List<int> childrenId)
-    {
-        if (!isActive)
+        if (isActive)
         {
-            // This will be a new evolutionary process, so we need to set this
-            // module as the active module in the genome!
-            uiManager.SetModuleActive(moduleId);
+            Evolve();
         }
+        else
+        {
+            InstantiateEvolveWarning();
+        }        
+    }
 
-        // If this module uses basic regulation, then we set it as the only
-        // active module! (its children will also remain active!)
-        //
-        // USE WITH ADVANCED REGULATION IS NOT FULLY SUPPORTED YET: USE WITH
-        // CAUTION!
-        newLink newRegulation = new newLink();
-        // Regulation from bias
-        newRegulation.otherNeuron = 0;
-        // With weight 1
-        newRegulation.weight = 1.0;
-        // Takes the ID following that of the regulatory neuron
-        newRegulation.id = regulatoryId + 1;
+    /// <summary>
+    /// Instantiates a panel warning this is not the active module (so starting
+    /// evolution here will lose population diversity for the current active
+    /// module!)
+    /// </summary>
+    public void InstantiateEvolveWarning()
+    {
+        warningEvolvePanel = InstantiateWarning("Prefabs/EvolveInactiveWarning");
+        warningEvolvePanel.GetComponent<EvolveInactivePanelController>().MyModuleController = this;
+    }
 
-        uiManager.MakeOnlyActiveMod(moduleId, newRegulation, childrenId);
+    /// <summary>
+    /// This is used in here and in options panel controller.
+    /// </summary>
+    public GameObject InstantiateWarning(string prefabAddress)
+    {
+        GameObject myPrefab = (GameObject)Resources.Load(prefabAddress);
+        GameObject panel = (GameObject)Instantiate(myPrefab);
 
-        //regulatoryMenu.GetComponent<>()
-        uiManager.LaunchEvolution();               
+        // Used to ensure correct orientation
+        uiManager.SetUpPanel(panel, myPrefab);
+        // But SetUpPanel leaves the gameObject inactive!
+        panel.SetActive(true);
+
+        return panel;
+    }
+
+    /// <summary>
+    /// Destroys the evolution warning panel
+    /// </summary>
+    public void DestroyEvolutionWarning()
+    {
+        Destroy(warningEvolvePanel);
+        // I believe this is not necessary in Unity/C#, but is it a good
+        // practice as it was in C++?
+        // Note that otherwise the object could be directly deleted from its
+        // own script with Destroy(this.gameObject)
+        warningEvolvePanel = null;
+    }
+
+    /// <summary>
+    /// Proceeds with the creation of a new evolutionary process (for an old
+    /// module)
+    /// </summary>
+    public void ProceedEvolve()
+    {
+        Evolve();
+        DestroyEvolutionWarning();
     }
 
     /// <summary>
@@ -675,20 +699,6 @@ public class ModuleController : MonoBehaviour {
 
         regulatoryInputList.Add(auxLink);
     }
-   
-    /// <summary>
-    /// Shows the regulation menu if it is inactive.
-    /// Note activeSelf tells if the element is set as active, but if a parent
-    /// is inactive it may still not show in the scene. activeInHierarchy may
-    /// be used to know that.
-    /// </summary>
-    public void ShowRegulation()
-    {
-        if (basicRegulation && !regulatoryMenu.activeSelf)
-        {
-            regulatoryMenu.SetActive(true);
-        }
-    }
 
 	/// <summary>
 	/// Shows the options menu if it is inactive.
@@ -701,14 +711,6 @@ public class ModuleController : MonoBehaviour {
 		}
 	}
 
-    /// <summary>
-    /// Hides the regulation menu.
-    /// </summary>
-    public void HideRegulation()
-    {
-        regulatoryMenu.SetActive(false);
-	}
-
 	/// <summary>
 	/// Hides the options menu.
 	/// </summary>
@@ -718,11 +720,10 @@ public class ModuleController : MonoBehaviour {
 	}
 
     /// <summary>
-    /// Using the slider, gets a new weight for all output connections. 
+    /// Sets a new weight for all output connections. 
     /// </summary>
-    public void newOutputWeightBasic()
+    public void newOutputWeightBasic(double newWeight)
     {        
-        double newWeight = (double)slider.value;
         for (int i = 0; i < localOutputList.Count; ++i)
         {
             newLink auxLink = localOutputList[i];
@@ -790,6 +791,50 @@ public class ModuleController : MonoBehaviour {
     #region ProtectedMethods
 
     /// <summary>
+    /// Calls the second part, EvolveContinue. First creates a list with the
+    /// children of this module. In this case this is a normal module, with no
+    /// children!
+    /// </summary>
+    protected virtual void Evolve()
+    {
+        // This is a normal module, with no children
+        List<int> noChildren = new List<int>();
+        EvolveContinue(noChildren);
+    }
+    /// <summary>
+    /// Make this the active module if it is not already.
+    /// If the module has basic regulation it is also (provisionally) made
+    /// the only active module (children left normal). This is so during evolution
+    /// only the behaviour of this module is shown, with no interference.
+    /// </summary>
+    protected void EvolveContinue(List<int> childrenId)
+    {
+        if (!isActive)
+        {
+            // This will be a new evolutionary process, so we need to set this
+            // module as the active module in the genome!
+            uiManager.SetModuleActive(moduleId);
+        }
+
+        // If this module uses basic regulation, then we set it as the only
+        // active module! (its children will also remain active!)
+        //
+        // USE WITH ADVANCED REGULATION IS NOT FULLY SUPPORTED YET: USE WITH
+        // CAUTION!
+        newLink newRegulation = new newLink();
+        // Regulation from bias
+        newRegulation.otherNeuron = 0;
+        // With weight 1
+        newRegulation.weight = 1.0;
+        // Takes the ID following that of the regulatory neuron
+        newRegulation.id = regulatoryId + 1;
+
+        uiManager.MakeOnlyActiveMod(moduleId, newRegulation, childrenId);
+
+        uiManager.LaunchEvolution();               
+    }
+
+    /// <summary>
     /// Sets the position of the regulation info panel. This is tricky, because 
     /// we need coordinates on canvas. WorldToScreenPoint returns points that
     /// are heavily shifted. 
@@ -809,8 +854,7 @@ public class ModuleController : MonoBehaviour {
         // intelligent offset to avoid going outside of the screen)
         canvasPosition.x += 180;
         canvasPosition.y += 40f;
-
-        regulatoryMenu.transform.localPosition = canvasPosition;     
+    
         optionsMenu.transform.localPosition = canvasPosition;
     }
 
@@ -825,7 +869,15 @@ public class ModuleController : MonoBehaviour {
 	void InstantiateOptionsPanel()
 	{
 		// Instantiates the object
-		GameObject myPrefab = (GameObject)Resources.Load("Prefabs/ModuleOptionsMenu");
+        GameObject myPrefab = null;
+        if (isRegModule)
+        {
+            myPrefab = (GameObject)Resources.Load("Prefabs/ModuleOptionsMenu-reg");  
+        }
+        else
+        {
+            myPrefab = (GameObject)Resources.Load("Prefabs/ModuleOptionsMenu"); 
+        }
 		optionsMenu = (GameObject)Instantiate(myPrefab);
 
         uiManager.SetUpPanel(optionsMenu, myPrefab);
@@ -834,23 +886,6 @@ public class ModuleController : MonoBehaviour {
 		// can communicate with this module in particular
         optionsMenu.GetComponent<OptionsPanelController>().SetModuleController(this);
 	}
-
-    /// <summary>
-    /// Instantiates the regulation menu panel. This will be activated or
-    /// deactivated as needed.
-    /// </summary>
-    void InstantiateRegulationPanel()
-    {
-        // Instantiates the object
-        GameObject myPrefab = (GameObject)Resources.Load("Prefabs/RegulationMenuBasic");
-        regulatoryMenu = (GameObject)Instantiate(myPrefab);
-
-        uiManager.SetUpPanel(regulatoryMenu, myPrefab);
-
-		// We need to pass a reference to this script, so that the regulation panel
-		// can communicate with this module in particular
-		regulatoryMenu.GetComponent<RegulationPanelController>().ModuleController = this;
-    }
 
     /// <summary>
     /// Instantiates a connector. It can be either at the top of the module

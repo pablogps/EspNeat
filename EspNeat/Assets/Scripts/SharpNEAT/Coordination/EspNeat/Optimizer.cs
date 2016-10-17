@@ -23,7 +23,7 @@ public abstract class Optimizer : MonoBehaviour
     // XOR - 10
 	// CheapLabour - 80
 	// Short tracks 26;
-    private float trial_duration = 26;
+    private float trial_duration = 150;
     // Fitness goal. If reached the evolutionary process stops.
     private float stopping_fitness = 500;
 

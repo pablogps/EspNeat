@@ -21,16 +21,16 @@ public class WorkerSimpleController : UnitController {
   private float av_speed;
   private float collision_counter;
   private float my_time;
-  private float fit_speed_multiplier = 5f;
-  private float fit_hit_multiplier = 0.1f;
+  private float fit_speed_multiplier = 0.3f;
+  private float fit_hit_multiplier = 0.03f;
   private static float fit_experiment_length = 0f;
   private float fit; // here we include the fitness related to cargo-delivery
   // Cargo-related fitness penaties and rewards
-  private float bonus_pick_up_cargo = +30f;
-  private float penalty_wrong_dock = -100f;
-  private float penalty_full_on_dock = -25f;
-  private float bonus_delivery = +40f;
-  private float penalty_delivery_empty = -20f;
+  private float bonus_pick_up_cargo = +40f;
+  private float penalty_wrong_dock = -80f;
+  private float penalty_full_on_dock = -20f;
+  private float bonus_delivery = +50f;
+  private float penalty_delivery_empty = -10f;
 
   private Rigidbody rigid_body; // used for movement
   private float input_cargo = 0f; // 0 means no cargo
@@ -109,10 +109,7 @@ public class WorkerSimpleController : UnitController {
                " where collision number is: " + collision_counter);
      Debug.Log("Events component: " + fit * fit_experiment_length +
                " where fit is: " + fit);
-    
-
-
-
+		
     fit = 0f;
     collision_counter = 0f;
     my_time = 0f;
@@ -181,7 +178,7 @@ public class WorkerSimpleController : UnitController {
   }  
 //------------------------------------------------------------------------------
   void FixedUpdate () {   
-        // Uncomment for phenome testing
+        // Uncomment for PHENOME TESTING
 /*        ISignalArray inputArr = box.InputSignalArray;
         inputArr[0] = 0.01;
         inputArr[1] = 0.1;
@@ -191,6 +188,7 @@ public class WorkerSimpleController : UnitController {
         inputArr[5] = 0.8;
         inputArr[6] = 0.99;
         inputArr[7] = 0.999;
+
         // Which is activated
         box.Activate();
         // And produces output signals (also in an array)
@@ -210,8 +208,8 @@ public class WorkerSimpleController : UnitController {
     float left_front_eco_sensor = 0f;
     float right_front_eco_sensor = 0f;
     float blue_eye = 0f;
-	  float red_eye = 0f;
-	  float pink_eye = 0f;
+	float red_eye = 0f;
+	float pink_eye = 0f;
     // Range sensors go from 0 (no object detected) to about 1 (collision)
     front_eco_sensor = RangeRay(new Vector3(0f, 0f, 1f).normalized);
     right_front_eco_sensor = RangeRay(new Vector3(1f, 0f, 1f).normalized);
@@ -219,7 +217,7 @@ public class WorkerSimpleController : UnitController {
     // Each eye will see a different cargo dock, and both will also respond to the chasm
     red_eye = See("CargoDock2");
     blue_eye = See("CargoDock1");
-    pink_eye = See("ChasmTrigger");
+	pink_eye = See("ChasmTrigger");
 
     // Input signals are used in the neural controller
     ISignalArray inputArr = box.InputSignalArray;
@@ -257,18 +255,10 @@ public class WorkerSimpleController : UnitController {
       // This fixes the magnitude of the vector but still allows to change direction!
       rigid_body.velocity = rigid_body.velocity.normalized * max_speed;
     }
-    // Average speed is computed for fitness.
-    //av_speed = ((av_speed * my_time) + (rigid_body.velocity.magnitude * 
-    //                                      Mathf.Sign(gas) * Time.deltaTime)) / 
-    //                                      (my_time + Time.deltaTime);
-    av_speed = ((av_speed * my_time) + (rigid_body.velocity.magnitude * 
-                                        Time.deltaTime)) / 
-                                        (my_time + Time.deltaTime);
-    my_time += Time.deltaTime; 
 
     // USING USER INPUT (for debugging)    
     // Use user input to move the robot (for debugging)
-    /*
+/*   
     float rotate = Input.GetAxis("Horizontal");
     float advance = Input.GetAxis("Vertical");    
     transform.rotation = Quaternion.Euler(0f, rotate * rotation_speed *
@@ -280,6 +270,15 @@ public class WorkerSimpleController : UnitController {
       // This fixes the magnitude of the vector but still allows to change direction!
       rigid_body.velocity = rigid_body.velocity.normalized * max_speed;
     }*/
+
+	// Average speed is computed for fitness.
+	//av_speed = ((av_speed * my_time) + (rigid_body.velocity.magnitude * 
+	//                                      Mathf.Sign(gas) * Time.deltaTime)) / 
+	//                                      (my_time + Time.deltaTime);
+	av_speed = ((av_speed * my_time) + (rigid_body.velocity.magnitude * 
+	  Time.deltaTime)) / 
+	  (my_time + Time.deltaTime);
+	my_time += Time.deltaTime; 
   }  
 //------------------------------------------------------------------------------
   // This are the range sensors for the input
