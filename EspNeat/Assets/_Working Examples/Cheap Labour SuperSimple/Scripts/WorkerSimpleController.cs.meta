@@ -1,11 +1,10 @@
 fileFormatVersion: 2
 guid: 215d2b97935310f42bc466b515b0e9d5
-timeCreated: 1459942104
+timeCreated: 1478855503
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences:
-  - cargo_drop: {fileID: 180074, guid: 0150ca3a835546f43a5fca2d063ee655, type: 2}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

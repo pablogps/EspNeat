@@ -13,6 +13,7 @@ public class TrafficLightController : MonoBehaviour {
     private float minPeriod = 2f;
     private float period;
     private float elapsed_time = 0f;
+    private static float fitnessBasedPeriod = 0.0f;
 
 	private enum lightState
 	{
@@ -29,20 +30,31 @@ public class TrafficLightController : MonoBehaviour {
         // Gets the length for the first clock period
         NewPeriod();
 
+        // We need all traffic lights with the same period!
+        if (fitnessBasedPeriod < 0.01f)
+        {
+            fitnessBasedPeriod = (Random.value * 6f) + 35f;
+            Debug.Log("Period: " + fitnessBasedPeriod);
+        }
+
         // Gets a reference to the actual lights!
         redLight = transform.FindChild("LightRed").gameObject;
         orangeLight = transform.FindChild("LightOrange").gameObject;
         greenLight = transform.FindChild("LightGreen").gameObject;
 
-		// Starts the traffic light to either red or green
+		// Starts the traffic light to either orange or green
 		float myRandom = Random.value;
 		if (myRandom < 0.5f)
 		{
-			currentLight = lightState.Red;
+            currentLight = lightState.Orange;
+            // For fitness-based evolution
+            period = fitnessBasedPeriod * 0.5f;
 		}
 		else
         {
-			currentLight = lightState.Green;
+            currentLight = lightState.Green;
+            // For fitness-based evolution
+            period = fitnessBasedPeriod;
 		}
 
         LigthChange();
@@ -94,20 +106,35 @@ public class TrafficLightController : MonoBehaviour {
         period = Random.value * maxPeriod + minPeriod;
     }
 
+    /// <summary>
+    /// Fixed period values used only for fitness-based evolution.
+    /// </summary>
     private void NextLight()
     {
         switch (currentLight)
         {
         case lightState.Red:
             currentLight = lightState.Green;
+
+            // For fitness-based evolution
+            period = fitnessBasedPeriod;
+
             break;
         case lightState.Orange:
             currentLight = lightState.Red;
+
+            // For fitness-based evolution
+            period = fitnessBasedPeriod * 0.5f;
+
             break;
         case lightState.Green:
             currentLight = lightState.Orange;
             // Orange always has a fixed short period:
             period = minPeriod;
+
+            // For fitness-based evolution
+            period = fitnessBasedPeriod * 0.5f;
+
             break;
         default:  
             break;
