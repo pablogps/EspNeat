@@ -100,26 +100,43 @@ public class XorController : UnitController
     {
         fitness = 0f;
         // Avoid testing floats for equality.
-		fitness += 1f - output00; // so +1 if output00 = 0
+/*		fitness += 1f - output00; // so +1 if output00 = 0
 		fitness += 1f - output11;
 		fitness += output01; // so +0 if output01 = 0, +1 if output01 = 1, etc.
-		fitness += output10;
-/*      if (output00 < 0.5f)
+		fitness += output10;*/
+
+        if (output00 < 0.5f)
         {
             ++fitness;
         }
+		else
+		{
+			fitness += 1f - output00;
+		}
         if (output01 > 0.5f)
         {
             ++fitness;
-        }
+		}
+		else
+		{
+			fitness += output01;
+		}
         if (output10 > 0.5f)
         {
             ++fitness;
-        }
+		}
+		else
+		{
+			fitness += output10;
+		}
         if (output11 < 0.5f)
         {
             ++fitness;
-        }*/
+		}
+		else
+		{
+			fitness += 1f - output11;
+		}
 
         return fitness;
     }

@@ -21,7 +21,11 @@ public class CarController : UnitController {
 	private static float fit_experiment_length = 0f;
 	private float fit_advance_multiplier = 20f;
 	private float fit_wall_hit_multiplier = 0.5f;
-    private float traffic_lights_multiplier = 5f;
+	private float traffic_lights_multiplier = 0.025f;
+	// For II
+	//private float traffic_lights_multiplier = 15f;
+	// For III
+	//private float traffic_lights_multiplier = 0.025f;
     private float directions_multiplier = 20f;
 
 	// Upon start cars will substract 1 point when they detect the first
@@ -66,12 +70,11 @@ public class CarController : UnitController {
                      junctions_count * directions_multiplier) *
                      fit_experiment_length;
 
-
 		Debug.Log("Advance term: " + (advanced * fit_advance_multiplier) + " advanced: " + advanced);
-        Debug.Log("Hits term: " + (wall_hits * fit_wall_hit_multiplier) + " hits: " + wall_hits);
-        Debug.Log("Lights term: " + (traffic_light_violations * traffic_lights_multiplier) + " lights: " + traffic_light_violations);
-        Debug.Log("Directions term: " + (junctions_count * directions_multiplier) + " junctions_count: " + junctions_count);
-
+        Debug.Log("Hits penalty: " + (wall_hits * fit_wall_hit_multiplier) + " hits: " + wall_hits);
+        Debug.Log("Lights penalty: " + (traffic_light_violations * traffic_lights_multiplier) + " lights: " + traffic_light_violations);
+		Debug.Log("Directions term: " + (junctions_count * directions_multiplier) + " junctions_count: " + junctions_count);
+		Debug.Log("Total fitness: " + fit + "before length " + (fit / fit_experiment_length) + "\n");
 
 		// After evaluation the unit is destroyed, so we do not need to reset
         // values, but it does not hurt either!
@@ -188,12 +191,45 @@ public class CarController : UnitController {
 
             // Is it complying with traffic lights?
             // Green (0) and orange (0.5) are Ok, red (1) means stop.
+            // To make auto evolution easier, let's make orange mean stop as well.
             // Gas goes from -1 to 1, so we want its absolute value below 0.05.
-            if (trafficLightsSensor > 0.55f &&
-                System.Math.Abs(gas) > 0.05)
+
+            // IDEA: Also reward waiting at orange/red!
+			// IDAE: Also reward during green!
+
+            // If orange/red light...
+            if (trafficLightsSensor > 0.45f)
             {
-                ++traffic_light_violations;
+                // If NOT waiting, add penalty
+                if (System.Math.Abs(gas) > 0.05)
+				{
+					// For II
+					//++traffic_light_violations;
+					// For III
+					traffic_light_violations += 600;
+                }
+                else
+				{
+					// For II
+					//--traffic_light_violations;
+					// For III
+                    traffic_light_violations -= 600;
+                }
             }
+			else
+			{
+				// For III
+				// If green... reward/punish, but a little less
+				// because there will be lots of green!
+				if (System.Math.Abs(gas) > 0.05)
+				{
+					--traffic_light_violations;
+				}
+				else
+				{
+					++traffic_light_violations;
+				}
+			}
 
 			float move_dist = gas * speed * Time.deltaTime;
 			// A car can only turn if it advances (this is why we multiply by gas)

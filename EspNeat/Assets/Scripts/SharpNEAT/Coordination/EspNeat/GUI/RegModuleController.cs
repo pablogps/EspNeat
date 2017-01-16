@@ -208,6 +208,8 @@ public class RegModuleController : ModuleController {
         other.GetComponent<BoxCollider>().enabled = false;
         other.GetComponent<ModuleController>().DragButton.SetActive(false);
 
+        PlaceOnTop(other);
+
         // If we are adding a regulation module we need a few extra steps
         if (other.GetComponent<ModuleController>().IsRegModule)
         {
@@ -273,7 +275,7 @@ public class RegModuleController : ModuleController {
         // The regulation scheme of the other module is reset (cleaned)
         // This is done first so genome statistics are updated before trying
         // to add new elements.
-        ResetRegulation();
+		CleanRegulation();
         // The children of a regulation module will be part of a pandemonium group!
         MoveToPandemonium();
 
@@ -314,7 +316,7 @@ public class RegModuleController : ModuleController {
         // The regulation scheme of the other module is reset (cleaned)
         // This is done first so genome statistics are updated before trying
         // to add new elements.
-        ResetRegulation();
+		CleanRegulation();
         // The children of a regulation module will be part of a pandemonium group!
         MoveToPandemonium();
 
@@ -492,6 +494,41 @@ public class RegModuleController : ModuleController {
         RegModuleController = this;
     }
 
+    /// <summary>
+    /// We need to make sure that the modules added in a regulatory module look
+    /// always on top. This applies also to hidden children (in case they are
+    /// revealed later!)
+    /// </summary>
+    void PlaceOnTop(Collider other)
+    {
+        ModuleController otherController = other.GetComponent<ModuleController>();
+
+        // Moves canvas layer up (so it is surely on top!)
+        otherController.ObjectCanvas.GetComponent<Canvas>().sortingOrder += 1;
+
+        // If this is a regulation module, we need to act on the children as well!
+        if (otherController.IsRegModule)
+        {
+            foreach (GameObject module in
+                     other.GetComponent<RegModuleController>().containedModules)
+            {
+                ModuleController childController = module.GetComponent<ModuleController>();
+
+                // If the child is a regulatory module itself, recursively
+                // calls PlaceOnTop!
+                if (childController.IsRegModule)
+                {
+                    PlaceOnTop(module.GetComponent<Collider>());
+                }
+                else
+                {
+                    // Moves canvas layer up (so it is surely on top!)
+                    childController.ObjectCanvas.GetComponent<Canvas>().sortingOrder += 1;
+                } 
+            }
+        }
+    }
+
 	/// <summary>
 	/// When a regulation module is moved inside of another, its children (the
     /// granchildren of the regulatio module higher in hierarchy) are hidden
@@ -518,9 +555,9 @@ public class RegModuleController : ModuleController {
         other.transform.position += new Vector3(-0.1f, 0f, 0.1f);
 
         // 5) Canvas layer 0 (so it is surely on top!)
-        otherController.ObjectCanvas.GetComponent<Canvas>().sortingOrder = 0;
+        //otherController.ObjectCanvas.GetComponent<Canvas>().sortingOrder = 0;
 
-        // 6) Corrects the position of all its children!
+        // 5) Corrects the position of all its children!
         int childIndex = 1;
         foreach (GameObject module in otherController.containedModules)
         {
@@ -539,9 +576,15 @@ public class RegModuleController : ModuleController {
 		foreach (GameObject module in containedModules)
 		{
 			module.SetActive(true);
+
+			// 2) Place the children on top!
+            // TODO: We should probably be working with "+1" and "-1" to allow 
+            // hierarchy depth.
+			//module.GetComponent<ModuleController>().ObjectCanvas.
+            //GetComponent<Canvas>().sortingOrder = +1;
 		}
 
-		// 2) Sets the module to the right size!
+		// 3) Sets the module to the right size!
 		GetNewSizes(modulesContained);
 
 		// 4) Undo position offset:
@@ -551,12 +594,13 @@ public class RegModuleController : ModuleController {
     /// <summary>
     /// Resets the regulation scheme of the other module. It is also set as
     /// advanced regulation!
+	/// Named CleanRegulation to avoid conflict with ResetRegulation in ModuleController.
     /// </summary>
-    void ResetRegulation()
+    void CleanRegulation()
     {
         ModuleController otherController = otherModule.GetComponent<ModuleController>();
         otherController.BasicRegulation = false;
-        otherController.RegulatoryInputList = new List<newLink>();
+		otherController.ResetRegulation();
 
         otherController.PassRegulation();
     }
