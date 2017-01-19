@@ -25,7 +25,8 @@ public abstract class Optimizer : MonoBehaviour
 	// Short tracks 26;
 	// For CheapLabour, used 150
 	// For Cars, used 27
-	private float trial_duration = 150;
+    // For robot arm, used ?
+	private float trial_duration = 5.2f;
     // Fitness goal. If reached the evolutionary process stops.
     private float stopping_fitness = 500;
 

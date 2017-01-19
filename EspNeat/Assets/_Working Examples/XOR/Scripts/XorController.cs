@@ -145,6 +145,7 @@ public class XorController : UnitController
     //  return member_ID;
     //}
 
+    // Seems unused, probably a debugging remnant?
     public int GetTotal()
     {
         return ID_counter;
