@@ -20,21 +20,29 @@ public class WelderController : UnitController {
     private float armSpeed = 60.0f;
     // This is used to avoid rotating past the limits
     private float armXaxe = 0.0f;
+    private const float armXaxeMin = -38.0f;
+    private const float armXaxeMax = 35.0f;
 
     private GameObject joint;
     private float jointSpeed = 60.0f;
     // This is used to avoid rotating past the limits
     private float jointZaxe = 0.0f;
+    private const float jointZaxeMin = -68.0f;
+    private const float jointZaxeMax = 69.0f;
 
     private GameObject piston;
     private float pistonSpeed = 2.0f;
     // This is used to avoid moving past the limits
     private float pistonPositionX = 0.0f;
+    private const float pistonPositionXMin = -0.72f;
+    private const float pistonPositionXMax = 0.34f;
 
     private GameObject manipulator;
     private float manipulatorSpeed = 60.0f;
     // This is used to avoid moving past the limits
     private float manipulatorZaxe = 0.0f;
+    private const float manipulatorZaxeMin = 210.0f;
+    private const float manipulatorZaxeMax = 330.0f;
 
     // Here we will only need the script in this child
     private ManipulatorTip manipulatorTip;
@@ -56,7 +64,7 @@ public class WelderController : UnitController {
         // shoulder speed is made a bit variable, to avoid overfitting in simple
         // scenarios using fitness evolution:
         // This multiplies the speed by a factor within (0.9, 1.1)
-        shoulderSpeed *= 1.0f + Random.value / 0.1f;
+        //shoulderSpeed *= 1.0f + Random.value / 0.1f;
         arm = shoulder.transform.Find("RobotArm_Welder_Arm").gameObject;
         armXaxe = arm.transform.localEulerAngles.x;
         joint = arm.transform.Find("RobotArm_Welder_Joint").gameObject;
@@ -79,7 +87,10 @@ public class WelderController : UnitController {
         // Let's make the range about 10% of the desired limits (just about)
         MoveAll(Random.Range(-15.0f, 15.0f), Random.Range(-10.0f, 10.0f),
                 Random.Range(-10.0f, 10.0f), Random.Range(-0.2f, 0.1f),
-                Random.Range(-10.0f, 10.0f));;
+                Random.Range(-10.0f, 10.0f));
+/*        MoveAll(Random.Range(-0.0f, 0.0f), Random.Range(-10.0f, 10.0f),
+                Random.Range(-10.0f, 10.0f), Random.Range(-0.2f, 0.1f),
+                Random.Range(-0.0f, 0.0f));;*/
     }
 //------------------------------------------------------------------------------
     void SetPosition()
@@ -123,27 +134,46 @@ public class WelderController : UnitController {
 //------------------------------------------------------------------------------  
     public override float GetFitness() {
         float distanceX;
-        float distanceY;
-        float distanceZ;
-        float totalDistance = 0.0f;
+        float distance = 0f;
+        //float distanceY;
+        //float distanceZ;
+        //float totalDistance = 0.0f;
+        float totalFit = 0.0f;
 
-        GetDistance(out distanceX, out distanceY, out distanceZ);
+		//GetDistance(out distanceX, out distanceY, out distanceZ);
+		GetDistance(out distanceX);
 
         // Remember distance is given between 0 and 1, the closest being 0.5
         // for x and z, and 0.25 for y.
         // Here we set it so minimum distance is value 0. 
-        distanceX -= 0.5f;
-        distanceY -= 0.25f;
-        distanceZ -= 0.5f;
+        //distanceX -= 0.5f;
+		//distanceX *= distanceX;
+        //distanceY -= 0.25f;
+        //distanceZ -= 0.5f;
 
         // The module of the distance is then between 0 (good) and
         // sqrt(0.5*0.5 + 0.75*0.75 + 0.5*0.5) = WORST = 1.031 (1.030776...)
-        float distanceMod = Mathf.Sqrt(distanceX*distanceX + distanceY*distanceY +
-            distanceZ*distanceZ);
+        //float distanceMod = Mathf.Sqrt(distanceX*distanceX + distanceY*distanceY +
+        //    distanceZ*distanceZ);
 
         // Returns WORST - distanceMod, so fitness is highest at closest
         // position (returns WORST - 0) and around 0 when furthest.
-        return 1.031f - distanceMod;
+		//return 1.031f - distanceMod;
+
+        // Contribution from x axe:
+        //totalFit = 0.25f - distanceX;
+
+        if (distanceX < 0.52f && distanceX > 0.48f)
+        {
+            totalFit += 1f;         
+        }
+        if (IsTowardsTarget(out distance))
+        {
+            totalFit += 2f;
+        }
+        totalFit += distance/2f;
+
+        return totalFit;
     } 
 //------------------------------------------------------------------------------
     public void UndoMovement() {
@@ -156,8 +186,8 @@ public class WelderController : UnitController {
     void FixedUpdate() {
         // Arm input:
         float distanceX;
-        float distanceY;
-        float distanceZ;
+        //float distanceY;
+        //float distanceZ;
 
         // Arm output:
         float rotateShoulder;
@@ -167,16 +197,45 @@ public class WelderController : UnitController {
         float moveManipulator1;
         float release;
 
-        GetDistance(out distanceX, out distanceY, out distanceZ);
+		//GetDistance(out distanceX, out distanceY, out distanceZ);
+		GetDistance(out distanceX);
         //Debug.Log("Dist: " + distanceX + "  " + distanceY + "  " + distanceZ );
         //Debug.Log("fitness " + GetFitness());
         //Debug.Log(shoulderXaxe);
 
         // Input signals are used in the neural controller
         ISignalArray inputArr = box.InputSignalArray;
-        inputArr[0] = distanceX;
+
+		inputArr[0] = 0f;
+		if (distanceX < 0.52f && distanceX > 0.48f)
+		{
+			inputArr[0] = 1f;			
+		}
+
+        float frontSensor = 0f;
+        if (IsTowardsTarget(out frontSensor))
+        {
+            inputArr[2] = 1.0f;
+        }
+        else
+        {
+            inputArr[2] = 0.0f;
+        }
+
+        inputArr[1] = frontSensor;
+
+        //Debug.Log("inputs " + inputArr[0] + "  " + inputArr[1] + "  " + inputArr[2]);
+
+/*		inputArr[0] = distanceX;
         inputArr[1] = distanceY;
-        inputArr[2] = distanceZ;
+        inputArr[2] = distanceZ;*/
+
+        // Extra inputs: proprioception (information about the state of different
+        // joints)
+        //inputArr[3] = NormalizeMe(armXaxe, armXaxeMin, armXaxeMax);
+        //inputArr[4] = NormalizeMe(jointZaxe, jointZaxeMin, jointZaxeMax);
+        //inputArr[5] = NormalizeMe(pistonPositionX, pistonPositionXMin, pistonPositionXMax);
+        //inputArr[6] = NormalizeMe(manipulatorZaxe, manipulatorZaxeMin, manipulatorZaxeMax);
 
         // Which is activated
         box.Activate();
@@ -187,12 +246,31 @@ public class WelderController : UnitController {
         // Output is between 0 and 1: we need it from -1 to +1
 
         // Automatic control:
-        rotateShoulder = (float)outputArr[0] * 2f - 1f;
+/*        rotateShoulder = (float)outputArr[0] * 2f - 1f;
         rotateArm = (float)outputArr[1] * 2f - 1f;
         rotateJoint = (float)outputArr[2] * 2f - 1f;
         movePiston = (float)outputArr[3] * 2f - 1f;
         moveManipulator1 = (float)outputArr[4] * 2f - 1f;
-        release = (float)outputArr[5] * 2f - 1f;
+        release = (float)outputArr[5] * 2f - 1f;*/
+
+        if ((float)outputArr[1] < 0.75f)
+        {
+            rotateShoulder = (float)outputArr[0] * 2f - 1f;
+        }
+        else
+        {
+            rotateShoulder = 0f;
+        }
+/*        rotateArm = 0f;
+        rotateJoint = 0f;
+        movePiston = 0f;
+        moveManipulator1 = 0f;
+        release = 0f;*/
+        rotateArm = (float)outputArr[2] * 2f - 1f;
+        rotateJoint = (float)outputArr[3] * 2f - 1f;
+        movePiston = (float)outputArr[4] * 2f - 1f;
+        moveManipulator1 = 0f;
+        release = 0f;
 
         // Manual control:
 /*        rotateShoulder = Input.GetAxis("Horizontal");
@@ -231,14 +309,15 @@ public class WelderController : UnitController {
         ToggleAudio(audio, totalMovement);*/
     }
 //------------------------------------------------------------------------------
-    void GetDistance(out float distanceX, out float distanceY, out float distanceZ) {
+	//void GetDistance(out float distanceX, out float distanceY, out float distanceZ) {
+    void GetDistance(out float distanceX) {
         distanceX = 0.0f;
-        distanceY = 0.0f;
-        distanceZ = 0.0f;
+/*        distanceY = 0.0f;
+        distanceZ = 0.0f;*/
 
         distanceX = manipulatorTip.transform.position.x - target.transform.position.x;
-        distanceY = manipulatorTip.transform.position.y - target.transform.position.y;
-        distanceZ = manipulatorTip.transform.position.z - target.transform.position.z;
+/*        distanceY = manipulatorTip.transform.position.y - target.transform.position.y;
+        distanceZ = manipulatorTip.transform.position.z - target.transform.position.z;*/
 
         // distanceX seems right even if the arm is pointing 180 degrees wrong.
         // Let's fix that here (although it is technically correct it's probably
@@ -260,12 +339,40 @@ public class WelderController : UnitController {
         distanceX = Mathf.Clamp(distanceX, -3.0f, 3.0f);
         distanceX = NormalizeMe(distanceX, -3.0f, 3.0f);
 
-        distanceY = Mathf.Clamp(distanceY, -0.5f, 1.5f);
+/*        distanceY = Mathf.Clamp(distanceY, -0.5f, 1.5f);
         distanceY = NormalizeMe(distanceY, -0.5f, 1.5f);
 
         distanceZ = Mathf.Clamp(distanceZ, -2.0f, 2.0f);
-        distanceZ = NormalizeMe(distanceZ, -2.0f, 2.0f);
+        distanceZ = NormalizeMe(distanceZ, -2.0f, 2.0f);*/
 	}
+//------------------------------------------------------------------------------
+	// This are the range sensors for the input
+    bool IsTowardsTarget(out float distance) {
+		// The starting point of the robot is just in front of it
+		float just_ahead = 0.25f;
+		float sensor_range = 1.3f;
+        distance = 0f;
+
+        // So the ray points forward from the tip
+        Vector3 ray_direction = new Vector3(0f, -1f, 0f).normalized;
+
+		RaycastHit hit;
+/*        if (Physics.Raycast(manipulatorTip.transform.position +
+            manipulatorTip.transform.forward * just_ahead,
+            manipulatorTip.transform.TransformDirection(ray_direction),
+            out hit, sensor_range))  */           
+		if (Physics.Raycast(manipulatorTip.transform.position,
+                            -manipulatorTip.transform.up,
+                            out hit, sensor_range))
+        {
+            distance = 1f - hit.distance / sensor_range;
+            if (hit.collider.gameObject == target)
+            {
+                return true;
+            }
+		}
+        return false;
+	}  
 //------------------------------------------------------------------------------
 	/// <summary>
 	/// Very simple method that only exists to avoid some code repetition.
@@ -296,12 +403,13 @@ public class WelderController : UnitController {
             shoulderXaxe = -360.0f + shoulderXaxe ;
         }
         shoulder.transform.Rotate(0, localShoulderAngle, 0);
-        armXaxe = AddAndClamp(armXaxe, localArmAngle, -38.0f, 35.0f);
+        armXaxe = AddAndClamp(armXaxe, localArmAngle, armXaxeMin, armXaxeMax);
         RotateX(arm.transform, armXaxe);
-        jointZaxe = AddAndClamp(jointZaxe, localJointAngle, -68.0f, 71.0f);
+        jointZaxe = AddAndClamp(jointZaxe, localJointAngle, jointZaxeMin, jointZaxeMax);
         RotateZ(joint.transform, jointZaxe);
         MovePiston(localPistonDelta);
-        manipulatorZaxe = AddAndClamp(manipulatorZaxe, localManipulatorAngle, 210.0f, 330.0f);
+        manipulatorZaxe = AddAndClamp(manipulatorZaxe, localManipulatorAngle,
+                                      manipulatorZaxeMin, manipulatorZaxeMax);
         RotateZ(manipulator.transform, manipulatorZaxe);        
     }
 //------------------------------------------------------------------------------ 
@@ -328,7 +436,8 @@ public class WelderController : UnitController {
     /// </summary>
     void MovePiston(float movePistonDelta) {
         pistonPositionX += movePistonDelta;
-        pistonPositionX = Mathf.Clamp(pistonPositionX, -0.72f, 0.34f);
+        pistonPositionX = Mathf.Clamp(pistonPositionX, pistonPositionXMin,
+                                      pistonPositionXMax);
 
         piston.transform.localPosition = new Vector3(
             pistonPositionX, piston.transform.localPosition.y,
@@ -363,8 +472,8 @@ public class WelderController : UnitController {
     void InstantiateTarget() {
         target = (GameObject)Instantiate(Resources.Load("Prefabs/RobotArmAccesories/Cylinder"));
         Vector3 temp = transform.position;
-        // z + 1.9 places the target on the centre of the workbench.
-        temp.y = 1.0f;
+		temp.y = 1.0f;
+		// z + 1.9 places the target on the centre of the workbench.
         //temp.z += 1.9f;
         temp.z += 1.9f + Random.Range(-0.5f, 0.5f);
         temp.x += Random.Range(-1.3f, 1.3f);

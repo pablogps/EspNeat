@@ -1,14 +1,15 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Resources\experiment.config.xml">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\_Working Examples\RobotArm\Scripts\WelderController.cs">
     <Files>
       <File FileName="Assets\Resources\experiment.config.xml" Line="5" Column="21" />
       <File FileName="Assets\_Working Examples\RobotArm\Scripts\Manipulator.cs" Line="1" Column="1" />
       <File FileName="Assets\_Working Examples\RobotArm\Scripts\ManipulatorTip.cs" Line="1" Column="1" />
+      <File FileName="Assets\_Working Examples\RobotArm\Scripts\WelderController.cs" Line="267" Column="31" />
       <File FileName="Assets\_Working Examples\RobotArm\Scripts\CylinderAttach.cs" Line="1" Column="1" />
-      <File FileName="Assets\_Working Examples\RobotArm\Scripts\WelderController.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\Optimizer.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\Optimizer.cs" Line="29" Column="35" />
+      <File FileName="Assets\_Working Examples\Cheap Labour SuperSimple\Scripts\WorkerSimpleController.cs" Line="213" Column="75" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
