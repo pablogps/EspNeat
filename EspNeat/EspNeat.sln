@@ -1,9 +1,9 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2008
-
-Project("{C9E7F502-2970-D32F-C242-6076BD87B7C9}") = "EspNeat", "Assembly-CSharp.csproj", "{FC941F35-25A3-D7BD-E6A6-7D8B52799206}"
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EspNeat", "Assembly-CSharp.csproj", "{FC941F35-25A3-D7BD-E6A6-7D8B52799206}"
 EndProject
-Project("{C9E7F502-2970-D32F-C242-6076BD87B7C9}") = "EspNeat", "Assembly-UnityScript.unityproj", "{A9504FEF-4824-8F91-032B-6B0766197590}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EspNeat", "Assembly-UnityScript.unityproj", "{A9504FEF-4824-8F91-032B-6B0766197590}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2183,7 +2183,11 @@ namespace SharpNeat.Coordination
             else if (optimizer.ExperimentName == "_ESP_RobotArm")
             {
                 ArmDefaultLabels();
-            }
+			}
+			else if (optimizer.ExperimentName == "_ESP_ArtistArm")
+			{
+				ArtistDefaultLabels();
+			}
         }
 
 		/// <summary>
@@ -2214,9 +2218,11 @@ namespace SharpNeat.Coordination
         }
         void ArmDefaultLabels()
         {
-            inputLabels[1] = "x-Axe";
-            inputLabels[2] = "isPointing";
-            inputLabels[3] = "distance";
+			inputLabels[1] = "x-Axe:Left";
+			inputLabels[2] = "x-Axe:Centre";
+			inputLabels[3] = "x-Axe:Right";
+            inputLabels[4] = "isPointing";
+            inputLabels[5] = "distance";
 
             outputLabels[0] = "enableX";
             outputLabels[1] = "x-Axe";
@@ -2228,7 +2234,23 @@ namespace SharpNeat.Coordination
             outputLabels[7] = "enableManip";
             outputLabels[8] = "manipulator";
             outputLabels[9] = "release?";
-        }
+		}
+		void ArtistDefaultLabels()
+		{
+			inputLabels[1] = "piston:short";
+			inputLabels[2] = "piston:long";
+			inputLabels[3] = "piston:target";
+
+			outputLabels[0] = "enableX";
+			outputLabels[1] = "x-Axe";
+			outputLabels[2] = "enableArmJoint";
+			outputLabels[3] = "arm";
+			outputLabels[4] = "joint";
+			outputLabels[5] = "enablePiston";
+			outputLabels[6] = "piston";
+			outputLabels[7] = "enableManip";
+			outputLabels[8] = "manipulator";
+		}
 
         /// <summary>
         /// Initializes the list with the inputs for regulatory neurons.

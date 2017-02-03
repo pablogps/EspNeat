@@ -94,7 +94,7 @@ public class WelderController : UnitController {
         // Let's make the range about 10% of the desired limits (just about)
         // If movement in the manipulator (last entry) is to be allowed, then
         // GetAngle needs to be updated!
-        MoveAll(Random.Range(-15.0f, 15.0f), Random.Range(-10.0f, 10.0f),
+        MoveAll(Random.Range(-180.0f, 180.0f), Random.Range(-10.0f, 10.0f),
                 Random.Range(-10.0f, 10.0f), Random.Range(-0.1f, 0.3f),
                 Random.Range(0.0f, 0.0f));
 /*        MoveAll(Random.Range(-0.0f, 0.0f), Random.Range(-10.0f, 10.0f),
@@ -142,7 +142,6 @@ public class WelderController : UnitController {
     }
 //------------------------------------------------------------------------------  
     public override float GetFitness() {
-        float distanceX;
         float distance = 0f;
         float totalFit = 0.0f;
 
@@ -170,9 +169,6 @@ public class WelderController : UnitController {
     }
 //------------------------------------------------------------------------------ 
     void FixedUpdate() {
-        // Arm input:
-        float distanceX;
-
         // Arm output:
         float rotateShoulder;
         float rotateArm;
@@ -181,6 +177,7 @@ public class WelderController : UnitController {
         float moveManipulator;
         float release;
 
+		// Arm input:
         if (target.transform.position != prevTargetPosition)
         {
             prevTargetPosition = target.transform.position;
@@ -191,24 +188,32 @@ public class WelderController : UnitController {
         ISignalArray inputArr = box.InputSignalArray;
 
 		inputArr[0] = 0f;
-        if (Mathf.Abs(GetDistanceXaxe()) < isXpointingThreshold)
+		if (GetDistanceXaxe() < -isXpointingThreshold)
 		{
 			inputArr[0] = 1f;			
+		}
+		else if (GetDistanceXaxe() > isXpointingThreshold)
+		{
+			inputArr[2] = 1f;
+		}
+		else
+		{
+			inputArr[1] = 1f;
 		}
 
         float frontSensor = 0f;
         if (IsTowardsTarget(out frontSensor))
         {
-            inputArr[1] = 1.0f;
+            inputArr[3] = 1.0f;
             targetMaterial.color = Color.red;
         }
         else
         {
-            inputArr[1] = 0.0f;
+            inputArr[3] = 0.0f;
             targetMaterial.color = Color.white;
         }
 
-        inputArr[2] = frontSensor;
+        inputArr[4] = frontSensor;
 
         // Extra inputs: proprioception (information about the state of different
         // joints)
@@ -222,7 +227,7 @@ public class WelderController : UnitController {
         // And produces output signals (also in an array)
         ISignalArray outputArr = box.OutputSignalArray;     
 
-        // The arm jooints move with the output from the neural network
+        // The arm joints move with the output from the neural network
         // Output is between 0 and 1: we need it from -1 to +1
 
         // Automatic control:
@@ -323,8 +328,6 @@ public class WelderController : UnitController {
 //------------------------------------------------------------------------------
 	// This are the range sensors for the input
     bool IsTowardsTarget(out float distance) {
-		// The starting point of the robot is just in front of it
-		float just_ahead = 0.25f;
 		float sensor_range = 1.3f;
         distance = 0f;
 
@@ -446,8 +449,8 @@ public class WelderController : UnitController {
         Vector3 temp = transform.position;
 		temp.y = 1.0f;
 		// z + 1.9 places the target on the centre of the workbench.
-        temp.z += 1.4f;
-        //temp.z += 1.9f + Random.Range(-0.5f, 0.5f);
+        //temp.z += 1.9f;
+        temp.z += 1.9f + Random.Range(-0.5f, 0.5f);
         temp.x += Random.Range(-1.3f, 1.3f);
         target.transform.position = temp;
         targetMaterial = target.GetComponent<Renderer>().material;
