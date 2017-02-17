@@ -10,25 +10,33 @@ using SharpNeat.Coordination;
 /// </summary>
 public class SelectInputPanelController : MonoBehaviour {
 
-    UImanager uiManager;
+    private UImanager uiManager;
+
+    // If there are too many inputs or outputs we cannot show all at the same
+    // time!
+    private int verticalInterval = 25;
+    private int firstActiveIndex = 0;
+    private int lastActiveIndex = 8;
 
     private bool isRegulationModule;
-    List<newLink> inputList;
-    List<string> inputLabelsLocal;
-    List<string> userGivenLabelsIn;
+    private List<newLink> inputList;
+    private List<string> inputLabelsLocal;
+    private List<string> userGivenLabelsIn;
 
-	List<newLink> outputList;
-	List<string> outputLabelsLocal;
-	List<string> userGivenLabelsOut;
+    private List<newLink> outputList;
+    private List<string> outputLabelsLocal;
+    private List<string> userGivenLabelsOut;
 
-	List<bool> chosenElementsList;
+    private List<bool> chosenElementsList;
 
-    List<GameObject> toggleElements;
+    private List<GameObject> toggleElements;
 
-    GameObject nextButton;
-    GameObject acceptButton;
-    GameObject inputText;
-    GameObject outputText;
+    private GameObject nextButton;
+    private GameObject acceptButton;
+    private GameObject inputText;
+    private GameObject outputText;
+    private GameObject scrollUpButton;
+    private GameObject scrollDownButton;
 
     int totalSelected;
 
@@ -71,6 +79,8 @@ public class SelectInputPanelController : MonoBehaviour {
         acceptButton = transform.Find("AcceptButton").gameObject;
         inputText = transform.Find("TextInput").gameObject;
         outputText = transform.Find("TextOutput").gameObject;
+        scrollUpButton = transform.Find("ScrollUpButton").gameObject;
+        scrollDownButton = transform.Find("ScrollDownButton").gameObject;
 
         acceptButton.gameObject.SetActive(false);
         outputText.gameObject.SetActive(false);
@@ -202,6 +212,24 @@ public class SelectInputPanelController : MonoBehaviour {
         Destroy(this.gameObject); 
     }
 
+    public void ScrollUp()
+    {
+        // Does not allow scroll if we are already at the top!
+        if (firstActiveIndex > 0)
+        {
+            --firstActiveIndex;
+            --lastActiveIndex;
+            RefreshToggles(-verticalInterval);           
+        }
+    }
+
+    public void ScrollDown()
+    {
+        ++firstActiveIndex;
+        ++lastActiveIndex;
+        RefreshToggles(+verticalInterval);
+    }
+
     #endregion
 
     #region PrivateMethods
@@ -252,6 +280,11 @@ public class SelectInputPanelController : MonoBehaviour {
         inputToggle.transform.localPosition = positionVector;
         // Makes sure the size is correct!
         inputToggle.transform.localScale = new Vector3(1f, 1f, 1f);
+
+        if (index > lastActiveIndex)
+        {
+            toggleElements[index].SetActive(false);
+        }
     }
 
     void SwitchButtonAndLabel() {
@@ -265,6 +298,15 @@ public class SelectInputPanelController : MonoBehaviour {
     /// Creates the toggles for inputs and outputs.
     /// </summary>
     void CreateToggles(List<newLink> toggleList, List<string> userLabels) {
+        // By default, these are the limits, so that only the first 9 elements
+        // may be shown initially.
+        firstActiveIndex = 0;
+        lastActiveIndex = 8;
+
+        // These are probably NOT needed!
+        scrollUpButton.SetActive(false);
+        scrollDownButton.SetActive(false);
+
         toggleElements = new List<GameObject>();
         totalSelected = 0;
         float yOffset = 0f;
@@ -277,7 +319,14 @@ public class SelectInputPanelController : MonoBehaviour {
 
             // Instantiates the required element for the interface!
             InstantiateToggle(i, yOffset, userLabels);
-            yOffset += 25;
+            yOffset += verticalInterval;
+        }
+
+        // If there are more than 9 elements we need buttons to scroll!
+        if (toggleList.Count > 9)
+        {
+            scrollUpButton.SetActive(true);
+            scrollDownButton.SetActive(true);
         }
     }
 
@@ -285,6 +334,31 @@ public class SelectInputPanelController : MonoBehaviour {
         for (int i = 0; i < toggleElements.Count; ++i)
         {
             Destroy(toggleElements[i]);
+        }
+    }
+
+    /// <summary>
+    /// If there are more than 9 inputs or outputs, only 9 elements are shown
+    /// at a time. There are buttons to go "up" and "down", and this method
+    /// updates which will be shown (and their vertical position).
+    /// </summary>
+    void RefreshToggles(int positionOffset)
+    {
+        for (int i = 0; i < toggleElements.Count; ++i)
+        {
+            if (i < firstActiveIndex || i > lastActiveIndex)
+            {
+                toggleElements[i].SetActive(false);
+            }
+            else
+            {
+                toggleElements[i].SetActive(true);
+            }
+
+            // Updates position:
+            Vector3 positionVector = toggleElements[i].transform.localPosition;
+            positionVector.y += positionOffset;
+            toggleElements[i].transform.localPosition = positionVector;
         }
     }
 
