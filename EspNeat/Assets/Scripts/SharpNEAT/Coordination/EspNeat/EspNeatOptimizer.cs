@@ -1156,14 +1156,31 @@ public class EspNeatOptimizer : Optimizer
 
         // First we get the game object
         GameObject targetObject = null;
+        targetObject = hit_collider.gameObject;
+
         if (hit_collider.tag == unit_tag)
         {
-            targetObject = hit_collider.gameObject;
             ProcessHit2(targetObject);
         }
         else if (hit_collider.tag == "UnitChild")
         {          
-            targetObject = hit_collider.transform.parent.gameObject; 
+            // This only works correctly if there is only one level of children
+            // objects!
+            //targetObject = hit_collider.transform.parent.gameObject;
+
+            // Remember transform.root won't work either if the game object
+            // has been instantiated as a child itself (within a folder, for 
+            // example!)
+            while(true)
+            {
+                targetObject = targetObject.transform.parent.gameObject;
+                // When we reach the original root of the prefab we can exit the loop.
+                if (targetObject.tag == unit_tag)
+                {
+                    break;
+                }
+            }
+
             ProcessHit2(targetObject);          
         }  
     }

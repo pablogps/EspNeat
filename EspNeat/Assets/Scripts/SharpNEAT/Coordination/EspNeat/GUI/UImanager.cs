@@ -869,7 +869,9 @@ namespace SharpNeat.Coordination
         /// </summary>
         public void AddBasicModulePart2(bool isRegulationModule,
                                         List<newLink> inputList,
-                                        List<string> inputLabelsLocal)
+                                        List<string> inputLabelsLocal,
+                                        List<newLink> outputList,
+                                        List<string> outputLabelsLocal)
         {
             // To increase the Dictionarys with necessary module information
             // we first need to know the new module ID:
@@ -879,21 +881,9 @@ namespace SharpNeat.Coordination
             uiVar.localInputList.Add(newId, inputList);  
             localInSources.Add(newId, inputLabelsLocal); 
 
-            // Adds outputs for the module (all for basic modules, one
-            // place-holder connection for regulation modules)
-            if (isRegulationModule)
-            {
-                // Regulation modules start with no local outputs!
-                // To be safe (although this is believed NOT to be necessary)
-                // we create a single local output to the first output, with
-                // weight 0. This will be modified later.
-                IncreaseLocalOutputListRegulation(newId);
-            }
-            else
-            {
-                // Local out to all output neurons!
-                IncreaseLocalOutputListBasic(newId);
-			}
+            // The new output list is added to the general list.
+            uiVar.localOutputList.Add(newId, outputList);    
+            localOutTargets.Add(newId, outputLabels);     
 
             // Adds a basic-regulation connection to the list
             IncreaseRegulationListBasic(newId);
@@ -1631,6 +1621,10 @@ namespace SharpNeat.Coordination
         /// </summary>
         void GetInputList(bool isRegulationModule, int newId)
         {
+            // NOTE: Originally only inputs could be selected for new modules.
+            // Later also selection of outputs was enabled. It is easier to use
+            // the same gameObject and controller script for both!
+
             // Local input:
             List<newLink> inputList = new List<newLink>();
             List<string> inputLabelsLocal = new List<string>();
@@ -1642,6 +1636,35 @@ namespace SharpNeat.Coordination
                 // will be updated in Factory.
                 inputList.Add(CreateDefaultWithTarget((uint)i));
                 inputLabelsLocal.Add(neuronStringFromId[(uint)i]);
+            }
+
+            // Local output:
+            List<newLink> outputList = new List<newLink>();
+            List<string> outputLabelsLocal = new List<string>();
+
+            if (isRegulationModule)
+            {
+                // Ads a connection to global output #1.
+                // For the time being the connection Id is left as 0. This
+                // will be updated in Factory.
+                int i = genome.Input + 1;
+                newLink newElement = new newLink();
+                newElement.otherNeuron = (uint)i;
+                newElement.weight = 0.0;
+                newElement.id = 0;
+                outputList.Add(newElement);
+                outputLabelsLocal.Add(neuronStringFromId[(uint)i]);
+            }
+            else
+            {
+                for (int i = genome.Input + 1; i < genome.Input + genome.Output + 1; ++i)
+                {
+                    // Ads connections to global outputs.
+                    // For the time being the connection Id is left as 0. This
+                    // will be updated in Factory.
+                    outputList.Add(CreateDefaultWithTarget((uint)i));
+                    outputLabelsLocal.Add(neuronStringFromId[(uint)i]);
+                }                
             }
 
             // Instantiates the input selection panel
@@ -1662,59 +1685,11 @@ namespace SharpNeat.Coordination
 
             // Passes the complete input lists to the panel
             panelController.GetCompleteInputList(inputList, inputLabelsLocal, 
-                                                 inputLabels);           
-        }
+                                                 inputLabels);
 
-        /// <summary>
-        /// In preparation for a new module, creates a local output list by
-        /// default, consisting of all global output neurons.
-        /// </summary>
-        void IncreaseLocalOutputListBasic(int newId)
-        {
-            // Local output:
-            List<newLink> outputList = new List<newLink>();
-            List<string> outputLabels = new List<string>();
-
-            for (int i = genome.Input + 1;
-                 i < genome.Input + 1 + genome.Output; ++i)
-            {
-                // Ads connections to global outputs.
-                // For the time being the connection Id is left as 0. This
-                // will be updated in Factory.
-                outputList.Add(CreateDefaultWithTarget((uint)i));
-                outputLabels.Add(neuronStringFromId[(uint)i]);
-            }
-            // The new output list is added to the general list.
-            uiVar.localOutputList.Add(newId, outputList);    
-            localOutTargets.Add(newId, outputLabels); 
-        }
-
-        /// <summary>
-        /// Increases the local output list regulation.
-        /// For a regulation module we will create a simple connection
-        /// to the first output neuron (this will be modified as soon as the
-        /// user adds the first module)
-        /// </summary>
-        void IncreaseLocalOutputListRegulation(int newId)
-        {
-            // Local output:
-            List<newLink> outputList = new List<newLink>();
-            List<string> outputLabels = new List<string>();
-
-            // Ads a connection to global output #1.
-            // For the time being the connection Id is left as 0. This
-            // will be updated in Factory.
-            int i = genome.Input + 1;
-            newLink newElement = new newLink();
-            newElement.otherNeuron = (uint)i;
-            newElement.weight = 0.0;
-            newElement.id = 0;
-            outputList.Add(newElement);
-            outputLabels.Add(neuronStringFromId[(uint)i]);
-
-            // The new output list is added to the general list.
-            uiVar.localOutputList.Add(newId, outputList);    
-            localOutTargets.Add(newId, outputLabels);             
+            // Passes the complete input lists to the panel
+            panelController.GetCompleteOutputList(outputList, outputLabelsLocal, 
+                                                  outputLabels);  
         }
 
         /// <summary>
@@ -2184,16 +2159,6 @@ namespace SharpNeat.Coordination
                 inputLabels.Add("Input" + (i).ToString()); 
             }
 
-			// Cheap labour and cars have pre-defined labels to help in user-tests
-			if (optimizer.ExperimentName == "_ESP_CheapLabour")
-			{
-				CheapLabourDefaultInput();
-			}
-			else if (optimizer.ExperimentName == "_ESP_Cars")
-			{
-				CarsDefaultInput();
-			}
-
             for (int i = 0; i < genome.Output; ++i)
             {
                 outputLabels.Add("Output" + (i + 1).ToString()); 
@@ -2204,7 +2169,25 @@ namespace SharpNeat.Coordination
             {
                 moduleLabels.Add(uiVar.moduleIdList[i],
                                  "Module" + uiVar.moduleIdList[i].ToString());
-            }  
+            }
+
+            // Cheap labour and cars have pre-defined labels to help in user-tests
+            if (optimizer.ExperimentName == "_ESP_CheapLabour")
+            {
+                CheapLabourDefaultLabels();
+            }
+            else if (optimizer.ExperimentName == "_ESP_Cars")
+            {
+                CarsDefaultLabels();
+            }
+            else if (optimizer.ExperimentName == "_ESP_RobotArm")
+            {
+                ArmDefaultLabels();
+			}
+			else if (optimizer.ExperimentName == "_ESP_ArtistArm")
+			{
+				ArtistDefaultLabels();
+			}
         }
 
 		/// <summary>
@@ -2212,7 +2195,7 @@ namespace SharpNeat.Coordination
         /// examples, Cheap Labour and Cars. Of course these may be removed
         /// (or adapted) for a general use of this code.
 		/// </summary>
-		void CheapLabourDefaultInput()
+        void CheapLabourDefaultLabels()
 		{
 			inputLabels[1] = "Front";
 			inputLabels[2] = "Front-L";
@@ -2223,7 +2206,7 @@ namespace SharpNeat.Coordination
 			inputLabels[7] = "Cargo";
 			inputLabels[8] = "Clock";
 		}
-		void CarsDefaultInput()
+		void CarsDefaultLabels()
 		{
 			inputLabels[1] = "Front";
 			inputLabels[2] = "Front-L";
@@ -2232,6 +2215,41 @@ namespace SharpNeat.Coordination
 			inputLabels[5] = "Right";
 			inputLabels[6] = "TrLights";
 			inputLabels[7] = "Junctions";
+        }
+        void ArmDefaultLabels()
+        {
+			inputLabels[1] = "x-Axe:Left";
+			inputLabels[2] = "x-Axe:Centre";
+			inputLabels[3] = "x-Axe:Right";
+            inputLabels[4] = "isPointing";
+            inputLabels[5] = "distance";
+
+            outputLabels[0] = "enableX";
+            outputLabels[1] = "x-Axe";
+            outputLabels[2] = "enableArmJoint";
+            outputLabels[3] = "arm";
+            outputLabels[4] = "joint";
+            outputLabels[5] = "enablePiston";
+            outputLabels[6] = "piston";
+            outputLabels[7] = "enableManip";
+            outputLabels[8] = "manipulator";
+            outputLabels[9] = "release?";
+		}
+		void ArtistDefaultLabels()
+		{
+			inputLabels[1] = "piston:short";
+			inputLabels[2] = "piston:long";
+			inputLabels[3] = "piston:target";
+
+			outputLabels[0] = "enableX";
+			outputLabels[1] = "x-Axe";
+			outputLabels[2] = "enableArmJoint";
+			outputLabels[3] = "arm";
+			outputLabels[4] = "joint";
+			outputLabels[5] = "enablePiston";
+			outputLabels[6] = "piston";
+			outputLabels[7] = "enableManip";
+			outputLabels[8] = "manipulator";
 		}
 
         /// <summary>

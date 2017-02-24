@@ -2,6 +2,9 @@
 using System.Collections;
 using SharpNeat.Coordination;
 
+/// <summary>
+/// This class is also used for the list of outputs, not only for inputs.
+/// </summary>
 public class InputToggleController : MonoBehaviour {
 
     private SelectInputPanelController selectInputController;

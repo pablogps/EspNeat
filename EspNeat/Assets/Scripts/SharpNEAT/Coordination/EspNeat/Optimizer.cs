@@ -18,14 +18,16 @@ public abstract class Optimizer : MonoBehaviour
 	// Evolution algorithms will need access to a few variables.
 
     // Number of trials per generation (to get an average fitness value).
-    private int trials = 1;
+    private int trials = 3;
     // Reference durations:
     // XOR - 10
 	// CheapLabour - 80
 	// Short tracks 26;
 	// For CheapLabour, used 150
 	// For Cars, used 27
-	private float trial_duration = 150;
+    // For robot arm, used 5.2
+    // For artist arm?
+	private float trial_duration = 5f;
     // Fitness goal. If reached the evolutionary process stops.
     private float stopping_fitness = 500;
 

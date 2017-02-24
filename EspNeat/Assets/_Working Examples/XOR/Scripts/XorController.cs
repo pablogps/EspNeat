@@ -145,6 +145,7 @@ public class XorController : UnitController
     //  return member_ID;
     //}
 
+    // Seems unused, probably a debugging remnant?
     public int GetTotal()
     {
         return ID_counter;
@@ -258,7 +259,7 @@ public class XorController : UnitController
     {
         Vector3 temp = transform.position;
         temp.x = xIni - (ID_counter % widthFit) * spacing;
-        temp.z = zIni + ((ID_counter / widthFit)) * spacing;
+        temp.z = zIni + (ID_counter / widthFit) * spacing;
         transform.position = temp;
     }
 

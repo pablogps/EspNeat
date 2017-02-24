@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/_Working Examples/Cheap Labour SuperSimple/_Scenes/CheapLabourSimple.unity
+- path: Assets/_Working Examples/RobotArm-Artist/_Scenes/ArtistArm.unity
   isLoaded: 1
   isActive: 1
