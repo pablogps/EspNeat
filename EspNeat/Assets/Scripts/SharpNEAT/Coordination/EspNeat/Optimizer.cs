@@ -27,7 +27,7 @@ public abstract class Optimizer : MonoBehaviour
 	// For Cars, used 27
     // For robot arm, used 5.2
     // For artist arm?
-	private float trial_duration = 5f;
+	private float trial_duration = 500f;
     // Fitness goal. If reached the evolutionary process stops.
     private float stopping_fitness = 500;
 

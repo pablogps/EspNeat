@@ -19,25 +19,38 @@ public class ArtistWelderController : UnitController {
     // the original value to left things as they were (this is done at destruction).
     private float oldTimeScale = -1f;
     private float startTime;
-    private float timeToMeasureTime = 1.9f;
-    private float timeForPainting = 2f;
+    private float timeToMeasureTime = 15.9f;
+    private float timeForPainting = 16f;
+    //private float timeToMeasureTime = 1.9f;
+    //private float timeForPainting = 2f;
     private bool isShowingPainting = false;
     private bool isTimeRateGot = false;
 
 	private GameObject bench;
 	private Material benchMaterial;
 	private List<GameObject> pixels = new List<GameObject>();
-    private const float pixelSizeX = 0.03876f; // for x76: 0.03928f;
-    private const float pixelSizeZ = 0.030336f; // for x50: 0.0316f;
-    private const float canvasPixelSizeX = 0.06217f; // for x76: 0.063f;
-    private const float canvasPixelSizeZ = 0.07296f; // for x50: 0.076f;
+    private const float pixelSizeX = 0.04f;
+    private const float pixelSizeZ = 0.032916667f;
+    private const float canvasPixelSizeX = 0.06217f;
+    private const float canvasPixelSizeZ = 0.07296f;
     private List<float> pixelColours = new List<float>();
 
 	// We want to know as fast as possible to which input each canvas pixel belongs
     private static Dictionary<int, int> pixelIndexToInputIndex = new Dictionary<int, int>();
 
+    // We want to create a dictionary that tells us to which input pixel
+    // corresponds each canvas pixel. However, input pixel 1 will not
+    // correspond to input 1 of the neural network, because there are 
+    // other inputs before! InputOffset says exacltly how many.
+    int inputOffset = 3;
+
     private const int canvasX = 75;
     private const int canvasY = 48;
+    // We need a constant with the number of canvas pixels in an input pixel.
+    // Because this will be used to divide in an average, we get the inverse for
+    // a bit of extra performance! (Better to multiply than to divide.)
+    //private const float canvasPixelsInInputPixelInverse = 0.00555556f; // canvasX*canvasY / 5*4
+    private const float canvasPixelsInInputPixelInverse = 0.0555556f; // canvasX*canvasY / 5*4
 
 	// We want a virtual representation of the canvas (which is made of pixel gameObjects)
     private float virtualCanvasCornerX = 0f;
@@ -45,47 +58,41 @@ public class ArtistWelderController : UnitController {
 
     private AudioSource audio;
 
-	private GameObject shoulder;
-	private float shoulderSpeed = 5.0f;
-	// This is used to keep track of the rotation angle (not trivial otherwise!)
-    private float shoulderXaxe = 0.0f;
+    // We keep all the properties of each joint nicely together.
+    private struct Joint
+    {
+        // This is the actual game object (needed to move it!)
+        public GameObject jointObject;
+        // We remember the position (or angle) of each joint. Needed to ensure
+        // we don't move beyond boundaries.
+        public float currentValue;
+        public float speed;
+        // Min and max are the boundaries for the joint.
+        public float min;
+        public float max;
+        // This is the amount (position, angle) we want to move the joint next
+        // time MoveAll is called.
+        public float toMove;
 
-    private GameObject arm;
-    private float armSpeed = 5.0f;
-    // This is used to avoid rotating past the limits
-    private float armXaxe = 0.0f;
-    private const float armXaxeMin = -38.0f;
-    private const float armXaxeMax = 35.0f;
+        public Joint(GameObject p1, float p2, float p3, float p4, float p5, float p6)
+        {
+            jointObject = p1;
+            currentValue = p2;
+            speed = p3;
+            min = p4;
+            max = p5; 
+            toMove = p6;
+        }
+    }
+    // Note the shoulder has no boundaries!
+    Joint jointShoulder = new Joint(null, 0f, 5f, 0f, 0f, 0f);
+    Joint jointArm = new Joint(null, 0f, 5f, -38f, 35f, 0f);
+    Joint jointElbow = new Joint(null, 0f, 5f, -68f, 69f, 0f);
+    Joint jointPiston = new Joint(null, 0f, 1f, -0.72f, 0.34f, 0f);
+    Joint jointManipulator = new Joint(null, 0f, 60f, 210f, 330f, 0f);
 
-    private GameObject joint;
-    private float jointSpeed = 5.0f;
-    // This is used to avoid rotating past the limits
-    private float jointZaxe = 0.0f;
-    private const float jointZaxeMin = -68.0f;
-    private const float jointZaxeMax = 69.0f;
-
-    private GameObject piston;
-    private float pistonSpeed = 1.0f;
-    // This is used to avoid moving past the limits
-    private float pistonPositionX = 0.0f;
-    private const float pistonPositionXMin = -0.72f;
-    private const float pistonPositionXMax = 0.34f;
-
-    private GameObject manipulator;
-    private float manipulatorSpeed = 60.0f;
-    // This is used to avoid moving past the limits
-    private float manipulatorZaxe = 0.0f;
-    private const float manipulatorZaxeMin = 210.0f;
-    private const float manipulatorZaxeMax = 330.0f;
-
-    // Here we will only need the script in this child
+    // The manipulator tip is not a joint!
     private GameObject manipulatorTip;
-
-    private float rotateShoulderAngle;
-    private float rotateArmAngle;
-    private float rotateJointAngle;
-    private float movePistonDelta;
-    private float rotateManipulatorAngle;
 
     // box is the neural network which will control the unit
     IBlackBox box;  
@@ -112,16 +119,27 @@ public class ArtistWelderController : UnitController {
 
         audio = transform.GetComponent<AudioSource>();
 
-        shoulder = transform.Find("RobotArm_Welder_Base/RobotArm_Welder_Shoulder").gameObject;
-        arm = shoulder.transform.Find("RobotArm_Welder_Arm").gameObject;
-        armXaxe = arm.transform.localEulerAngles.x;
-        joint = arm.transform.Find("RobotArm_Welder_Joint").gameObject;
-        jointZaxe = joint.transform.localEulerAngles.z;
-        piston = joint.transform.Find("RobotArm_Welder_Piston").gameObject;
-        pistonPositionX = piston.transform.localPosition.x;
-        manipulator = piston.transform.Find("RobotArm_Welder_Manipulator").gameObject;
-        manipulatorZaxe = manipulator.transform.localEulerAngles.z;
-		manipulatorTip = manipulator.transform.Find("ManipulatorTip").gameObject;
+        // Here we find references for all joint elements
+        jointShoulder.jointObject = transform.
+                Find("RobotArm_Welder_Base/RobotArm_Welder_Shoulder").gameObject;
+
+        jointArm.jointObject = jointShoulder.jointObject.transform.
+                Find("RobotArm_Welder_Arm").gameObject;
+        jointArm.currentValue = jointArm.jointObject.transform.localEulerAngles.x;
+
+        jointElbow.jointObject = jointArm.jointObject.transform.
+                Find("RobotArm_Welder_Joint").gameObject;
+        jointElbow.currentValue = jointElbow.jointObject.transform.localEulerAngles.z;
+
+        jointPiston.jointObject = jointElbow.jointObject.transform.
+                Find("RobotArm_Welder_Piston").gameObject;
+        jointPiston.currentValue = jointPiston.jointObject.transform.localPosition.x;
+
+        jointManipulator.jointObject = jointPiston.jointObject.transform.
+                Find("RobotArm_Welder_Manipulator").gameObject;
+        jointManipulator.currentValue = jointManipulator.jointObject.transform.localEulerAngles.z;
+
+        manipulatorTip = jointManipulator.jointObject.transform.Find("ManipulatorTip").gameObject;
 
 		SetPosition();
         ++ID_counter;
@@ -131,22 +149,15 @@ public class ArtistWelderController : UnitController {
         // position will correspond. This is faster if we have stored the coordinates
         // of the canvas corner.
         Vector3 temp = transform.position;
-        virtualCanvasCornerX = temp.x + 38f * pixelSizeX;
-        virtualCanvasCornerZ = temp.z + 1.9f + 25f * pixelSizeZ; 
+        virtualCanvasCornerX = temp.x + ((float)canvasX / 2f) * pixelSizeX;
+        virtualCanvasCornerZ = temp.z + 1.9f + ((float)canvasY / 2f) * pixelSizeZ; 
 
 		InstantiateBench();
         InstantiateColourMarkers();
 
         // Let's give the joints a little initial offset (to avoid overfitting!)
-        // Let's make the range about 10% of the desired limits (just about)
-        // If movement in the manipulator (last entry) is to be allowed, then
-        // GetAngle needs to be updated!
-/*        MoveAll(Random.Range(-180.0f, 180.0f), Random.Range(-10.0f, 10.0f),
-                Random.Range(-10.0f, 10.0f), Random.Range(-0.1f, 0.3f),
-                Random.Range(0.0f, 0.0f));*/
-		MoveAll(Random.Range(0.0f, 0.0f), Random.Range(0.0f, 0.0f),
-			    Random.Range(0.0f, 0.0f), Random.Range(-0.5f, 0.1f),
-		        Random.Range(0.0f, 0.0f));
+        jointPiston.toMove = Random.Range(-0.5f, 0.1f);
+        MoveAll();
 
         // We want to know the time elapsed since the robot arm started drawing.
         // After the allocated time painting will stop and we will display the
@@ -249,102 +260,46 @@ public class ArtistWelderController : UnitController {
     } 
 //------------------------------------------------------------------------------
     public void UndoMovement() {
-        MoveAll(-rotateShoulderAngle, -rotateArmAngle, -rotateJointAngle,
-            -movePistonDelta, -rotateManipulatorAngle);
+        jointShoulder.toMove *= -1f;
+        jointArm.toMove *= -1f;
+        jointElbow.toMove *= -1f;
+        jointPiston.toMove *= -1f;
+        jointManipulator.toMove *= -1f;
+        MoveAll();
     }
 //------------------------------------------------------------------------------ 
     void FixedUpdate()
     {
         CheckTime();
 
-        // Arm output:
-        float rotateShoulder;
-        float rotateArm;
-        float rotateJoint;
-        float movePiston;
-        float moveManipulator;
-
-		// Arm input:
-		float frontSensor = 0f;
-
         // Input signals are used in the neural controller
         ISignalArray inputArr = box.InputSignalArray;
 
+        // Arm input:
+        float frontSensor;
 		IsTowardsTarget(out frontSensor);
+        SetBenchColour(frontSensor, ref inputArr);
+        // Extra inputs: proprioception (information about the state of different joints)
+        //inputArr[] = NormalizeMe(jointValue, jointMin, jointMax);
 
-		if (frontSensor < 0.35f)
-		{
-			inputArr[0] = 1f;
-			inputArr[1] = 0f;	
-			inputArr[2] = 0f;
-			benchMaterial.color = Color.blue;
-		}
-		else if (frontSensor > 0.45f)
-		{
-			inputArr[0] = 0f;
-			inputArr[1] = 1f;	
-			inputArr[2] = 0f;
-			benchMaterial.color = Color.green;
-		}
-		else
-		{
-			inputArr[0] = 0f;
-			inputArr[1] = 0f;	
-			inputArr[2] = 1f;
-			benchMaterial.color = Color.red;
-		}
+        // Goes through all pixels in the canvas, and averages their values for
+        // all the pixels that belong to the same input.
+        ReadCanvas(ref inputArr);
 
-        // Extra inputs: proprioception (information about the state of different
-        // joints)
-        //inputArr[3] = NormalizeMe(armXaxe, armXaxeMin, armXaxeMax);
-        //inputArr[4] = NormalizeMe(jointZaxe, jointZaxeMin, jointZaxeMax);
-        //inputArr[5] = NormalizeMe(pistonPositionX, pistonPositionXMin, pistonPositionXMax);
-        //inputArr[6] = NormalizeMe(manipulatorZaxe, manipulatorZaxeMin, manipulatorZaxeMax);
-
-        // Which is activated
+        // The neural controller is activated
         box.Activate();
         // And produces output signals (also in an array)
         ISignalArray outputArr = box.OutputSignalArray;     
 
-        // The arm joints move with the output from the neural network
-        // Output is between 0 and 1: we need it from -1 to +1
+        // The first processing step returns outputs from -1 to +1 (instead of
+        // from 0 to 1) and also checks if inputs needed to enable some joints
+        // are active.
+        AutomaticControl(ref outputArr);
+        //ManualControl(ref outputArr);
 
-        // Automatic control:
-        // Shoulder (rotation along vertical axe)
-        rotateShoulder = ActuatorValueIfEnabled(outputArr[0], (float)outputArr[1]);
-        // Arm and joint (finger-like rotation)
-        if (outputArr[2] > 0.5)
-        {
-            rotateArm = (float)outputArr[3] * 2f - 1f;
-            rotateJoint = (float)outputArr[4] * 2f - 1f;
-        }
-        else
-        {
-            rotateArm = 0f;
-            rotateJoint = 0f;
-        }
-        // Piston movement
-        movePiston = ActuatorValueIfEnabled(outputArr[5], (float)outputArr[6]);
-        // Manipulator (rotation perpendicular to both shoulder and arm/joint)
-        moveManipulator = ActuatorValueIfEnabled(outputArr[7], (float)outputArr[8]);
-
-        // Manual control:
-/*        rotateShoulder = Input.GetAxis("Horizontal");
-        rotateArm = Input.GetAxis("Vertical");
-        rotateJoint = Input.GetAxis("MyInputIK");
-        //movePiston = Input.GetAxis("MyInputJL");
-        moveManipulator = Input.GetAxis("MyInputTG");*/
-
-        // We multiply movements by their speed and timestep.
-        rotateShoulderAngle = rotateShoulder * shoulderSpeed * Time.deltaTime;
-        rotateArmAngle = rotateArm * armSpeed * Time.deltaTime;
-        rotateJointAngle = rotateJoint * jointSpeed * Time.deltaTime;
-        movePistonDelta = movePiston * pistonSpeed * Time.deltaTime;
-        rotateManipulatorAngle = moveManipulator * manipulatorSpeed * Time.deltaTime;
-
-        MoveAll(rotateShoulderAngle, rotateArmAngle, rotateJointAngle,
-                movePistonDelta, rotateManipulatorAngle);
-
+        // Multiplies outputs by the speed of joints and the elapsed time and
+        // then calls MoveAll.
+        ProcessOutput();
 
         // Sound effects!
 /*        float totalMovement = AddMovements(rotateShoulderAngle, rotateArmAngle,
@@ -353,14 +308,15 @@ public class ArtistWelderController : UnitController {
         ToggleAudio(audio, totalMovement);*/
     }
 //------------------------------------------------------------------------------
+    /// <summary>
+    /// Checks the elapsed time. After timeToMeasureTime we record the current
+    /// time speed. This is needed because we will almost freeze time for the
+    /// display of the painting, and we want to undo this at the end.
+    /// We wait a bit extra after taking this time (otherwise some individuals will
+    /// likely record as current timeRate the now slowed timeRate by other units!)
+    /// </summary>
     void CheckTime()
     {
-        // Let's check the elapsed time. After timeToMeasureTime we record the
-        // current time speed. This is needed because we will almost freeze time
-        // for the display of the painting, and we want to undo this at the end.
-        // We wait a bit extra after taking this time (otherwise some individuals
-        // will likely record as current timeRate the now slowed timeRate by
-        // other units!)
         if (Time.time - startTime > timeToMeasureTime)
         {
             if (!isTimeRateGot)
@@ -377,19 +333,86 @@ public class ArtistWelderController : UnitController {
             }
         }
     }
-
+//------------------------------------------------------------------------------
+    void SetBenchColour(float frontSensor, ref ISignalArray inputArr)
+    {
+        if (frontSensor < 0.35f)
+        {
+            inputArr[0] = 1f;
+            inputArr[1] = 0f;   
+            inputArr[2] = 0f;
+            benchMaterial.color = Color.blue;
+        }
+        else if (frontSensor > 0.45f)
+        {
+            inputArr[0] = 0f;
+            inputArr[1] = 1f;   
+            inputArr[2] = 0f;
+            benchMaterial.color = Color.green;
+        }
+        else
+        {
+            inputArr[0] = 0f;
+            inputArr[1] = 0f;   
+            inputArr[2] = 1f;
+            benchMaterial.color = Color.red;
+        }
+    }
+//-----------------------------------------------------------------------------
+    /// <summary>
+    /// This method takes the output array from the neural network and processes
+    /// it to update the variables used in the movement of different robot arm
+    /// joints.
+    /// </summary>
+    void AutomaticControl(ref ISignalArray outputArr)
+    {
+        // Shoulder (rotation along vertical axe)
+        jointShoulder.toMove = ActuatorValueIfEnabled(outputArr[0], (float)outputArr[1]);
+        // Arm and joint (finger-like rotation)
+        if (outputArr[2] > 0.5)
+        {
+            // The arm joints move with the output from the neural network
+            // Output is between 0 and 1: we need it from -1 to +1
+            jointArm.toMove = (float)outputArr[3] * 2f - 1f;
+            jointElbow.toMove = (float)outputArr[4] * 2f - 1f;
+        }
+        else
+        {
+            jointArm.toMove = 0f;
+            jointElbow.toMove = 0f;
+        }
+        // Piston movement
+        jointPiston.toMove = ActuatorValueIfEnabled(outputArr[5], (float)outputArr[6]);
+        // Manipulator (rotation perpendicular to both shoulder and arm/joint)
+        jointManipulator.toMove = ActuatorValueIfEnabled(outputArr[7], (float)outputArr[8]);        
+    }
+//-----------------------------------------------------------------------------
+    /// <summary>
+    /// Takes inputs directly from the keyboard. Mostly for debugging.
+    /// </summary>
+    void ManualControl(ref ISignalArray outputArr)
+    {
+        jointShoulder.toMove = Input.GetAxis("Horizontal");
+        jointArm.toMove = Input.GetAxis("Vertical");
+        jointElbow.toMove = Input.GetAxis("MyInputIK");
+        jointPiston.toMove = Input.GetAxis("MyInputJL");
+        jointManipulator.toMove = Input.GetAxis("MyInputTG");
+    }
 //------------------------------------------------------------------------------
     // Simply to avoid repetition (used 3 times)
     float ActuatorValueIfEnabled(double enabler, float convertMe)
     {
         if (enabler > 0.5)
         {
+            // The arm joints move with the output from the neural network
+            // Output is between 0 and 1: we need it from -1 to +1
             return convertMe * 2f - 1f;
         }
         return 0f;
     }
 //------------------------------------------------------------------------------
-	// This are the range sensors for the input
+    // If the arm is pointing towards a relevant object (say, the simulated canvas)
+    // returns true, and the distance.
     bool IsTowardsTarget(out float distance)
     {
 		float sensor_range = 0.6f;
@@ -418,6 +441,11 @@ public class ArtistWelderController : UnitController {
                 }               
             //}
         }
+        else
+        {
+            UndoMovement();
+        }
+
         return false;
 	}  
 //------------------------------------------------------------------------------
@@ -432,36 +460,52 @@ public class ArtistWelderController : UnitController {
 		value /= (maxValue - minValue);
         return value;
 	}
+//------------------------------------------------------------------------------
+    /// <summary>
+    /// Multiplies movements by their speed and timestep, then calls MoveAll.
+    /// </summary>
+    void ProcessOutput()
+    {
+        jointShoulder.toMove = jointShoulder.toMove * jointShoulder.speed * Time.deltaTime;
+        jointArm.toMove = jointArm.toMove * jointArm.speed * Time.deltaTime;
+        jointElbow.toMove = jointElbow.toMove * jointElbow.speed * Time.deltaTime;
+        jointPiston.toMove = jointPiston.toMove * jointPiston.speed * Time.deltaTime;
+        jointManipulator.toMove = jointManipulator.toMove * jointManipulator.speed * Time.deltaTime;
+        MoveAll();
+    }
 //------------------------------------------------------------------------------ 
     /// <summary>
     /// Moves all parts. Doing it like this so it is easy to also revert the
     /// movement (by calling this with negative increments). (It is unimportant
     /// if the result is not mathematically the inverse because of compound rotations.)
     /// </summary>
-    void MoveAll(float localShoulderAngle, float localArmAngle, float localJointAngle,
-                 float localPistonDelta, float localManipulatorAngle)
+    void MoveAll()
     {
-        // With += it works just as well
-        shoulderXaxe -= localShoulderAngle;
-        // Let's make sure the angle is within +-180 degrees
-        if (shoulderXaxe < -180.0f)
-        {
-            shoulderXaxe = 360.0f + shoulderXaxe ;
-        }
-        else if (shoulderXaxe > 180.0f)
-        {
-            shoulderXaxe = -360.0f + shoulderXaxe ;
-        }
+        // SHOULDER
+        MoveShoulder();
 
-        shoulder.transform.Rotate(0, localShoulderAngle, 0);
-        armXaxe = AddAndClamp(armXaxe, localArmAngle, armXaxeMin, armXaxeMax);
-        RotateX(arm.transform, armXaxe);
-        jointZaxe = AddAndClamp(jointZaxe, localJointAngle, jointZaxeMin, jointZaxeMax);
-        RotateZ(joint.transform, jointZaxe);
-        MovePiston(localPistonDelta);
-        manipulatorZaxe = AddAndClamp(manipulatorZaxe, localManipulatorAngle,
-                                      manipulatorZaxeMin, manipulatorZaxeMax);
-        RotateZ(manipulator.transform, manipulatorZaxe);        
+        // ARM
+        jointArm.currentValue = AddAndClamp(jointArm.currentValue, jointArm.toMove,
+                                            jointArm.min, jointArm.max);
+        RotateX(jointArm.jointObject.transform, jointArm.currentValue);
+
+        // ELBOW
+        jointElbow.currentValue = AddAndClamp(jointElbow.currentValue, jointElbow.toMove,
+                                              jointElbow.min, jointElbow.max);
+        RotateZ(jointElbow.jointObject.transform, jointElbow.currentValue);
+
+        // PISTON
+        jointPiston.currentValue = AddAndClamp(jointPiston.currentValue, jointPiston.toMove,
+                jointPiston.min, jointPiston.max);
+        jointPiston.jointObject.transform.localPosition = new Vector3(
+                jointPiston.currentValue, jointPiston.jointObject.transform.localPosition.y,
+                jointPiston.jointObject.transform.localPosition.z);
+
+        // MANIPULATOR
+        jointManipulator.currentValue = AddAndClamp(
+                jointManipulator.currentValue, jointManipulator.toMove,
+                jointManipulator.min, jointManipulator.max);
+        RotateZ(jointManipulator.jointObject.transform, jointManipulator.currentValue); 
     }
 //------------------------------------------------------------------------------ 
     /// <summary>
@@ -485,17 +529,22 @@ public class ArtistWelderController : UnitController {
     }
 //------------------------------------------------------------------------------ 
     /// <summary>
-    /// Moves the piston (with its children). Enforces movement within limits.
+    /// Moves the shoulder and keeps track of its current angle, making sure
+    /// it is within +-180 degrees..
     /// </summary>
-    void MovePiston(float movePistonDelta)
+    void MoveShoulder()
     {
-        pistonPositionX += movePistonDelta;
-        pistonPositionX = Mathf.Clamp(pistonPositionX, pistonPositionXMin,
-                                      pistonPositionXMax);
-
-        piston.transform.localPosition = new Vector3(
-            pistonPositionX, piston.transform.localPosition.y,
-            piston.transform.localPosition.z);
+        // With += it works just as well
+        jointShoulder.currentValue -= jointShoulder.toMove;
+        if (jointShoulder.currentValue < -180.0f)
+        {
+            jointShoulder.currentValue = 360.0f + jointShoulder.currentValue ;
+        }
+        else if (jointShoulder.currentValue > 180.0f)
+        {
+            jointShoulder.currentValue = -360.0f + jointShoulder.currentValue ;
+        }
+        jointShoulder.jointObject.transform.Rotate(0, jointShoulder.toMove, 0);
     }
 //------------------------------------------------------------------------------ 
     /// <summary>
@@ -613,7 +662,7 @@ public class ArtistWelderController : UnitController {
             int xCoordInput = (xCoordCanvas / inputPixelWidth);
 
             // A new row of input pixels starts every 5 input pixels, so that is
-            // after every 5*180 = 900 canvas pixels.
+            // after every 5 * 180 = 900 canvas pixels.
             // int canvasPixelsInRow = 5 * inputPixelWidth * inputPixelHeight;
             // Note this is just:
             int canvasPixelsInRow = canvasX * inputPixelHeight;
@@ -623,11 +672,35 @@ public class ArtistWelderController : UnitController {
             int inputIndex = xCoordInput + 5 * zCoordInput;
 
             // Beware: will attempt 3600 screen prints (slow)
-            // Debug.Log("pixel index " + i + " " + inputIndex);
+            //Debug.Log("pixel index " + i + " " + inputIndex);
+
+            inputIndex += inputOffset;
 
             // Finally adds the relationship between the canvas index and the
             // input index:
             pixelIndexToInputIndex.Add(i,inputIndex);
+        }
+    }
+//------------------------------------------------------------------------------
+    /// <summary>
+    /// Goes through all pixels in the canvas, and averages their values for
+    /// all the pixels that belong to the same input.
+    /// </summary>
+    void ReadCanvas(ref ISignalArray inputArr)
+    {
+        for (int i = 0; i < canvasY*canvasX; ++i)
+        {
+            inputArr[pixelIndexToInputIndex[i]] += pixelColours[i];
+        }
+
+        // After adding the value of each pixel, we need to divide by the total
+        // number of canvas pixels in each input pixel: canvasY*canvasX / 5*4
+        //canvasPixelsInInputPixel
+        for (int i = inputOffset; i < inputArr.Length; ++i)
+        {
+            inputArr[i] *= canvasPixelsInInputPixelInverse;
+
+            //Debug.Log("input " + i + " value " + inputArr[i]);
         }
     }
 //------------------------------------------------------------------------------
@@ -653,6 +726,7 @@ public class ArtistWelderController : UnitController {
     int PointToId(Vector3 position)
 	{
         int returnId = 0;
+
         // Dividing and rounding the z increment by the size.Z of the pixel we 
         // get the number of rows we need to add.
         // Note the corner has the maximum values for z and x position (see
