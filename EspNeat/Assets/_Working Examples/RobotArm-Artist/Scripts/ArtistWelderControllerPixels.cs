@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using SharpNeat.Phenomes;
 
-public class ArtistWelderController : UnitController {
+public class ArtistWelderControllerPixels : UnitController {
 
     private static int ID_counter = 0;
     private int ID;
@@ -15,42 +15,33 @@ public class ArtistWelderController : UnitController {
 
     private GameObject paintingsBackground;
 
+    // When creating the canvas time is heavily slowed down. We want to remember
+    // the original value to left things as they were (this is done at destruction).
+    private float oldTimeScale = -1f;
     private float startTime;
-    private float timeForPainting = 16f; 
-    private float maxTimeInverse = 0.0625f; //0.0625 for t = 16, 
+    private float timeToMeasureTime = 1500.9f;
+    private float timeForPainting = 1600f; 
+    private float maxTimeInverse = 0.000625f; //0.0625 for t = 16, 
     private bool isShowingPainting = false;
+    private bool isTimeRateGot = false;
 
 	private GameObject bench;
 	private Material benchMaterial;
-	private Texture2D benchTexture;
+	private List<GameObject> pixels = new List<GameObject>();
     private const float pixelSizeX = 0.04f;
     private const float pixelSizeXinv = 25f;
     private const float pixelSizeZ = 0.032916667f;
     private const float pixelSizeZinv = 30.3797f;
-
-	// We want a matrix that tells us, for a pixel A and brush size B (neighbour
-    // distance) the vectors (x, y) of all the correct neighbours (including itself)
-    // We define first PixelPoint, so that we don't need to use Vector2 (which is
-    // of type float)
-    private struct PixelPoint
-    {
-        public int x;
-        public int y;
-
-        public PixelPoint(int px, int py)
-        {
-            x = px;
-            y = py;
-        }
-    }
-    private List<List<List<PixelPoint>>> pixelNeighbours = new List<List<List<PixelPoint>>>();
+    private const float canvasPixelSizeX = 0.06217f;
+    private const float canvasPixelSizeZ = 0.07296f;
+    private List<float> pixelColours = new List<float>();
 
     private const int canvasX = 75;
     private const float canvasXinv = 0.0133333333f;
     private const int canvasY = 48;
     private const float canvasYinv = 0.0208333333f;
 
-	// We want a virtual representation of the canvas
+	// We want a virtual representation of the canvas (which is made of pixel gameObjects)
     private float virtualCanvasCornerX = 0f;
     private float virtualCanvasCornerZ = 0f;
 
@@ -153,17 +144,17 @@ public class ArtistWelderController : UnitController {
         virtualCanvasCornerZ = temp.z + 1.9f + ((float)canvasY / 2f) * pixelSizeZ; 
 
 		InstantiateBench();
+        InstantiateColourMarkers();
 
         // Let's give the joints a little initial offset (to avoid overfitting!)
         jointPiston.toMove = Random.Range(-0.5f, 0.1f);
         MoveAll();
 
-        CreateNeighbourList();
-
         // We want to know the time elapsed since the robot arm started drawing.
         // After the allocated time painting will stop and we will display the
         // result!
         startTime = Time.time;
+		oldTimeScale = Time.timeScale;
     }
 //------------------------------------------------------------------------------
     /// <summary>
@@ -181,9 +172,14 @@ public class ArtistWelderController : UnitController {
         evolutionCamera.transform.eulerAngles = new Vector3(90f, 180f, 0f);
 
         // Special background!
-        //paintingsBackground.SetActive(true);
+        paintingsBackground.SetActive(true);
 
+        Destroy(bench);
         isShowingPainting = true;
+        Time.timeScale = 0.4f;
+        // Instead of instantiating/destroying everytime we could consider
+        // pooling: activating/deactivating the same objects over and over again.
+        InstantiatePixels(); 
     }
 //------------------------------------------------------------------------------
     void SetPosition()
@@ -213,7 +209,19 @@ public class ArtistWelderController : UnitController {
         // Resets background.
         paintingsBackground.SetActive(false);
 
-		Destroy(bench);
+        // Sets timeScale as it was (we should probably only do this for the last
+        // element that is destroyed!
+        if (oldTimeScale > 0f)
+        {
+            Time.timeScale = oldTimeScale;
+        }
+
+        // In case we are destroying the element before the painting was displayed
+        // (in which case the bench is still there!)
+        if (bench)
+        {
+            Destroy(bench);
+        }
 
         --ID_counter;
     }
@@ -296,11 +304,19 @@ public class ArtistWelderController : UnitController {
     /// </summary>
     void CheckTime()
     {
-        if (Time.time - startTime > timeForPainting)
+        if (Time.time - startTime > timeToMeasureTime)
         {
-            if (!isShowingPainting)
+            if (!isTimeRateGot)
             {
-                ShowPainting();
+                isTimeRateGot = true;
+                oldTimeScale = Time.timeScale;
+            }
+            else if (!isShowingPainting)
+            {
+                if (Time.time - startTime > timeForPainting)
+                {
+                    ShowPainting();
+                }
             }
         }
     }
@@ -312,21 +328,21 @@ public class ArtistWelderController : UnitController {
             inputArr[0] = 1f;
             inputArr[1] = 0f;   
             inputArr[2] = 0f;
-            //benchMaterial.color = Color.blue;
+            benchMaterial.color = Color.blue;
         }
         else if (frontSensor > 0.45f)
         {
             inputArr[0] = 0f;
             inputArr[1] = 1f;   
             inputArr[2] = 0f;
-            //benchMaterial.color = Color.green;
+            benchMaterial.color = Color.green;
         }
         else
         {
             inputArr[0] = 0f;
             inputArr[1] = 0f;   
             inputArr[2] = 1f;
-            //benchMaterial.color = Color.red;
+            benchMaterial.color = Color.red;
         }
     }
 //-----------------------------------------------------------------------------
@@ -377,8 +393,6 @@ public class ArtistWelderController : UnitController {
         jointElbow.toMove = Input.GetAxis("MyInputIK");
         jointPiston.toMove = Input.GetAxis("MyInputJL");
         jointManipulator.toMove = Input.GetAxis("MyInputTG");
-
-        paintNow = true;
     }
 //------------------------------------------------------------------------------
     // Simply to avoid repetition (used 3 times)
@@ -424,15 +438,7 @@ public class ArtistWelderController : UnitController {
                 // the inputs for location!)
                 if (paintNow)
                 {
-                    //private List<List<List<PixelPoint>>> pixelNeighbours = new List<List<List<PixelPoint>>>();
-                    //pixelNeighbours
-                    int brushSize = 0;
-                    foreach (PixelPoint pixel in pixelNeighbours[pixelId][brushSize])
-                    {
-                        benchTexture.SetPixel(pixel.x, pixel.y, Color.red);
-                        benchTexture.Apply();
-                        benchMaterial.mainTexture = benchTexture;
-                    }
+                    pixelColours[pixelId] = 1f;
                 }
                 return true;
             }
@@ -567,9 +573,83 @@ public class ArtistWelderController : UnitController {
         temp.z += 1.9f;
 		bench.transform.position = temp;
 		benchMaterial = bench.GetComponent<Renderer>().material;
-		benchTexture = benchMaterial.mainTexture as Texture2D;
-        benchTexture = new Texture2D(canvasX, canvasY);
 	}
+//------------------------------------------------------------------------------ 
+	void InstantiatePixels()
+    {
+		pixels = new List<GameObject>();
+
+        // Let's first determine the position of the whole picture.
+        // Our display will (in principle) fit 4 x 3 pieces.
+
+        // Admitedly, this is NOT the most intuitive way to do this...
+
+        // Note the first case is ID = 1, so we need "ID - 1" so that the first
+        // in the second column happens for ID = 5.
+        float row = (float)(1 + (ID - 1) / 4);
+        float column = (float)(ID - 4 * ((int)row - 1));
+
+        // This will be the reference position to build the canvas.
+        Vector3 temp = new Vector3(8f, 6.5f, -6.75f);
+        // The working width is 20, and this must be split into 4 areas (columns).
+        // The centre of each is in the half, so we split 20 into 8 (simplified
+        // 2.5). The first is at 1/8, the second at 3/8...
+        temp.x -= (1f + (column - 1f) * 2f) * 2.5f;
+        // The working heigth is 12.25, and this must be split into 3 areas (rows).
+        // The centre of each is in the half, so we split 12.25 into 6 (simplified
+        // 2.0417).
+        temp.z += (1f + (row - 1f) * 2f) * 2.0417f;
+
+        // The first corner is:
+        // there are 75 in a row, with one in the middle and 74/2 to each side.
+        // (canvasPixelSizeX * 37) is the first corner (X axe value)
+        float canvasCornerX = temp.x + 37f * canvasPixelSizeX;
+        // there are 48 in a column, the first to one side
+        // is only offset by half a length!:
+        // (canvasPixelSizeZ * 23.5) is the first corner (Z axe value)
+        float canvasCornerZ = temp.z + 23.5f * canvasPixelSizeZ; 
+
+        // The canvas is made of 48 rows and 75 columns (which is too many elements
+        // to have around all the time for all individuals in the genome!)
+        for (int i = 0; i < canvasY*canvasX; ++i)
+        {
+			pixels.Add((GameObject)Instantiate(Resources.Load("Prefabs/ArtistArmAccesories/Pixel")));
+
+            Vector3 pixelPosition = new Vector3();
+
+            // Required x offset
+            pixelPosition.x = canvasCornerX - canvasPixelSizeX * (i % canvasX);
+            pixelPosition.y = temp.y;
+            // Plus z offset:
+            pixelPosition.z = canvasCornerZ - canvasPixelSizeZ * (i / canvasX);
+
+            pixels[i].transform.position = pixelPosition;
+
+            // If the pixel active?
+            if (pixelColours[i] > 0.5f)
+            {
+                pixels[i].GetComponent<Renderer>().material.color = Color.red;
+            }
+
+			// Let's set the robot arm as the parent (in this way we will be able to
+			// use the pixels to select the correct individual!)
+            pixels[i].transform.SetParent(this.transform);
+        }
+	}
+//------------------------------------------------------------------------------
+    /// <summary>
+    /// We need the colour markers from the beginning, before we instantiate the
+    /// pixels. We will use this markers to set the colour of the pixels when
+    /// they are instantiated.
+    /// </summary>
+    void InstantiateColourMarkers()
+    {
+        pixelColours = new List<float>();
+        for (int i = 0; i < canvasY*canvasX; ++i)
+        {
+            pixelColours.Add(0f);
+        }
+    }
 //------------------------------------------------------------------------------
 	/// <summary>
     /// Translates a hit position on the canvas to the ID of the corresponding
@@ -608,29 +688,6 @@ public class ArtistWelderController : UnitController {
         // return Mathf.Max(0, returnId);
         return returnId;
 	}
-//------------------------------------------------------------------------------ 
-    void CreateNeighbourList()
-    {
-        // Rows
-        for (int j = 0; j < canvasY; ++j)
-        {
-            // Columns
-            for (int i = 0; i < canvasX; ++i)
-            {
-                List<List<PixelPoint>> neighboursForThisPixel = new List<List<PixelPoint>>();
-
-                // Brush size 0 means only the current pixel
-                List<PixelPoint> forThisBrush = new List<PixelPoint>();
-                PixelPoint currentXY = new PixelPoint(i, j);
-                forThisBrush.Add(currentXY);
-                neighboursForThisPixel.Add(forThisBrush);
-                // Here we would add the list of XY coordinates for other brush
-                // sizes.
-
-                pixelNeighbours.Add(neighboursForThisPixel);
-            }           
-        }
-    }
 //------------------------------------------------------------------------------ 
     void ToggleAudio(AudioSource audio, float movement)
     {
