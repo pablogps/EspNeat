@@ -240,8 +240,11 @@
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Clock.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\Destroy.cs" />
      <Compile Include="Assets\_Working Examples\Cheap Labour\Scripts\WorkerController.cs" />
+     <Compile Include="Assets\_Working Examples\RobotArm-Artist\Scripts\ArtistWelderController-CanvasAsInput.cs" />
      <Compile Include="Assets\_Working Examples\RobotArm-Artist\Scripts\ArtistWelderController.cs" />
+     <Compile Include="Assets\_Working Examples\RobotArm-Artist\Scripts\ArtistWelderControllerPixels.cs" />
      <Compile Include="Assets\_Working Examples\RobotArm-Artist\Scripts\ManipulatorArtist.cs" />
+     <Compile Include="Assets\_Working Examples\RobotArm-Artist\Scripts\prueba.cs" />
      <Compile Include="Assets\_Working Examples\RobotArm\Arkham Interactive\Industrial\Standard Assets\Character Controllers\Sources\Scripts\MouseLook.cs" />
      <Compile Include="Assets\_Working Examples\RobotArm\Scripts\CylinderAttach.cs" />
      <Compile Include="Assets\_Working Examples\RobotArm\Scripts\Manipulator.cs" />
