@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+namespace RobotArtist
+{
 public class ManipulatorArtist : MonoBehaviour {
 
 	private ArtistWelderController parentScript;
@@ -24,4 +26,5 @@ public class ManipulatorArtist : MonoBehaviour {
     void OnTriggerStay(Collider other) {
         parentScript.UndoMovement();
     }
+}
 }

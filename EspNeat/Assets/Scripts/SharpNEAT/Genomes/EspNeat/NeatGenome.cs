@@ -96,37 +96,61 @@ namespace SharpNeat.Genomes.Neat
 
         #region Constructors
 
-        /// <summary>
-        /// Constructs with the provided ID, birth generation and gene lists.
-        /// </summary>
-        public NeatGenome(NeatGenomeFactory genomeFactory,
-                          uint id, 
-                          uint birthGeneration,
-                          NeuronGeneList neuronGeneList, 
-                          ConnectionGeneList connectionGeneList, 
-                          bool rebuildNeuronGeneConnectionInfo)
-        {
-            _genomeFactory = genomeFactory;
-            _id = id;
-            _birthGeneration = birthGeneration;
-            _neuronGeneList = neuronGeneList;
-            _connectionGeneList = connectionGeneList;
+		/// <summary>
+		/// Constructs with the provided ID, birth generation and gene lists.
+		/// It calls the more complex constructor, asking for integrity check
+		/// by default.
+		/// </summary>
+		public NeatGenome(NeatGenomeFactory genomeFactory,
+			              uint id,
+						  uint birthGeneration,
+						  NeuronGeneList neuronGeneList,
+						  ConnectionGeneList connectionGeneList,
+						  bool rebuildNeuronGeneConnectionInfo)
+			: this(genomeFactory, id, birthGeneration, neuronGeneList,
+				   connectionGeneList, rebuildNeuronGeneConnectionInfo, true)
+		{
+		}
 
-            // Rebuild per neuron connection info if caller has requested it.
-            if (rebuildNeuronGeneConnectionInfo) {
-                RebuildNeuronGeneConnectionInfo();
-            }
+		/// <summary>
+		/// This constructor allows to NOT test for integrity. This is used when
+		/// building partial genomes (e.g., in sexual reproduction, where a 
+		/// genome is first created without the elements in the active module,
+		/// and so would not pass the integrity check!)
+		/// </summary>
+		public NeatGenome(NeatGenomeFactory genomeFactory,
+				          uint id,
+						  uint birthGeneration,
+						  NeuronGeneList neuronGeneList,
+						  ConnectionGeneList connectionGeneList,
+						  bool rebuildNeuronGeneConnectionInfo,
+						  bool assertIntegrity)
+		{
+			_genomeFactory = genomeFactory;
+			_id = id;
+			_birthGeneration = birthGeneration;
+			_neuronGeneList = neuronGeneList;
+			_connectionGeneList = connectionGeneList;
 
-            // If we have a factory then create the evaluation info object now, 
-            // also count the nodes that have auxiliary state.
-            // Otherwise wait until the factory is provided through the property setter.
-            if (null != _genomeFactory) 
-            {
-                _evalInfo = new EvaluationInfo(genomeFactory.NeatGenomeParameters.FitnessHistoryLength);
-                _auxStateNeuronCount = CountAuxStateNodes();
-            }
-            Debug.Assert(PerformIntegrityCheck());
-        }
+			// Rebuild per neuron connection info if caller has requested it.
+			if (rebuildNeuronGeneConnectionInfo) {
+				RebuildNeuronGeneConnectionInfo();
+			}
+
+			// If we have a factory then create the evaluation info object now, 
+			// also counts the nodes that have auxiliary state.
+			// Otherwise wait until the factory is provided through the property setter.
+			if (null != _genomeFactory) 
+			{
+				_evalInfo = new EvaluationInfo(genomeFactory.NeatGenomeParameters.FitnessHistoryLength);
+				_auxStateNeuronCount = CountAuxStateNodes();
+			}
+
+			if (assertIntegrity)
+			{
+				Debug.Assert(PerformIntegrityCheck());
+			}  
+		}
 
         /// <summary>
         /// Copy constructor.
@@ -378,6 +402,23 @@ namespace SharpNeat.Genomes.Neat
             _localOut = 0;
             _inHiddenModules = 0;          
         }
+
+		public void PrintGenomeStatistics()   
+		{
+			UnityEngine.Debug.Log("\nGenome statistics for genome: " + _id);
+			UnityEngine.Debug.Log("Birth generation: " + _birthGeneration);
+			UnityEngine.Debug.Log("Specie ID: " + _specieIdx);
+			UnityEngine.Debug.Log("Input (no bias): " + _inputNeuronCount);
+			UnityEngine.Debug.Log("Output: " + _outputNeuronCount);
+			UnityEngine.Debug.Log("Regulatory: " + _regulatory);
+			UnityEngine.Debug.Log("Local in: " + _localIn);
+			UnityEngine.Debug.Log("Local out: " + _localOut);
+			UnityEngine.Debug.Log("In hidden: " + _inHiddenModules);
+			UnityEngine.Debug.Log("Active connections: " + _activeConnections);
+			UnityEngine.Debug.Log("Aux state neurons: " + _auxStateNeuronCount);
+			_neuronGeneList.PrintNeuronListData();
+			_connectionGeneList.PrintConnectionListData();
+		}
 
         /// <summary>
         /// Finds the latest innovation ID used. This is needed in Factory in 
@@ -796,9 +837,11 @@ namespace SharpNeat.Genomes.Neat
                 connectionCommonList.Add(_connectionGeneList[i]);
             }
 
-            return _genomeFactory.CreateGenome(_genomeFactory.NextGenomeId(), 
-                                               birthGeneration, neuronCommonList, 
-                                               connectionCommonList, false);  
+			bool rebuildConnectionInfo = false;
+			bool assertIntegrity = false;
+			return new NeatGenome(_genomeFactory, _genomeFactory.NextGenomeId(),
+				                  birthGeneration, neuronCommonList, connectionCommonList,
+				                  rebuildConnectionInfo, assertIntegrity);
         }
             
         private void Mutate()

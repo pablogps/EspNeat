@@ -101,9 +101,6 @@ public class NeatManualEvolution<TGenome>
         selected_genomes = new Dictionary<int, bool>();
         // Creates the units...
         WakeUp();
-        // Now we need to wait while the useer chooses different units and we 
-        // let optimizer that this process can start.
-        optimizer.ManualWait = false;
         // We call this function from coroutiner since it is an IEnumerator
 		Coroutiner.StartCoroutine(ManualEvaluation());
         // Then units are killed and NeatEvolutionAlgorithm continues 
@@ -232,7 +229,7 @@ public class NeatManualEvolution<TGenome>
             // Decodes the genomes into phenomes (neural networks)
             unit_brains[index] = decoder.Decode(genome_list[index]);
             // And units are then instantiated in optimizer
-            optimizer.Evaluate(unit_brains[index]);
+            optimizer.InstantiateCandidate(unit_brains[index]);
 			// And we update our brain-to-genome dictionary
 			brain_index.Add(unit_brains[index], index);
         }
@@ -282,7 +279,7 @@ public class NeatManualEvolution<TGenome>
 	{
 		for (int index = 0; index < unit_brains.Length; ++index)
 		{
-			optimizer.StopEvaluation(unit_brains[index]);
+            optimizer.DestroyCandidate(unit_brains[index]);
 		}  
 	}
 

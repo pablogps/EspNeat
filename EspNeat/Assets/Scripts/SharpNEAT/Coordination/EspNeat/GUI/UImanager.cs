@@ -543,7 +543,7 @@ namespace SharpNeat.Coordination
                 yield return null;
             }
 
-            optimizer.StartEA();
+            optimizer.StartEvolutionAlgorithm();
 
             // Set evolution camera
             ActivateEvolutionCamera();
@@ -574,7 +574,7 @@ namespace SharpNeat.Coordination
         {
             // Sets time-scale to the corresponding value
             sliderEvolution.GetComponent<TimeSliderController>().SetTimeScale();
-            optimizer.StartEA();
+            optimizer.StartEvolutionAlgorithm();
 
             // Set evolution camera
             ActivateEvolutionCamera();
@@ -841,7 +841,7 @@ namespace SharpNeat.Coordination
             uiVar.moduleIdList.Add(newId);
 
             // Old way: adds all global inputs as inputs for the new module
-			//IncreaseLocalInputListBasic(newId);
+			// IncreaseLocalInputListBasic(newId);
             // Lets the user select the inputs for the module. This is important, 
             // since in many cases inputs may complicate evolution (for instance
             // if an input not needed for the module's behaviour will be required
@@ -1099,17 +1099,15 @@ namespace SharpNeat.Coordination
         {
             for (int i = 0; i < childrenClonesIds.Count; ++i)
             {
-                uint childRegulatoryId = 0;
+                uint childRegulatoryId;
                 childRegulatoryId = optimizer.RegIdFromModId(childrenClonesIds[i]);
 
-                uint connectionId;
-                uint connectionSource;
-                optimizer.ConnectionIdFromModAndTarget(clonedParentId, childRegulatoryId,
-                    out connectionId, out connectionSource);
+                ConnectionGene connectionToChildRegInParent =
+                        optimizer.ConnectionFromModAndTarget(clonedParentId, childRegulatoryId);
 
                 newLink regulationLink = new newLink();
-                regulationLink.id = connectionId;
-                regulationLink.otherNeuron = connectionSource;
+                regulationLink.id = connectionToChildRegInParent.InnovationId;
+                regulationLink.otherNeuron = connectionToChildRegInParent.SourceNodeId;
                 regulationLink.weight = 1.0;
 
                 int childIndex = getModuleIndexById(childrenClonesIds[i]);
@@ -2237,9 +2235,13 @@ namespace SharpNeat.Coordination
 		}
 		void ArtistDefaultLabels()
 		{
-			inputLabels[1] = "piston:short";
+/*			inputLabels[1] = "piston:short";
 			inputLabels[2] = "piston:long";
-			inputLabels[3] = "piston:target";
+			inputLabels[3] = "piston:target";*/
+            inputLabels[1] = "distance:Target";
+            inputLabels[2] = "position:X";
+            inputLabels[3] = "position:Y";
+            inputLabels[4] = "time";
 
 			outputLabels[0] = "enableX";
 			outputLabels[1] = "x-Axe";
@@ -2249,7 +2251,9 @@ namespace SharpNeat.Coordination
 			outputLabels[5] = "enablePiston";
 			outputLabels[6] = "piston";
 			outputLabels[7] = "enableManip";
-			outputLabels[8] = "manipulator";
+            outputLabels[8] = "manipulator";
+            outputLabels[9] = "drawOnOff";
+            outputLabels[10] = "brushSize";
 		}
 
         /// <summary>

@@ -110,6 +110,17 @@ namespace SharpNeat.Genomes.Neat
 
         #region Public Methods
 
+		public void PrintConnectionListData()
+		{
+			UnityEngine.Debug.Log("\nConnection list data:");
+			UnityEngine.Debug.Log("Index for first non-protected in active module: " + _firstActiveIndex);
+			foreach (ConnectionGene connection in this)
+
+			{
+				connection.PrintConnectionInfo();
+			}
+		}
+
         /// <summary>
         /// Locates the first non-protected connection in the active module 
         /// (the last module in the list!) Used to update _firstActiveIndex. 

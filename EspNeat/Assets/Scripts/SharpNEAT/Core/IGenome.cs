@@ -69,6 +69,8 @@ namespace SharpNeat.Core
         /// </summary>
         object CachedPhenome { get; set; }
 
+		void PrintGenomeStatistics();
+
         /// <summary>
         /// Asexual reproduction.
         /// </summary>

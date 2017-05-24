@@ -567,8 +567,7 @@ namespace SharpNeat.Genomes.Neat
                 // Move to first connection elem.
                 string localName = XmlIoUtils.MoveToElement(xrSubtree, true);
                 if(localName == __ElemConnection)
-                {   // We have at least one connection.
-                    // Read connection elements.
+                {   // We have at least one connection. Reads connection elements.
                     do
                     {
                         uint id = XmlIoUtils.ReadAttributeAsUInt(xrSubtree, __AttrId);
@@ -577,9 +576,8 @@ namespace SharpNeat.Genomes.Neat
                         double weight = XmlIoUtils.ReadAttributeAsDouble(xrSubtree, __AttrWeight);
                         int module = XmlIoUtils.ReadAttributeAsInt(xrSubtree, __AttrModule);
                         bool protect = XmlIoUtils.ReadAttributeAsBool(xrSubtree, __AttrProtected);
-                        ConnectionGene cGene = new ConnectionGene(id, srcId, tgtId,
-                                                                  weight, module, 
-                                                                  protect);
+                        ConnectionGene cGene = new ConnectionGene(id, srcId, tgtId, weight,
+							                                      module, protect);
                         cGeneList.Add(cGene);
                     } 
                     while(xrSubtree.ReadToNextSibling(__ElemConnection));

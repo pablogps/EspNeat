@@ -196,6 +196,14 @@ namespace SharpNeat.Genomes.Neat
         #endregion
 
         #region Public Methods
+
+		public void PrintNeuronInfo()
+		{
+			UnityEngine.Debug.Log("Type: " + _neuronType + ", ID: " + _innovationId +
+				", act. function ID: " + _activationFnId +
+				", Module ID: " + _modId + ", pandemonium: " + _pandemonium);
+		}
+
         /// <summary>
         /// Creates a copy of the current gene. Virtual method that can be 
         /// overriden by sub-types.

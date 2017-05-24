@@ -50,7 +50,6 @@ public class EspNeatOptimizer : Optimizer
 
     private uint generation;
     private double fitness;
-    private bool manualWait = false; // not used in this version.
     private bool manual = false; // fitness selection or manual selection?
     // Use if you need your rays in manual selection to interact only with
     // a given set of layers
@@ -133,16 +132,6 @@ public class EspNeatOptimizer : Optimizer
         set { manual = value; }
     }
 
-    /// <summary>
-    /// This is not needed.
-    /// TODO: Delete this (which requires changes in Optimizer). 
-    /// </summary>
-    public override bool ManualWait
-    {
-        get { return manualWait; }
-        set { manualWait = value; }
-    }
-
     public bool IsSetChampion
     {
         set { isSetChampion = value; }
@@ -152,28 +141,23 @@ public class EspNeatOptimizer : Optimizer
 
     #region Public Methods
 
-    /// <summary>
-    /// Starts the evolutionary process. Note that the automatic evolutionary 
-    /// algorithm is also used as the base of the manual process! 
-    /// (Since only the evaluation of units differs.)
-    /// </summary>
-    public void StartEA()
+	public void StartEvolutionAlgorithm()
     {         
         Utility.DebugLog = true;
         Utility.Log("Starting neuroevolution");
 
         StartGenomePopulation();
 
-        // We do it here, so we do not try to access this before the 
-        // algorithm is set up.
+        // We do it here, so we do not try to access this before the algorithm is set up.
         if (manual == true)
         {
             _ea.Manual = true;
         }
+
         startTime = DateTime.Now;
 
-        // Here we subscribe the function ea_UpdateEvent to the event UpdateEvent
-        // which is handled by the evolutionary algorithm (which is our object _ea, 
+        // Subscribes the function _ea.UpdateEvent and .PausedEvent to the event UpdateEvent
+        // which is handled by the evolution algorithm (which is our object _ea, 
         // of type NeatEvolutionAlgorithm : AbstracGenerationalAlgorithm
         // The same for PausedEvent.
         // When _ea notifies there is an update or a pause these events will notify
@@ -181,22 +165,31 @@ public class EspNeatOptimizer : Optimizer
         _ea.UpdateEvent += new EventHandler(ea_UpdateEvent);
         _ea.PausedEvent += new EventHandler(ea_PauseEvent);
         // The above can be simplified in Unity: _ea.UpdateEvent += ea_UpdateEvent is valid
+
         // TODO: There should be an unsubscribe line somewhere, but right now 
         // the program ends with Optimizer, so it is not needed. 
 
-        // This feature is old: now this is chosen with a UI slider
-        // speed is increased so evolution is faster in real time
-        //var evoSpeed = 25;
-        //Time.timeScale = evoSpeed;
-
         // Starts the algorithm running. The algorithm will switch to the Running 
         // state from either the Ready or Paused states.
-        _ea.StartContinue();
+		_ea.StartContinue();
         EARunning = true;
     }
 
     /// <summary>
-    /// Overload so we can specify other save paths (used from NeatGenomeFactory
+    ///  Simple saving: only affects the current population and will be overwritten.
+    ///  To really save use SavePopulation(directoryPath, populationPath, championPath)
+    /// </summary>
+    public void SimpleSavePopulation()
+    {
+        SavePopulation(baseFilesPath); 
+    }
+    void SavePopulation(string directoryPath)
+    {
+        SavePopulation(directoryPath, popFileSavePath, champFileSavePath);
+        SaveResearch(directoryPath);
+    }
+    /// <summary>
+    /// Allows to specify other save paths (e.g.: used from NeatGenomeFactory
     /// before adding a new module so the genome diversity is not lost if we
     /// want to reset the addition of the new module, which overwrites every
     /// genome with the champion!)
@@ -206,7 +199,7 @@ public class EspNeatOptimizer : Optimizer
         XmlWriterSettings _xwSettings = new XmlWriterSettings();
         _xwSettings.Indent = true;
 
-        IsThereDirectory(directoryPath);
+        CreateDirectoryIfNew(directoryPath);
 
         // Save genomes to xml file.  
         using (XmlWriter xw = XmlWriter.Create(popPath, _xwSettings))
@@ -218,24 +211,6 @@ public class EspNeatOptimizer : Optimizer
         {
             experiment.SavePopulation(xw, new NeatGenome[] { _ea.CurrentChampGenome });
         }
-
-        SaveResearch(directoryPath);
-    }
-    /// <summary>
-    ///  Simple saving: only affects the current population and will be
-    ///  overwritten. To really save use 
-    ///  SavePopulation(string directoryPath, string popPath, string champPath)
-    /// </summary>
-    public void SimpleSavePopulation()
-    {
-        SavePopulation(baseFilesPath);  
-    }
-    /// <summary>
-    /// Saves the population and champion genome in the default path.
-    /// </summary>
-    void SavePopulation(string directoryPath)
-    {
-        SavePopulation(directoryPath, popFileSavePath, champFileSavePath);
     }
 
     /// <summary>
@@ -247,8 +222,7 @@ public class EspNeatOptimizer : Optimizer
     public void SaveResearch(string directoryPath)
     {
         string fitnessDirectory = directoryPath + "/" + experiment_name + ".fitnessEvol.dat";
-        using (System.IO.StreamWriter file =
-                new System.IO.StreamWriter(fitnessDirectory, true))
+        using (System.IO.StreamWriter file = new System.IO.StreamWriter(fitnessDirectory, true))
         {
             string line = "Generation: " + generation.ToString() +
                           ", max fitness: " + fitness.ToString();
@@ -257,37 +231,25 @@ public class EspNeatOptimizer : Optimizer
 
         if (writeAllGenerations)
         {
-            XmlWriterSettings _xwSettings = new XmlWriterSettings();
-            _xwSettings.Indent = true;
-
-            // There is probably a cleverer way to do this.
             string newDirectory = directoryPath + "/" + timeStamp;
-            string popPath = newDirectory + "/" + generation.ToString() +
-                             experiment_name + ".pop.xml";            
-            string champPath = newDirectory + "/" + generation.ToString() +
-                               experiment_name + ".champ.xml";
-
-            IsThereDirectory(newDirectory);
-
-            using (XmlWriter xw = XmlWriter.Create(popPath, _xwSettings))
-            {
-                experiment.SavePopulation(xw, _ea.GenomeList);
-            }
-            using (XmlWriter xw = XmlWriter.Create(champPath, _xwSettings))
-            {
-                experiment.SavePopulation(xw, new NeatGenome[] { _ea.CurrentChampGenome });
-            }            
+            string popPath = CreateSavePath(newDirectory, ".pop.xml");
+            string champPath = CreateSavePath(newDirectory, ".champ.xml");
+            SavePopulation(newDirectory, popPath, champPath);            
         }        
     }
 
+    string CreateSavePath(string basePath, string pathSuffix)
+    {
+        return basePath + "/" + generation.ToString() + experiment_name + pathSuffix; 
+    }
+
     /// <summary>
-    /// Resets GUI elements and analyses a new genome instance (in case the
-    /// structure has changed).
+    /// Resets GUI elements and analyses a new genome instance (in case its
+    /// structure (the common structure of all instances) has changed).
     /// </summary>
     public void ResetGUI()
     {
-        // We update the genome used in uiManager. For the schematic view all 
-        // genomes are exactly the same, so we can pass any we like.
+        // For the schematic view all genomes are the same.
         uiManager.UpdateModelGenome(_ea.GenomeList[0]);
     }
 
@@ -303,44 +265,35 @@ public class EspNeatOptimizer : Optimizer
         }
     }
 
-    /// <summary>
-    /// Proper sequence to end an interactive evolution process
-    /// </summary>
     public void StopInteractiveEvolution()
     {
-        // Old fitness values will be recovered and used to produce offspring.
         SetAborted();
         EndManual(); 
-        // Automatic testing of units disabled (we will abort, this is not needed).
+        // EaIsNextManual(true) prevents fitness-based evaluation of the genome, 
+        // which we don't need when aborting interactive evolution.
         EaIsNextManual(true);
         GoThenAuto();
         StopEA(); 
     }
 
     /// <summary>
-    /// Called by SimpleEvaluator
-    ///****Why is this called "Evaluate" when it instantiates?
+    /// Called by SimpleEvaluator and NeatManualEvaluator.
     /// Instantiates and activates a unit. Adds its controller (box parameter)
     /// to the dictionary ControllerMap.
-    /// DO NOT confuse this function with SimpleEvaluator.Evaluate.
     /// </summary>
-    /// <param name="box">Box.</param>
-    // TODO: Change name. Maybe "InstantiateUnit"?
-	public override void Evaluate(SharpNeat.Phenomes.IBlackBox box)
+	public override void InstantiateCandidate(SharpNeat.Phenomes.IBlackBox box)
     {
         GameObject obj = Instantiate(Unit, Unit.transform.position, 
-            Unit.transform.rotation) as GameObject;
+                                     Unit.transform.rotation) as GameObject;
         UnitController controller = obj.GetComponent<UnitController>();
         ControllerMap.Add(box, controller);
         controller.Activate(box);
     }
 
     /// <summary>
-    /// Called by SimpleEvaluator and NeatManualEvolution.
     /// Destroys the unit that uses a given controller (parameter box)
     /// </summary>
-    /// <param name="box">Box.</param>
-	public override void StopEvaluation(SharpNeat.Phenomes.IBlackBox box)
+    public override void DestroyCandidate(SharpNeat.Phenomes.IBlackBox box)
     {
         UnitController ct = ControllerMap[box];
         Destroy(ct.gameObject);
@@ -352,36 +305,30 @@ public class EspNeatOptimizer : Optimizer
     public void RunBest()
     {
         champRunning = true;
-
         NeatGenome genome = LoadChampion();
 
         // Get a genome decoder that can convert genomes to phenomes.
         var genomeDecoder = experiment.CreateGenomeDecoder();
         // Decode the genome into a phenome (neural network).
         var phenome = genomeDecoder.Decode(genome);
-        // The actual unit is now created, added to the dictionary and activated.
-        GameObject obj = Instantiate(Unit, Unit.transform.position, 
-            Unit.transform.rotation) as GameObject;
-        UnitController controller = obj.GetComponent<UnitController>();
-        ControllerMap.Add(phenome, controller);
-        controller.Activate(phenome);
-
+        InstantiateCandidate(phenome);
+        GameObject bestInstance = ControllerMap[phenome].gameObject;
+            
         // Special tag so we can selectively actuate on these units.
-        // For instance to kill them while neuroevolution is active
-        obj.tag = "BestUnit";
-        // Also removes the tag from child components (no granchildren, but since 
-        // these have no colliders we don't need to worry about that during manual
-        // selection (rays will never interact with these components!)
+        bestInstance.tag = "BestUnit";
+        // Also removes the tag from child components (but no granchildren. This
+        // is currently ok since these elements have no coliders and champions
+        // are destroyed before entering evolution).
         // These cannot use "BestUnit" or we will be in trouble when we destroy
         // the unit! 
-        foreach (Transform child in obj.transform)
+        foreach (Transform child in bestInstance.transform)
         {
             child.gameObject.tag = "Untagged";
         }
 
         // This is called if we want the champions to be evaluated, mostly for
         // research reasons.
-        if (true)
+        if (false)
         {
             Coroutiner.StartCoroutine(EvaluateChamp(phenome));
         }
@@ -406,8 +353,6 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
 	public override float GetFitness(SharpNeat.Phenomes.IBlackBox box)
     {
-        // If the provided controller is in the dictionary, we retrieve the fitness
-        // of the unit that uses said controller
         if (ControllerMap.ContainsKey(box))
         {
             // This is the function written by the user in the derived class from the
@@ -424,8 +369,6 @@ public class EspNeatOptimizer : Optimizer
     {
         champRunning = false;
 
-        // We need to remove units created by the button "Run Best"
-        // First we identify all remaining units (not taken care by StopEA)
         GameObject[] bests;
         bests = GameObject.FindGameObjectsWithTag("BestUnit");
         foreach (GameObject best in bests)
@@ -441,8 +384,8 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
-    /// Sets whichModule as active (clones the current champion and moves
-    /// whichModule to the end of the genome, then produces mutations)
+    /// Sets "whichModule" as active: clones the current champion and moves
+    /// "whichModule" to the end of the genome, then (from UImanager) produces mutations.
     /// </summary>
     public void AskSetActive(UIvariables uiVar, int whichModule)
     {
@@ -451,9 +394,6 @@ public class EspNeatOptimizer : Optimizer
 
         // Sets whichModule as the current module in the factory!
         _ea.GenomeList[0].GenomeFactory.CurrentModule = whichModule;
-
-        // UImanager will call MutateOnce, which already updates the champion
-        // and saves the progress.
     }
 
     /// <summary>
@@ -482,14 +422,14 @@ public class EspNeatOptimizer : Optimizer
         // IDs, which creates genomes that fail the integrity check.
 
         // Easy patch: update the ID generator here.
-        _ea.GenomeList[0].GenomeFactory.InitializeGeneratorAfterLoad(_ea.GenomeList);   
+		_ea.GenomeList[0].GenomeFactory.InitializeGeneratorAfterLoad(_ea.GenomeList); 
     }
 
     /// <summary>
     /// This is used to clone a module. Note two things:
     /// 1) The cloned module will never be the active module! (It will be placed
     /// immediately before.)
-    /// 2) Complex modules (such as regulation modules) will need some further
+    /// TODO: 2) Complex modules (such as regulation modules) will need some further
     /// work to make sure the connexions among modules are correct.
     /// </summary>
     public void AskCloneModule(UIvariables uiVar, int whichModule)
@@ -501,14 +441,12 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
-    /// Used to rewire cloned regulation modules (note that while cloning them
-    /// in factory we do not know the IDs for the cloned children)
+    /// The "base" is the same for all genomes, so we use the first one.
+    /// First finds the index for the regulatory neuron, then returns
+    /// the ID of this neuron.
     /// </summary>
     public uint RegIdFromModId(int moduleId)
     {
-        // The base is the same for all genomes, so we use the first one.
-        // First finds the index for the regulatory neuron, then returns
-        // the ID of this neuron.
         int regIndex = 0;
         _ea.GenomeList[0].NeuronGeneList.FindRegulatory(moduleId, out regIndex);
         return _ea.GenomeList[0].NeuronGeneList[regIndex].Id;
@@ -549,25 +487,20 @@ public class EspNeatOptimizer : Optimizer
     }
 
     /// <summary>
-    /// Given a module and target, returns the ID of a protected connection with
-    /// such target, as well as the source.
+    /// Given a module and target, returns the protected connection with such target.
     /// </summary>
-    public void ConnectionIdFromModAndTarget(int moduleId, uint targetId,
-                                             out uint connectionId, out uint sourceId)
+    public ConnectionGene ConnectionFromModAndTarget(int moduleId, uint targetId)
     {
-        connectionId = 0;
-        sourceId = 0;
-
+		ConnectionGene returnConnection = new ConnectionGene(0, 0, targetId, 0, moduleId, true);
         foreach (ConnectionGene connection in _ea.GenomeList[0].ConnectionGeneList)
         {
             if (connection.ModuleId == moduleId &&
                 connection.TargetNodeId == targetId)
             {
-                connectionId = connection.InnovationId;
-                sourceId = connection.SourceNodeId;
-                return;
+                returnConnection = connection;
             }
         }
+        return returnConnection;
     }
 
     /// <summary>
@@ -602,13 +535,9 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void AskResetActiveModule()
     {
-        // We record this action:
         uiManager.WriteToRecord("Reset");
-
-        // Stops current evolution. Note this will not return the cameras to
-        // the editing menu
+        // Note this will not return the cameras to the editing menu.
         StopInteractiveEvolution();
-
         // Restart and reset (after allowing time to stop and remove old individuals!)
         Coroutiner.StartCoroutine(WaitResetStart());
     }
@@ -636,7 +565,7 @@ public class EspNeatOptimizer : Optimizer
 
         // Starts a new evolutionary process
         Manual = true;
-        StartEA();        
+        StartEvolutionAlgorithm();        
     }
 
     /// <summary>
@@ -752,12 +681,9 @@ public class EspNeatOptimizer : Optimizer
     /// </summary>
     public void GoThenAuto()
     {
-        // NeatManualEvolution extension will not be executed next time.
         _ea.Manual = false;
         // No more need for the manual GUI.
         manual = false;    
-        // Get time to its normal speed (old feature).
-        //ResetTime(); 
     }
 
     /// <summary>
@@ -837,103 +763,17 @@ public class EspNeatOptimizer : Optimizer
     /// around so different objects can refer to each other. 
     /// </summary>
     void Start()
-    {		
-        /*
-        SharpNeat.Network.InverseAbsoluteSteepSigmoid funcion1 = new SharpNeat.Network.InverseAbsoluteSteepSigmoid();
-        SharpNeat.Network.SteepenedSigmoid function2 = new SharpNeat.Network.SteepenedSigmoid();
-
-		System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
-		TimeSpan ts;
-		double ans;    
-        
-		stopWatch.Start();
-		for (int i = 0; i < 10000000; ++i)
-		{
-			ans = funcion1.Calculate(0.5, null);
-		}
-		stopWatch.Stop();
-		// Get the elapsed time as a TimeSpan value.
-		ts = stopWatch.Elapsed;
-		stopWatch.Reset();
-		Debug.Log("inv abs " + ts);
-
-		stopWatch.Start();
-		for (int i = 0; i < 10000000; ++i)
-		{
-			ans = function2.Calculate(0.5, null);
-		}
-		stopWatch.Stop();
-		// Get the elapsed time as a TimeSpan value.
-		ts = stopWatch.Elapsed;
-		stopWatch.Reset();
-		Debug.Log("normal " + ts);
-        */
-
-        // DateTime.Now.ToString("HH:mm:ss tt");
+    {	
         // If writeAllGenerations == true then all generations will be saved.
         // The time stamp will allow to distinguish different experiments.
         timeStamp = DateTime.Now.ToString("HHmm");
-
-        // Fast, hidden address:
-        // C:\Users\userName\AppData\LocalLow\CompanyNameInProject\ProjectName
-        baseFilesPath = Application.persistentDataPath;
-        // Slow, normal address:
-        // baseFilesPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
-        // baseFilesPath += "/" + Application.productName;
-        champFileSavePath = baseFilesPath + "/" + experiment_name + ".champ.xml";
-        popFileSavePath   = baseFilesPath + "/" + experiment_name + ".pop.xml";
-        // Useful reference! Delete these files for a fresh start.
-        Debug.Log("Local files' path: " + baseFilesPath);
-
-        // Initializes GUI-related classes.
+        InitSavePaths();
         InitGUI();
-
         Utility.DebugLog = true;
-
-        // We get rid of spaces in the experiment name to avoid trouble with paths
-        experiment_name = experiment_name.Replace(' ', '_');
-        experiment = new SimpleExperiment(this);
-        XmlDocument xmlConfig = new XmlDocument();
-        // Loads some experiment info.  
-        // Population size, number of species, cyclic or feedforward networks, 
-        // complexity regulation strategy and threshold.
-        TextAsset textAsset = (TextAsset)Resources.Load("experiment.config");
-        xmlConfig.LoadXml(textAsset.text);
-
-        // Manual selection extension for NeatEvolutionAlgorithm.
+        InitExperiment();
         manual_ea = new NeatManualEvolution<NeatGenome>(this, fitness_in_manual);
-
-        // Loads the experiment parameters from the xml file "experiment.config" 
-        experiment.Initialize(experiment_name, xmlConfig.DocumentElement, 
-                              num_inputs, num_outputs);
-
-        // Use if you need your rays in manual selection to interact only with
-        // a given set of layers. 
-        // In this exammple we want to exclude layer 9 "SeenByWorker":
-        for_mouse_input = (1 << LayerMask.NameToLayer("SeenByWorker"));
-        // We can exclude multiple layers:
-        // for_mouse_input |= (1 << 13);
-        // If we omit this line raycast will only interact with the previous layers!
-        for_mouse_input = ~for_mouse_input;
-
-        // In case units are tagged as something different than "Unit":
-        if (Unit.transform.tag != "Unit")
-        {
-            unit_tag = Unit.transform.tag;
-            Debug.Log("WARNING: Unit tag is: " + unit_tag);
-            Debug.Log("Please set tag as 'Unit'.");
-            // TODO: Enforce this? End program otherwise?
-            if (Unit.transform.tag == "Untagged")
-            {
-                unit_tag = "Unit"; 
-                Debug.Log("Units were not correctly tagged. Please choose a " +
-                          "new tag if you want to use manual selection.");
-            }
-        }
-        // Finally we start an evolutionary algorithm and load or create an 
-        // initial population.
-        // Note NeatGenomeFactory will set AddModule screen if CreateGenomeList
-        // is called and there is not a saved population.
+        SetRaycastLayers();
+        CheckUnitTag();
         StartGenomePopulation();
 
         // We need to load the champion now (in case we want to add a new module
@@ -947,6 +787,64 @@ public class EspNeatOptimizer : Optimizer
         uiManager.InstantiateLoadedElements();
     }
 
+    void InitExperiment()
+    {
+        // We get rid of spaces in the experiment name to avoid trouble with paths
+        experiment_name = experiment_name.Replace(' ', '_');
+        experiment = new SimpleExperiment(this); 
+
+        // Loads experiment parameters into XML document.
+        XmlDocument xmlConfig = new XmlDocument();
+        TextAsset textAsset = (TextAsset)Resources.Load("experiment.config");
+        xmlConfig.LoadXml(textAsset.text);
+
+        // Loads the experiment parameters from the xml file "experiment.config" 
+        experiment.Initialize(experiment_name, xmlConfig.DocumentElement, 
+                              num_inputs, num_outputs);
+    }
+
+    void InitSavePaths()
+    {
+        // Fast, hidden address:
+        // C:\Users\userName\AppData\LocalLow\CompanyNameInProject\ProjectName
+        // Slow, normal address:
+        // baseFilesPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+        // baseFilesPath += "/" + Application.productName;
+        baseFilesPath = Application.persistentDataPath;
+        champFileSavePath = baseFilesPath + "/" + experiment_name + ".champ.xml";
+        popFileSavePath   = baseFilesPath + "/" + experiment_name + ".pop.xml";
+        Debug.Log("Local files' path: " + baseFilesPath);    
+    }
+
+    void SetRaycastLayers()
+    {
+        // Use if you need your rays in manual selection to interact only with
+        // a given set of layers. 
+        // In this exammple we want to exclude layer 9 "SeenByWorker":
+        for_mouse_input = (1 << LayerMask.NameToLayer("SeenByWorker"));
+        // We can exclude multiple layers:
+        // for_mouse_input |= (1 << 13);
+        // If we omit this line raycast will only interact with the previous layers!
+        for_mouse_input = ~for_mouse_input;
+    }
+
+    void CheckUnitTag()
+    {
+        if (Unit.transform.tag != "Unit")
+        {
+            unit_tag = Unit.transform.tag;
+            Debug.Log("WARNING: Unit tag is: " + unit_tag);
+            Debug.Log("Please set tag as 'Unit'.");
+            // TODO: Enforce this? End program otherwise?
+            if (Unit.transform.tag == "Untagged")
+            {
+                unit_tag = "Unit"; 
+                Debug.Log("Units were not correctly tagged. Please choose a " +
+                    "new tag if you want to use manual selection.");
+            }
+        }        
+    }
+
     /// <summary>
     /// Instantiates and initializes elements needed for the program GUI.
     /// </summary>
@@ -955,54 +853,16 @@ public class EspNeatOptimizer : Optimizer
 		uiManager = GetComponent<UImanager>();
         uiManager.SetPaths(baseFilesPath + "/" + experiment_name);
         // Needed if sub-folders are used (in uiManager, for instance)
-        //IsThereDirectory(baseFilesPath + "/" + experiment_name);
+        //CreateDirectoryIfNew(baseFilesPath + "/" + experiment_name);
 	}
 
-    /// <summary>
-    /// Calculates frames per second and reduces the time scale if they are too
-    /// low. Also in Update we call the manual selection function in
-    /// optimizer (the actual selection of units with mouse input) when this 
-    /// mode is selected
-    /// </summary>
     void Update()
     {
-        // CheckFPS();
-
-        // Allows to select units only if the interactive evolution is chosen.
         if (manual)
         {
             ManualSelection(); 
         }
     }
-
-    /// <summary>
-    /// Calculates frames per second and reduces the time step if they are too
-    /// low. Currently not in use.
-    /// </summary>
-    /*void CheckFPS()
-    {
-        const int min_fps = 10;
-        const float updateInterval = 12;
-
-        // calculates frames per second
-        timeLeft -= Time.deltaTime;
-        accum += Time.timeScale / Time.deltaTime;
-        ++frames;
-        // every updateInterval fps are checked
-        if (timeLeft <= 0.0)
-        {
-            var fps = accum / frames;
-            timeLeft = updateInterval;
-            accum = 0.0f;
-            frames = 0;
-            // if fps are too low the time scale is reduced
-            if (fps < min_fps)
-            {
-                Time.timeScale = Time.timeScale - 1;
-                print("Lowering time scale to " + Time.timeScale);
-            }
-        }        
-    }*/
 
     /// <summary>
     /// Returns the latest generation in a loaded (or freshly created) population.
@@ -1028,25 +888,19 @@ public class EspNeatOptimizer : Optimizer
         {
             // It would make more sense to use LoadGenome instead of ReadCompleteGenomeList
             using (XmlReader xr = XmlReader.Create(champFileSavePath))
-                genome = NeatGenomeXmlIO.ReadCompleteGenomeList(xr, false, 
-                    (NeatGenomeFactory)experiment.CreateGenomeFactory())[0];
+                genome = NeatGenomeXmlIO.ReadCompleteGenomeList(
+                        xr, false, (NeatGenomeFactory)experiment.CreateGenomeFactory())[0];
         } 
         catch (Exception e1) 
         {
-            // print(champFileLoadPath + " Error loading genome from file!\nLoading aborted.\n"
-            //                        + e1.Message + "\nJoe: " + champFileLoadPath);
-            return genome;
         }
-
         return genome;
     }
 
     /// <summary>
     /// Updates some information for the user. This is subscribed to the UpdateEvent
-    /// event used in the evolutionary algorithm.
+    /// used in the evolution algorithm.
     /// </summary>
-    /// <param name="sender">Sender.</param>
-    /// <param name="e">E.</param>
     void ea_UpdateEvent(object sender, EventArgs e)
     {
         Utility.Log(string.Format("gen={0:N0} bestFitness={1:N6}",
@@ -1054,10 +908,6 @@ public class EspNeatOptimizer : Optimizer
                                   _ea.Statistics._maxFitness));
         fitness = _ea.Statistics._maxFitness;
         generation = _ea.CurrentGeneration;
-        // Utility.Log(string.Format("Moving average: {0}, N: {1}", 
-                                   // _ea.Statistics._bestFitnessMA.Mean, 
-        	                       // _ea.Statistics._bestFitnessMA.Length));
-
         SaveResearch(baseFilesPath);
     }
 
@@ -1065,23 +915,19 @@ public class EspNeatOptimizer : Optimizer
     /// Pause the evolutionary process and save the current genomes. This is 
     /// subscribed to the PauseEvent event used in the evolutionary algorithm.
     /// </summary>
-    /// <param name="sender">Sender.</param>
-    /// <param name="e">E.</param>
     void ea_PauseEvent(object sender, EventArgs e)
     {
         //Time.timeScale = 1;      
         SimpleSavePopulation();
         DateTime endTime = DateTime.Now;
         Utility.Log("Total time elapsed: " + (endTime - startTime));
-		// Why this line??
-        // System.IO.StreamReader stream = new System.IO.StreamReader(popFileSavePath);           
         EARunning = false;   
     }
 
     /// <summary>
     /// Checks if the directory path provided exists, and creates it if it does not.
     /// </summary>
-    void IsThereDirectory(string directoryPath)
+    void CreateDirectoryIfNew(string directoryPath)
     {
         System.IO.DirectoryInfo dirInf = new System.IO.DirectoryInfo(directoryPath);
         if (!dirInf.Exists)
@@ -1089,22 +935,6 @@ public class EspNeatOptimizer : Optimizer
             dirInf.Create();
         }        
     }
-
-    /// <summary>
-    /// Now EARunning is going to be true every time we call this function 
-    /// because Manual starts the evolutionary process. Change eventually?
-    /// </summary>
-    /*void ResetTime()
-    {
-        if (EARunning == true)
-        {
-            Time.timeScale = 25;
-        }
-        else
-        {
-            Time.timeScale = 1;
-        }      
-    }*/
         
     /// <summary>
     /// Select interesting units with mouse input during manual evolution-
