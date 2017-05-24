@@ -158,6 +158,13 @@ namespace SharpNeat.Genomes.Neat
 
         #region Public Methods
 
+		public void PrintConnectionInfo()
+		{
+			UnityEngine.Debug.Log("ID: " + _innovationId + ", from: " + _sourceNodeId +
+				", to: " + _targetNodeId + ", weight: " + _weight +
+				", module: " + _modId + ", is protected: " + _protected);
+		}
+
         /// <summary>
         /// Creates a copy of the current gene. Virtual method that can be 
         /// overriden by sub-types.

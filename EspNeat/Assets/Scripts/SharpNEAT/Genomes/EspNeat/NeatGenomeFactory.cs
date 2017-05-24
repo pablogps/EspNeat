@@ -1318,8 +1318,7 @@ namespace SharpNeat.Genomes.Neat
                         break;
                     }
                     // We do NOT want a reference to a common element!
-                    // The second parameter means we also want to copy the 
-                    // connectivity data.
+                    // The second parameter means we also want to copy the connectivity data.
                     NeuronGene newNeuron = new NeuronGene(oldNeuron, true);
                     targetGenome.InsertNeuron(newNeuron, neuronIndex);
                 }
@@ -1341,8 +1340,7 @@ namespace SharpNeat.Genomes.Neat
                 // Do not forget to insert the regulatory neuron!
                 int oldRegIndex = sourceGenome.NeuronGeneList.LastBase;
                 NeuronGene oldReg = sourceGenome.NeuronGeneList[oldRegIndex];
-                // The second parameter means we also want to copy the 
-                // connectivity data.
+                // The second parameter means we also want to copy the connectivity data.
                 NeuronGene newReg = new NeuronGene(oldReg, true);
                 // We want to place this regulatory neuron before the last
                 targetGenome.InsertNeuron(newReg, oldRegIndex - 1);
@@ -2073,43 +2071,37 @@ namespace SharpNeat.Genomes.Neat
         /// </summary>
         List<uint> MakeLocalOutput(NeatGenome genome, List<newLink> localOutList)
         {
-            NeuronGeneList neuronList = genome.NeuronGeneList;
-
-            List<uint> localOutputId = new List<uint>();
-            for (int k = 0; k < localOutList.Count; ++k)
-            {
-                // Peek gets the next ID to be used, but does not advance the counter.
-                // The next ID will be used in the local_output neuron.
-                genome.AddConnection(new ConnectionGene(_innovationIdGenerator.NextId,
-                                                        _innovationIdGenerator.Peek,
-                                                        localOutList[k].otherNeuron,
-                                                        localOutList[k].weight,
-                                                        _currentModule, true));  
-
-                localOutputId.Add(_innovationIdGenerator.Peek);
-                genome.AddNeuron(CreateNeuronGene(_innovationIdGenerator.NextId, 
-                                                  NodeType.Local_Output, 
-                                                  _currentModule, -1)); 
-
-                // Register connection with endpoint neurons.
-
-                // The source of the connection (local_output) is the last in 
-                // NeuronGeneList! The new target for this neuron is
-                // LocalOutputList[_currentModule][k].otherNeuron.
-                neuronList[neuronList.Count - 1].TargetNeurons.Add(
-                        localOutList[k].otherNeuron);
-
-                // We need to look for the index for the target neuron
-                // with ID LocalOutputList[_currentModule][k].otherNeuron.
-                // We cannot use GetNeuronById because the statistics are not
-                // updated during the creation of a new module!
-                NeuronGene targetNeuron = neuronList.GetNeuronByIdAll(
-                        localOutList[k].otherNeuron);
-                // The new neuron source we need to add to the source list is
-                // the last ID we used: _innovationIdGenerator.Peek - 1
-                targetNeuron.SourceNeurons.Add(_innovationIdGenerator.Peek - 1);                
-            }
-            return localOutputId;            
+			NeuronGeneList neuronList = genome.NeuronGeneList;
+			List<uint> localOutputId = new List<uint>();
+			for (int k = 0; k < localOutList.Count; ++k)
+			{
+				uint connectionID = _innovationIdGenerator.NextId;
+				uint localOutputNeuronID = _innovationIdGenerator.NextId;
+				genome.AddConnection(new ConnectionGene(connectionID,
+					localOutputNeuronID,
+					localOutList[k].otherNeuron,
+					localOutList[k].weight,
+					_currentModule,
+					true));
+				localOutputId.Add(localOutputNeuronID);
+				genome.AddNeuron(CreateNeuronGene(
+					localOutputNeuronID, NodeType.Local_Output, _currentModule, -1));
+				// The neuron that has just been created is the local output neuron,
+				// which is the SOURCE of the new connection. The new target for
+				// this neuron is localOutputList[k].otherNeuron
+				neuronList[neuronList.Count - 1].TargetNeurons.Add(
+					localOutList[k].otherNeuron);
+				// We need to look for the index for the target neuron
+				// with ID LocalOutputList[k].otherNeuron.
+				// We cannot use GetNeuronById because the statistics are not
+				// updated during the creation of a new module!
+				NeuronGene targetNeuron = neuronList.GetNeuronByIdAll(
+					localOutList[k].otherNeuron);
+				// We have to add the connection's source to the sources list
+				// of this neuron we have found.
+				targetNeuron.SourceNeurons.Add(localOutputNeuronID);
+			}
+			return localOutputId;              
         }
 
         /// <summary>
@@ -2163,7 +2155,7 @@ namespace SharpNeat.Genomes.Neat
                 // We need to look for the target neuron.
                 NeuronGene targetNeuron = neuronList.GetNeuronByIdAll(def._targetNeuronId);
                 // Its sourceId is def._sourceNeuronId.
-                targetNeuron.SourceNeurons.Add(def._targetNeuronId); 
+				targetNeuron.SourceNeurons.Add(def._sourceNeuronId); 
             }
 
             // Ensure connections are sorted (this will only affect the 

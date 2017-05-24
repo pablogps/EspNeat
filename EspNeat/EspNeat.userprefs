@@ -1,11 +1,23 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\_Working Examples\RobotArm-Artist\Scripts\prueba.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs">
     <Files>
-      <File FileName="Assets\_Working Examples\RobotArm-Artist\Scripts\ArtistWelderController.cs" Line="276" Column="9" />
-      <File FileName="Assets\_Working Examples\RobotArm-Artist\Scripts\prueba.cs" Line="27" Column="4" />
-      <File FileName="Assets\_Working Examples\RobotArm-Artist\Scripts\ArtistWelderControllerPixels.cs" Line="108" Column="71" />
-      <File FileName="Assets\_Working Examples\RobotArm-Artist\Scripts\ArtistWelderController-CanvasAsInput.cs" Line="6" Column="49" />
+      <File FileName="Assets\Scripts\SharpNEAT\Core\UnityParallelListEvaluator.cs" Line="99" Column="28" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeFactory.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\Optimizer.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\EspNeatOptimizer.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\SimpleExperiment.cs" Line="163" Column="83" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeuronGene.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenomeXmlIO.cs" Line="517" Column="54" />
+      <File FileName="Assets\Scripts\SharpNEAT\Genomes\EspNeat\NeatGenome.cs" Line="101" Column="20" />
+      <File FileName="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\EspNeat\NeatEvolutionAlgorithm.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\UImanager.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\ModuleController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\GUI\SelectInputPanelController.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\Coordination\EspNeat\SimpleEvaluator.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SharpNEAT\EvolutionAlgorithms\EspNeat\AbstractGenerationalAlgorithm.cs" Line="1" Column="1" />
+      <File FileName="Assets\Resources\experiment.config.xml" Line="7" Column="35" />
+      <File FileName="Assets\Scripts\SharpNEAT\Decoders\EspNeat\EspCyclicNetworkFactory.cs" Line="713" Column="4" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

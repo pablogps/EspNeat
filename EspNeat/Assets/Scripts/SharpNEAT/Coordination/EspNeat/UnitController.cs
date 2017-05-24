@@ -14,7 +14,7 @@ public abstract class UnitController : MonoBehaviour {
 	
 	public abstract float GetFitness();
 
-	//Used (hopefully well) in Optimizer --> DestroyBest and for the manual selection process
+	//Used in Optimizer --> DestroyBest and for the manual selection process
     public abstract SharpNeat.Phenomes.IBlackBox GetBox();
 
 	public bool Selected

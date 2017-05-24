@@ -9,11 +9,11 @@ public class TrafficLightController : MonoBehaviour {
 
     // Traffic light period (note the maximum period will actually be
     // maxPeriod + minPeriod)
-    private float maxPeriod = 6f;
-    private float minPeriod = 2f;
+    private float maxPeriod = 6f; // 6f
+    private float minPeriod = 2f; // 2f
     private float period;
     private float elapsed_time = 0f;
-    private static float fitnessBasedPeriod = 0.0f;
+    private static float fitnessBasedPeriod = 6.0f;
 
 	private enum lightState
 	{

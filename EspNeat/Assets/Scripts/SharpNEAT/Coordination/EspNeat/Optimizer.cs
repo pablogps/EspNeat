@@ -48,26 +48,13 @@ public abstract class Optimizer : MonoBehaviour
     }
 
     /// <summary>
-    /// NeatManualEvolution will use this to notify when manual selection can
-    /// start (any ongoing automatic generation is finished)
-    /// </summary>
-    public abstract bool ManualWait { set; get; } 
-
-    /// <summary>
-    /// Called by SimpleEvaluator
-    ///****Why is this called "Evaluate" when it instantiates?
+    /// Called by SimpleEvaluator and NeatManualEvolution.
     /// Instantiates and activates a unit. Adds its controller (box parameter)
     /// to the dictionary ControllerMap.
-    /// DO NOT confuse this function with SimpleEvaluator.Evaluate.
     /// </summary>
-    // TODO: Change name. Maybe "InstantiateUnit"?
-	public abstract void Evaluate(IBlackBox box);
+    public abstract void InstantiateCandidate(IBlackBox box);
 
-    /// <summary>
-    /// Called by SimpleEvaluator and NeatManualEvolution.
-    /// Destroys the unit that uses a given controller (parameter box)
-    /// </summary>
-	public abstract void StopEvaluation(IBlackBox box);
+	public abstract void DestroyCandidate(IBlackBox box);
 
     /// <summary>
     /// Gets the fitness corresponding to the unit which uses the controller "box"

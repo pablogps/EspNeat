@@ -126,6 +126,17 @@ namespace SharpNeat.Genomes.Neat
 
         #region Public Methods
 
+		public void PrintNeuronListData()
+		{
+			UnityEngine.Debug.Log("\nNeuron list data:");
+			UnityEngine.Debug.Log("Index for first element in active module: " + _firstModuleIndex);
+			UnityEngine.Debug.Log("Index for the last element in the base: " + _lastBaseIndex);
+			foreach (NeuronGene neuron in this)
+			{
+				neuron.PrintNeuronInfo();
+			}
+		}
+
         /// <summary>
         /// Locates the last base item. 
         /// </summary>
