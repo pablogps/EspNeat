@@ -758,6 +758,16 @@ namespace SharpNeat.Genomes.Neat
             // test for this when evoloving feedforward-only networks.
             if (null != disjointExcessGeneList && 0 != disjointExcessGeneList.Count)
             {
+				// Our provisional connectionList (within connectionListBuilder)
+				// shares _firstActiveIndex with all the connection lists in other
+				// genomes. This is wrong here! (This list has only active connections, 
+				// so that _firstActiveIndex is wrong!). This is important because
+				// trying to add connections with lower ID into the right place
+				// will fail! So we change here the value of _firstActiveIndex, 
+				// and reset it after this part.
+				// TODO: Refactor so that this is very clear!
+				connectionListBuilder.ConnectionGeneList.LocateFirstId();
+				
                 foreach (CorrelationItem correlItem in disjointExcessGeneList)
                 {
                     // Get ref to the selected connection gene and its source
@@ -780,11 +790,14 @@ namespace SharpNeat.Genomes.Neat
 						!connectionListBuilder.IsConnectionCyclic(connectionGene.SourceNodeId,
                                                                   connectionGene.TargetNodeId))
                     {
-                        // Add connection gene to the offspring's genome.
                         connectionListBuilder.TryAddGene(connectionGene, 
                                                          parentGenome, false);
                     }
                 }
+
+				// DO NOT FORGET to reset _firstActiveIndex, changed at the
+				// beginning of this IF.
+				ConnectionGeneList.LocateFirstId();
             }
 
             // Add the connection builders definitive list of neurons to the genome.
@@ -801,11 +814,15 @@ namespace SharpNeat.Genomes.Neat
                      connectionListBuilder.ConnectionGeneList)
             {
                 genome.AddConnection(connectionGene);
-            }
+			}
+			// Updates the number of active connections.
+			genome.ActiveConnectionsFromLoad();
 
-            // We update the number of active connections.
-            genome.ActiveConnectionsFromLoad();
+			// Resets connectivity info (was this not a problem in normal SharpNEAT?)
+			genome.RebuildNeuronGeneConnectionInfo();
 
+			// Perform an integrity test of the offspring before returning it!
+			Debug.Assert(genome.PerformIntegrityCheck());
             return genome;           
         }
 
